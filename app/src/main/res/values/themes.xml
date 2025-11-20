@@ -1,0 +1,7 @@
+<resources >
+    <style name="Base.Theme.VolineUIAndroid" parent="Theme.Material3.DayNight.NoActionBar">
+
+    </style>
+
+    <style name="Theme.VolineUIAndroid" parent="Base.Theme.VolineUIAndroid" />
+</resources>
