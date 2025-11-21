@@ -217,7 +217,7 @@ class Radio @JvmOverloads constructor(
             )
             radioLabelTextColor = typedArray.getColor(
                 R.styleable.Radio_radioLabelTextColor,
-                0xFF757575.toInt()
+                0xFF252525.toInt()
             )
             
             labelTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, radioLabelTextSize)

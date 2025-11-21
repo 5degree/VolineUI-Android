@@ -317,9 +317,7 @@ class InputField @JvmOverloads constructor(
             }
 
             val labelTextColor = typedArray.getColor(R.styleable.InputField_labelTextColor, -1)
-            if (labelTextColor != -1) {
-                labelTextView.setTextColor(labelTextColor)
-            }
+            labelTextView.setTextColor(if (labelTextColor != -1) labelTextColor else 0xFF252525.toInt())
 
             val hintTextColor = typedArray.getColor(R.styleable.InputField_hintTextColor, -1)
             if (hintTextColor != -1) {
@@ -856,11 +854,12 @@ class InputField @JvmOverloads constructor(
         backgroundPaint.color = bgColor
         canvas.drawRoundRect(borderRect, cornerRadius, cornerRadius, backgroundPaint)
 
-        // Draw border on top with proper stroke width
-        borderPaint.color = currentBorderColor
-        borderPaint.strokeWidth = currentBorderWidth
-        canvas.drawRoundRect(borderRect, cornerRadius, cornerRadius, borderPaint)
-        
+        if (isEnabled) {
+            // Draw border on top with proper stroke width
+            borderPaint.color = currentBorderColor
+            borderPaint.strokeWidth = currentBorderWidth
+            canvas.drawRoundRect(borderRect, cornerRadius, cornerRadius, borderPaint)
+        }
         // Draw children after border
         super.onDraw(canvas)
     }
