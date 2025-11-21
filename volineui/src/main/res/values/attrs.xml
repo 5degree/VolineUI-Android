@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="InputField">
+        <!-- Text Configuration -->
+        <attr name="android:text" />
+        <attr name="android:hint" />
+        <attr name="label" format="string" />
+        <attr name="android:inputType" />
+        <attr name="android:maxLength" />
+        
+        <!-- Visual Customization -->
+        <attr name="cornerRadius" format="dimension" />
+        <attr name="borderColor" format="color" />
+        <attr name="borderWidth" format="dimension" />
+        <attr name="focusedBorderColor" format="color" />
+        <attr name="focusedBorderWidth" format="dimension" />
+        <attr name="backgroundColor" format="color" />
+        
+        <!-- State Colors -->
+        <attr name="errorColor" format="color" />
+        <attr name="successColor" format="color" />
+        <attr name="disabledColor" format="color" />
+        <attr name="loadingColor" format="color" />
+        
+        <!-- Feature Toggles -->
+        <attr name="showClearIcon" format="boolean" />
+        <attr name="showCharacterCounter" format="boolean" />
+        <attr name="enableValidation" format="boolean" />
+        <attr name="multiLine" format="boolean" />
+        <attr name="android:enabled" />
+        <attr name="readOnly" format="boolean" />
+        
+        <!-- Icons -->
+        <attr name="prefixIcon" format="reference" />
+        <attr name="suffixIcon" format="reference" />
+        <attr name="clearIcon" format="reference" />
+        <attr name="passwordToggleIcon" format="reference" />
+        <attr name="passwordToggleVisibleIcon" format="reference" />
+        
+        <!-- Validation -->
+        <attr name="validationType" format="enum">
+            <enum name="none" value="0" />
+            <enum name="email" value="1" />
+            <enum name="phone" value="2" />
+            <enum name="url" value="3" />
+            <enum name="custom" value="4" />
+        </attr>
+        <attr name="customValidationPattern" format="string" />
+        
+        <!-- Input Masking -->
+        <attr name="inputMask" format="string" />
+        <attr name="maskCharacter" format="string" />
+        
+        <!-- Spacing -->
+        <attr name="labelGap" format="dimension" />
+        <attr name="iconPadding" format="dimension" />
+        <attr name="verticalPadding" format="dimension" />
+        <attr name="horizontalPadding" format="dimension" />
+        <attr name="android:padding" />
+        <attr name="android:paddingStart" />
+        <attr name="android:paddingEnd" />
+        <attr name="android:paddingTop" />
+        <attr name="android:paddingBottom" />
+        
+        <!-- Text Appearance -->
+        <attr name="android:textSize" />
+        <attr name="android:textColor" />
+        <attr name="labelTextSize" format="dimension" />
+        <attr name="labelTextColor" format="color" />
+        <attr name="hintTextColor" format="color" />
+        <attr name="errorTextSize" format="dimension" />
+        <attr name="counterTextSize" format="dimension" />
+    </declare-styleable>
+</resources>

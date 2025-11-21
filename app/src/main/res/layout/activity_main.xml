@@ -1,19 +1,164 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:orientation="vertical"
+        android:padding="24dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VolineUI InputField Demo"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Basic Text Input -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/basicInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Full Name"
+            android:hint="Enter your full nameed"
+            app:borderColor="#CCCCCC"
+            app:focusedBorderColor="#2196F3"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Email Input with Validation -->
+
+        <!-- Phone Input with Masking -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/emailInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="example@email.com"
+            android:inputType="textEmailAddress"
+            app:cornerRadius="12dp"
+            app:label="Email Address" />
+
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/phoneInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Phone Number"
+            android:hint="(123) 456-7890"
+            android:inputType="phone"
+            app:inputMask="(###) ###-####"
+            app:showClearIcon="true"
+            app:cornerRadius="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Password Input with Toggle -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/passwordInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Password"
+            android:hint="Enter password"
+            android:inputType="textPassword"
+            app:cornerRadius="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Input with Character Counter -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/messageInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Message"
+            android:hint="Type your message"
+            android:maxLength="100"
+            app:showCharacterCounter="true"
+            app:showClearIcon="true"
+            app:cornerRadius="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Multi-line Text Area -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/bioInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Bio"
+            android:hint="Tell us about yourself..."
+            app:multiLine="true"
+            android:maxLength="250"
+            app:showCharacterCounter="true"
+            app:cornerRadius="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Number Input -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/ageInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Age"
+            android:hint="18"
+            android:inputType="number"
+            app:cornerRadius="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Disabled Input -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/disabledInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Disabled Field"
+            android:text="This field is disabled"
+            android:enabled="false"
+            app:cornerRadius="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Read-only Input -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/readonlyInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Read-only Field"
+            android:text="This field is read-only"
+            app:readOnly="true"
+            app:cornerRadius="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Demo Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/btnShowError"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Show Error"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnShowSuccess"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Show Success"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnShowLoading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toggle Loading"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+</ScrollView>
