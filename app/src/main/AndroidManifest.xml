@@ -11,6 +11,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VolineUIAndroid">
         <activity
+            android:name=".RadioExamplesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".InputFieldExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

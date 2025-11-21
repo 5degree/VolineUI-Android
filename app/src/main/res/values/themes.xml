@@ -3,5 +3,7 @@
 
     </style>
 
-    <style name="Theme.VolineUIAndroid" parent="Base.Theme.VolineUIAndroid" />
+    <style name="Theme.VolineUIAndroid" parent="Base.Theme.VolineUIAndroid">
+        <item name="android:colorPrimary">@color/green</item>
+    </style>
 </resources>

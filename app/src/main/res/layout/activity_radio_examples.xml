@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    tools:context=".RadioExamplesActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VolineUI Radio Demo"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Basic Radio with Label -->
+        <com.cropintellix.volineui.Radio
+            android:id="@+id/roleRadio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:radioLabel="Select Your Role"
+            app:options="@array/user_roles"
+            app:height="32dp"
+            app:selectedIndex="2"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Custom Colors with Label -->
+        <com.cropintellix.volineui.Radio
+            android:id="@+id/timePeriodRadio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:radioLabel="Preferred Time"
+            app:radioLabelTextSize="16sp"
+            app:radioLabelTextColor="#333333"
+            app:options="@array/time_periods"
+            app:selectedBackgroundColor="#FF6B6B"
+            app:selectedTextColor="#FFFFFF"
+            app:unselectedTextColor="#999999"
+            app:containerBackgroundColor="#F0F0F0"
+            app:height="52dp"
+            app:gap="5dp"
+            app:cornerRadius="26dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Compact Size -->
+        <com.cropintellix.volineui.Radio
+            android:id="@+id/sizeRadio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:radioLabel="Size"
+            app:radioLabelGap="3dp"
+            app:options="@array/sizes"
+            app:selectedBackgroundColor="#4CAF50"
+            app:height="42dp"
+            app:gap="3dp"
+            app:cornerRadius="21dp"
+            android:textSize="13sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Two Options -->
+        <com.cropintellix.volineui.Radio
+            android:id="@+id/planRadio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:radioLabel="Choose Plan"
+            app:options="@array/plan_types"
+            app:selectedBackgroundColor="#9C27B0"
+            app:selectedTextColor="#FFFFFF"
+            app:unselectedTextColor="#757575"
+            app:height="56dp"
+            app:gap="6dp"
+            app:cornerRadius="28dp"
+            android:textSize="16sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Without Dividers -->
+        <com.cropintellix.volineui.Radio
+            android:id="@+id/difficultyRadio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:radioLabel="Difficulty Level"
+            app:radioLabelTextSize="15sp"
+            app:options="@array/difficulty_levels"
+            app:selectedBackgroundColor="#FF9800"
+            app:showDividers="none"
+            app:enableSwipeGesture="true"
+            app:height="48dp"
+            app:gap="4dp"
+            app:cornerRadius="24dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Custom Label Gap and Style -->
+        <com.cropintellix.volineui.Radio
+            android:id="@+id/customRadio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:radioLabel="Custom Styled Radio"
+            app:radioLabelGap="10dp"
+            app:radioLabelTextSize="18sp"
+            app:radioLabelTextColor="#2196F3"
+            app:options="@array/user_roles"
+            app:selectedBackgroundColor="#2196F3"
+            app:selectedTextColor="#FFFFFF"
+            app:unselectedTextColor="#AAAAAA"
+            app:containerBackgroundColor="#E3F2FD"
+            app:height="60dp"
+            app:enableSwipeGesture="true"
+            app:gap="6dp"
+            app:cornerRadius="30dp"
+            app:pillElevation="6dp"
+            android:textSize="15sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Disabled Radio -->
+        <com.cropintellix.volineui.Radio
+            android:id="@+id/disabledRadio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:radioLabel="Disabled Radio (Read-only)"
+            app:options="@array/sizes"
+            app:selectedIndex="1"
+            android:enabled="false"
+            app:height="48dp"
+            app:gap="4dp"
+            app:cornerRadius="24dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Demo Buttons -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Programmatic Controls"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btnSelectFirst"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Select First"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnSelectLast"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Select Last" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnGetValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Get Selected Value"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvSelectedValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selected: -"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="#F5F5F5"
+            android:gravity="center" />
+
+    </LinearLayout>
+
+</ScrollView>

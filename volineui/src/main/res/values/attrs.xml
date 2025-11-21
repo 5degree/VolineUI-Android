@@ -71,4 +71,57 @@
         <attr name="errorTextSize" format="dimension" />
         <attr name="counterTextSize" format="dimension" />
     </declare-styleable>
+    
+    <declare-styleable name="Radio">
+        <!-- Options Configuration -->
+        <attr name="options" format="reference" />
+        <attr name="selectedIndex" format="integer" />
+        
+        <!-- Label -->
+        <attr name="radioLabel" format="string" />
+        <attr name="radioLabelGap" format="dimension" />
+        <attr name="radioLabelTextSize" format="dimension" />
+        <attr name="radioLabelTextColor" format="color" />
+        
+        <!-- Colors -->
+        <attr name="selectedBackgroundColor" format="color" />
+        <attr name="unselectedBackgroundColor" format="color" />
+        <attr name="selectedTextColor" format="color" />
+        <attr name="unselectedTextColor" format="color" />
+        <attr name="containerBackgroundColor" format="color" />
+        <attr name="dividerColor" />
+        
+        <!-- Sizing & Spacing -->
+        <attr name="height" format="dimension" />
+        <attr name="gap" format="dimension" />
+        <attr name="optionSpacing" format="dimension"/>
+        <attr name="cornerRadius" />
+        
+        <!-- Visual Effects -->
+        <attr name="showDividers" />
+        <attr name="pillElevation" format="dimension" />
+        <attr name="dividerWidth" format="dimension" />
+        
+        <!-- Behavior -->
+        <attr name="enableHapticFeedback" format="boolean" />
+        <attr name="animationDuration" format="integer" />
+        <attr name="enableSwipeGesture" format="boolean" />
+        <attr name="android:enabled" />
+        
+        <!-- Text Appearance -->
+        <attr name="android:textSize" />
+        <attr name="android:fontFamily" />
+        
+        <!-- Text Style -->
+        <attr name="selectedTextStyle" format="enum">
+            <enum name="bold" value="1" />
+            <enum name="italic" value="2" />
+            <enum name="boldItalic" value="3" />
+        </attr>
+        <attr name="unselectedTextStyle" format="enum">
+            <enum name="bold" value="1" />
+            <enum name="italic" value="2" />
+            <enum name="boldItalic" value="3" />
+        </attr>
+    </declare-styleable>
 </resources>

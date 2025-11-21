@@ -1,3 +1,41 @@
 <resources>
     <string name="app_name">VolineUI Android</string>
+
+    <string-array name="genders">
+        <item>Male</item>
+        <item>Female</item>
+        <item>Other</item>
+    </string-array>
+
+    <!-- RadioButton Example Arrays -->
+    <string-array name="user_roles">
+        <item>Admin</item>
+        <item>Editor</item>
+        <item>Viewer</item>
+    </string-array>
+
+    <string-array name="time_periods">
+        <item>Morning</item>
+        <item>Afternoon</item>
+        <item>Evening</item>
+        <item>Night</item>
+    </string-array>
+
+    <string-array name="sizes">
+        <item>Small</item>
+        <item>Medium</item>
+        <item>Large</item>
+    </string-array>
+
+    <string-array name="plan_types">
+        <item>Free</item>
+        <item>Pro</item>
+    </string-array>
+
+    <string-array name="difficulty_levels">
+        <item>Easy</item>
+        <item>Medium</item>
+        <item>Hard</item>
+        <item>Expert</item>
+    </string-array>
 </resources>
