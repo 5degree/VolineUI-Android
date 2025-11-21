@@ -67,6 +67,8 @@
             android:hint="Enter password"
             android:inputType="textPassword"
             app:cornerRadius="12dp"
+            android:maxLength="20"
+            app:showCharacterCounter="true"
             android:layout_marginBottom="16dp" />
 
         <!-- Input with Character Counter -->

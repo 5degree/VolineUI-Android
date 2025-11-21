@@ -336,6 +336,14 @@ class InputField @JvmOverloads constructor(
                 counterTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, counterTextSize)
             }
 
+            // Set theme-based defaults if not explicitly set in XML
+            if (!typedArray.hasValue(R.styleable.InputField_focusedBorderColor)) {
+                focusedBorderColor = getThemePrimaryColor()
+            }
+            if (!typedArray.hasValue(R.styleable.InputField_loadingColor)) {
+                loadingColor = getThemePrimaryColor()
+            }
+            
         } finally {
             typedArray.recycle()
         }
@@ -636,7 +644,7 @@ class InputField @JvmOverloads constructor(
         }
 
         val targetWidth = when (newState) {
-            FieldState.FOCUSED -> focusedBorderWidth
+            FieldState.FOCUSED -> if(isReadOnly) borderWidth else focusedBorderWidth
             else -> borderWidth
         }
 
@@ -831,7 +839,8 @@ class InputField @JvmOverloads constructor(
             paddingTop.toFloat()
         }
         
-        val inputHeight = inputEditText.measuredHeight.coerceAtLeast(dpToPx(48f).toInt())
+        // Use actual EditText bottom position for accurate height
+        val inputBottom = inputEditText.bottom.toFloat()
 
         // Set border rect with proper inset for stroke width
         // The stroke is drawn centered on the path, so we need to inset by half the stroke width
@@ -840,7 +849,7 @@ class InputField @JvmOverloads constructor(
             paddingStart.toFloat() + halfStroke,
             inputTop + halfStroke,
             (width - paddingEnd).toFloat() - halfStroke,
-            inputTop + inputHeight - halfStroke
+            inputBottom - halfStroke
         )
 
         // Draw background first
@@ -941,5 +950,21 @@ class InputField @JvmOverloads constructor(
                 ContextCompat.getDrawable(context, R.drawable.ic_visibility_off)!!
             }
         }
+    }
+    
+    /**
+     * Get theme primary color from the app's theme
+     */
+    private fun getThemePrimaryColor(): Int {
+        val typedValue = TypedValue()
+        val theme = context.theme
+        
+        // Try to get Android colorPrimary
+        if (theme.resolveAttribute(android.R.attr.colorPrimary, typedValue, true)) {
+            return typedValue.data
+        }
+        
+        // Final fallback to blue
+        return 0xFF2196F3.toInt()
     }
 }
