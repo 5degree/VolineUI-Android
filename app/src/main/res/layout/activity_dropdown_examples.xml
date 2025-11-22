@@ -91,7 +91,7 @@
             app:options="@array/colors"
             app:label="6. Color (Filled Style)"
             app:trailingIcon="@drawable/chess_queen_24px"
-            app:triggerStyle="filled"
+            app:containerStyle="filled"
             android:layout_marginBottom="16dp" />
 
         <!-- 7. XML array ghost style -->
@@ -100,7 +100,7 @@
             android:layout_height="wrap_content"
             app:options="@array/sizes"
             app:label="7. Size (Ghost Style)"
-            app:triggerStyle="ghost"
+            app:containerStyle="ghost"
             app:trailingIcon="@drawable/dataset_24px"
             app:trailingIconTint="#40187c"
             app:animateTrailingIcon="false"
@@ -397,7 +397,7 @@
             android:layout_height="wrap_content"
             app:options="@array/categories"
             app:label="35. Outlined Style"
-            app:triggerStyle="outlined"
+            app:containerStyle="outlined"
             app:borderColor="#4CAF50"
             app:borderWidth="2dp"
             android:layout_marginBottom="16dp" />
@@ -408,7 +408,7 @@
             android:layout_height="wrap_content"
             app:options="@array/colors"
             app:label="36. Filled Style"
-            app:triggerStyle="filled"
+            app:containerStyle="filled"
             app:backgroundColor="#F5F5F5"
             android:layout_marginBottom="16dp" />
 
@@ -418,7 +418,7 @@
             android:layout_height="wrap_content"
             app:options="@array/sizes"
             app:label="37. Ghost Style"
-            app:triggerStyle="ghost"
+            app:containerStyle="ghost"
             android:layout_marginBottom="16dp" />
 
         <!-- 38. Custom background color -->
@@ -428,6 +428,7 @@
             app:options="@array/languages"
             app:label="38. Custom Background"
             app:backgroundColor="#E3F2FD"
+            app:horizontalPadding="40dp"
             app:borderColor="#2196F3"
             android:layout_marginBottom="16dp" />
 
@@ -437,8 +438,8 @@
             android:layout_height="wrap_content"
             app:options="@array/time_zones"
             app:label="39. Custom Focus Color"
-            app:focusedBorderColor="#FF5722"
-            app:expandedBorderColor="#F44336"
+            app:focusedBorderColor="#2A558A"
+            app:verticalPadding="70dp"
             android:layout_marginBottom="16dp" />
 
         <!-- 40. All custom colors -->
@@ -561,7 +562,7 @@
             app:showClearButton="true"
             app:searchable="true"
             app:searchHint="Search departments..."
-            app:triggerStyle="filled"
+            app:containerStyle="filled"
             app:cornerRadius="12dp"
             app:horizontalPadding="20dp"
             app:verticalPadding="14dp"

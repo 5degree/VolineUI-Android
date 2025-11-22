@@ -17,8 +17,6 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
-import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -83,12 +81,12 @@ class Dropdown @JvmOverloads constructor(
     private var labelGap: Float = dpToPx(5f)
     
     // Visual customization
-   private var triggerStyleValue: Int = 0 // 0=outlined, 1=filled, 2=ghost
+   private var containerStyleValue: Int = 0 // 0=outlined, 1=filled, 2=ghost
     private var cornerRadius: Float = dpToPx(8f)
     private var borderColor: Int = 0xFFCCCCCC.toInt()
     private var borderWidth: Float = dpToPx(1f)
     private var focusedBorderColor: Int = 0xFF2196F3.toInt()
-    private var expandedBorderColor: Int = 0xFF2196F3.toInt()
+    private var focusedBorderWidth: Float = dpToPx(2f)
     private var bgColor: Int = 0xFFFFFFFF.toInt()
     
     // Padding
@@ -258,12 +256,12 @@ class Dropdown @JvmOverloads constructor(
             }
             
             // Visual customization
-            triggerStyleValue = typedArray.getInt(R.styleable.Dropdown_triggerStyle, 0)
+            containerStyleValue = typedArray.getInt(R.styleable.Dropdown_containerStyle, 0)
             cornerRadius = typedArray.getDimension(R.styleable.Dropdown_cornerRadius, dpToPx(8f))
             borderColor = typedArray.getColor(R.styleable.Dropdown_borderColor, 0xFFCCCCCC.toInt())
             borderWidth = typedArray.getDimension(R.styleable.Dropdown_borderWidth, dpToPx(1f))
             focusedBorderColor = typedArray.getColor(R.styleable.Dropdown_focusedBorderColor, getThemePrimaryColor())
-            expandedBorderColor = typedArray.getColor(R.styleable.Dropdown_expandedBorderColor, focusedBorderColor)
+            focusedBorderWidth = typedArray.getDimension(R.styleable.Dropdown_focusedBorderWidth, dpToPx(2f))
             bgColor = typedArray.getColor(R.styleable.Dropdown_backgroundColor, 0xFFFFFFFF.toInt())
             
             // Padding
@@ -341,7 +339,7 @@ class Dropdown @JvmOverloads constructor(
             optionHeight = typedArray.getDimension(R.styleable.Dropdown_optionHeight, dpToPx(48f))
             optionPadding = typedArray.getDimension(R.styleable.Dropdown_optionPadding, dpToPx(16f))
             optionHoverColor = typedArray.getColor(R.styleable.Dropdown_optionHoverColor, 0x10000000)
-            optionSelectedColor = typedArray.getColor(R.styleable.Dropdown_optionSelectedColor, 0x202196F3.toInt())
+            optionSelectedColor = typedArray.getColor(R.styleable.Dropdown_optionSelectedColor, 0x202196F3)
             optionTextColor = typedArray.getColor(R.styleable.Dropdown_optionTextColor, 0xFF212121.toInt())
             optionSelectedTextColor = typedArray.getColor(R.styleable.Dropdown_optionSelectedTextColor, getThemePrimaryColor())
             showCheckmarks = typedArray.getBoolean(R.styleable.Dropdown_showCheckmarks, true)
@@ -358,7 +356,14 @@ class Dropdown @JvmOverloads constructor(
             isEnabled = typedArray.getBoolean(R.styleable.Dropdown_android_enabled, true)
             isReadOnly = typedArray.getBoolean(R.styleable.Dropdown_readOnly, false)
             isRequired = typedArray.getBoolean(R.styleable.Dropdown_required, false)
-            
+
+            // Set theme-based defaults if not explicitly set in XML
+            if (!typedArray.hasValue(R.styleable.Dropdown_focusedBorderColor)) {
+                focusedBorderColor = getThemePrimaryColor()
+            }
+            if (!typedArray.hasValue(R.styleable.Dropdown_loadingColor)) {
+                loadingColor = getThemePrimaryColor()
+            }
         } finally {
             typedArray.recycle()
         }
@@ -367,11 +372,11 @@ class Dropdown @JvmOverloads constructor(
         currentBorderWidth = borderWidth
         
         // Apply trigger style
-        applyTriggerStyle()
+        applyContainerStyle()
     }
 
-    private fun applyTriggerStyle() {
-        when (triggerStyleValue) {
+    private fun applyContainerStyle() {
+        when (containerStyleValue) {
             0 -> { // Outlined
                 backgroundPaint.color = bgColor
                 borderPaint.strokeWidth = borderWidth
@@ -580,7 +585,7 @@ class Dropdown @JvmOverloads constructor(
         }
         
         isDropdownOpen = true
-        updateState(DropdownState.EXPANDED)
+        updateState(DropdownState.FOCUSED)
         
         // Rotate trailing icon if enabled
         if (animateTrailingIcon && trailingIconView != null) {
@@ -999,11 +1004,15 @@ class Dropdown @JvmOverloads constructor(
             DropdownState.DISABLED -> disabledColor
             DropdownState.LOADING -> loadingColor
             DropdownState.FOCUSED -> focusedBorderColor
-            DropdownState.EXPANDED -> expandedBorderColor
             else -> borderColor
         }
 
-        animateBorder(targetColor, borderWidth)
+        val targetWidth = when (newState) {
+            DropdownState.FOCUSED -> if(isReadOnly) borderWidth else focusedBorderWidth
+            else -> borderWidth
+        }
+
+        animateBorder(targetColor, targetWidth)
     }
 
     private fun animateBorder(targetColor: Int, targetWidth: Float) {
@@ -1014,6 +1023,15 @@ class Dropdown @JvmOverloads constructor(
             invalidate()
         }
         colorAnimator.start()
+
+        // Width animation
+        val widthAnimator = ValueAnimator.ofFloat(currentBorderWidth, targetWidth)
+        widthAnimator.duration = 200
+        widthAnimator.addUpdateListener { animator ->
+            currentBorderWidth = animator.animatedValue as Float
+            invalidate()
+        }
+        widthAnimator.start()
     }
 
     private fun animateIconRotation(icon: ImageView, from: Float, to: Float) {
@@ -1233,7 +1251,7 @@ class Dropdown @JvmOverloads constructor(
         canvas.drawRoundRect(borderRect, cornerRadius, cornerRadius, backgroundPaint)
 
         // Draw border on top if applicable
-        if (triggerStyleValue == 0 || currentState != DropdownState.NORMAL) {
+        if (containerStyleValue == 0 || currentState != DropdownState.NORMAL) {
             borderPaint.color = currentBorderColor
             borderPaint.strokeWidth = currentBorderWidth
             canvas.drawRoundRect(borderRect, cornerRadius, cornerRadius, borderPaint)

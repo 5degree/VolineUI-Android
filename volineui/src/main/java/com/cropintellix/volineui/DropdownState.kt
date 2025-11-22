@@ -18,7 +18,6 @@ package com.cropintellix.volineui
 enum class DropdownState {
     NORMAL,
     FOCUSED,
-    EXPANDED,
     ERROR,
     SUCCESS,
     DISABLED,

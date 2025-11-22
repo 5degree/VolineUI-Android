@@ -135,7 +135,7 @@
         <attr name="labelGap" />
         
         <!-- Visual Customization -->
-        <attr name="triggerStyle" format="enum">
+        <attr name="containerStyle" format="enum">
             <enum name="outlined" value="0" />
             <enum name="filled" value="1" />
             <enum name="ghost" value="2" />
@@ -144,6 +144,7 @@
         <attr name="borderColor" />
         <attr name="borderWidth" />
         <attr name="focusedBorderColor" />
+        <attr name="focusedBorderWidth" />
         <attr name="backgroundColor" />
         <attr name="expandedBorderColor" format="color" />
         <attr name="dropdownElevation" format="dimension" />
