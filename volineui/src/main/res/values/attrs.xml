@@ -124,4 +124,122 @@
             <enum name="boldItalic" value="3" />
         </attr>
     </declare-styleable>
+    
+    <declare-styleable name="Dropdown">
+        <!-- Options Data -->
+        <attr name="options" />
+        
+        <!-- Text Configuration -->
+        <attr name="dropdownLabel" format="string" />
+        <attr name="dropdownHint" format="string" />
+        <attr name="dropdownLabelGap" format="dimension" />
+        
+        <!-- Visual Customization -->
+        <attr name="triggerStyle" format="enum">
+            <enum name="outlined" value="0" />
+            <enum name="filled" value="1" />
+            <enum name="ghost" value="2" />
+        </attr>
+        <attr name="cornerRadius" />
+        <attr name="borderColor" />
+        <attr name="borderWidth" />
+        <attr name="focusedBorderColor" />
+        <attr name="backgroundColor" />
+        <attr name="expandedBorderColor" format="color" />
+        <attr name="dropdownElevation" format="dimension" />
+        <attr name="verticalPadding" />
+        <attr name="horizontalPadding" />
+        
+        <!-- Selection Mode -->
+        <attr name="selectionMode" format="enum">
+            <enum name="single" value="0" />
+            <enum name="multi" value="1" />
+        </attr>
+        <attr name="maxSelections" format="integer" />
+        <attr name="showSelectAll" format="boolean" />
+        <attr name="collapseChipsAfter" format="integer" />
+        
+        <!-- Icons -->
+        <attr name="leadingIcon" format="reference" />
+        <attr name="leadingIconTint" format="color" />
+        <attr name="trailingIcon" format="reference" />
+        <attr name="trailingIconTint" format="color" />
+        <attr name="animateTrailingIcon" format="boolean" />
+        <attr name="showClearButton" format="boolean" />
+        <attr name="clearIcon" />
+        <attr name="clearIconTint" format="color" />
+        <attr name="emptyStateIcon" format="reference" />
+        <attr name="loadingIcon" format="reference" />
+        
+        <!-- Search & Filter -->
+        <attr name="searchable" format="boolean" />
+        <attr name="searchHint" format="string" />
+        <attr name="searchDebounceMs" format="integer" />
+        <attr name="highlightMatches" format="boolean" />
+        <attr name="showCreateOption" format="boolean" />
+        
+        <!-- Dropdown Behavior -->
+        <attr name="openAnimation" format="enum">
+            <enum name="none" value="0" />
+            <enum name="fade" value="1" />
+            <enum name="scale" value="2" />
+            <enum name="slide" value="3" />
+        </attr>
+        <attr name="closeAnimation" format="enum">
+            <enum name="none" value="0" />
+            <enum name="fade" value="1" />
+            <enum name="scale" value="2" />
+            <enum name="slide" value="3" />
+        </attr>
+        <attr name="animationDuration" />
+        <attr name="showBackdrop" format="boolean" />
+        <attr name="backdropColor" format="color" />
+        <attr name="dismissOnClickOutside" format="boolean" />
+        <attr name="autoFlipPosition" format="boolean" />
+        <attr name="scrollToSelected" format="boolean" />
+        
+        <!-- Option Styling -->
+        <attr name="optionHeight" format="dimension" />
+        <attr name="optionPadding" format="dimension" />
+        <attr name="optionHoverColor" format="color" />
+        <attr name="optionSelectedColor" format="color" />
+        <attr name="optionTextColor" format="color" />
+        <attr name="optionSelectedTextColor" format="color" />
+        <attr name="showCheckmarks" format="boolean" />
+        <attr name="showDividers" />
+        
+        <!-- State Colors -->
+        <attr name="errorColor" />
+        <attr name="successColor" />
+        <attr name="disabledColor" />
+        <attr name="loadingColor" />
+        <attr name="required" format="boolean" />
+        
+        <!-- Chip Styling -->
+        <attr name="chipBackgroundColor" format="color" />
+        <attr name="chipTextColor" format="color" />
+        <attr name="chipCornerRadius" format="dimension" />
+        <attr name="chipHeight" format="dimension" />
+        <attr name="chipSpacing" format="dimension" />
+        
+        <!-- Accessibility -->
+        <attr name="android:contentDescription" />
+        <attr name="announceSelection" format="boolean" />
+        
+        <!-- Advanced -->
+        <attr name="useVirtualScrolling" format="boolean" />
+        <attr name="virtualScrollThreshold" format="integer" />
+        <attr name="enableHapticFeedback" />
+        
+        <!-- Common Attributes -->
+        <attr name="android:enabled" />
+        <attr name="readOnly" />
+        
+        <!-- Text Appearance -->
+        <attr name="android:textSize" />
+        <attr name="android:textColor" />
+        <attr name="labelTextSize" />
+        <attr name="labelTextColor" />
+        <attr name="hintTextColor" />
+    </declare-styleable>
 </resources>

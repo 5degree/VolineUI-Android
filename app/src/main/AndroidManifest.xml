@@ -17,6 +17,9 @@
             android:name=".InputFieldExamplesActivity"
             android:exported="false" />
         <activity
+            android:name=".DropdownExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

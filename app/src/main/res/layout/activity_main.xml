@@ -35,6 +35,12 @@
             android:layout_height="wrap_content"
             android:text="Radio Examples" />
 
+        <Button
+            android:id="@+id/btnOpenDropdownExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Dropdown Examples" />
+
     </LinearLayout>
 
 </ScrollView>
