@@ -1215,8 +1215,9 @@ class Dropdown @JvmOverloads constructor(
         } else 0f
 
         val triggerTop = paddingTop + labelHeight + chipsHeight
-        val triggerHeight = triggerContainer.measuredHeight.coerceAtLeast(dpToPx(48f).toInt())
-        val triggerBottom = triggerTop + triggerHeight
+        
+        // Use actual triggerContainer bottom position for accurate height (matching InputField pattern)
+        val triggerBottom = triggerContainer.bottom.toFloat()
 
         // Set border rect with proper inset for stroke width
         // The stroke is drawn centered on the path, so we need to inset by half the stroke width
@@ -1225,7 +1226,7 @@ class Dropdown @JvmOverloads constructor(
             paddingStart.toFloat() + halfStroke,
             triggerTop + halfStroke,
             (width - paddingEnd).toFloat() - halfStroke,
-            triggerBottom.toFloat() - halfStroke
+            triggerBottom - halfStroke
         )
 
         // Draw background first
