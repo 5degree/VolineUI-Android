@@ -130,9 +130,9 @@
         <attr name="options" />
         
         <!-- Text Configuration -->
-        <attr name="dropdownLabel" format="string" />
-        <attr name="dropdownHint" format="string" />
-        <attr name="dropdownLabelGap" format="dimension" />
+        <attr name="label" />
+        <attr name="android:hint" />
+        <attr name="labelGap" />
         
         <!-- Visual Customization -->
         <attr name="triggerStyle" format="enum">

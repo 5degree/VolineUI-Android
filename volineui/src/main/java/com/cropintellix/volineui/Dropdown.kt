@@ -240,9 +240,9 @@ class Dropdown @JvmOverloads constructor(
 
         try {
             // Text configuration
-            label = typedArray.getString(R.styleable.Dropdown_dropdownLabel) ?: ""
-            hint = typedArray.getString(R.styleable.Dropdown_dropdownHint) ?: "Select..."
-            labelGap = typedArray.getDimension(R.styleable.Dropdown_dropdownLabelGap, dpToPx(5f))
+            label = typedArray.getString(R.styleable.Dropdown_label) ?: ""
+            hint = typedArray.getString(R.styleable.Dropdown_android_hint) ?: "Select..."
+            labelGap = typedArray.getDimension(R.styleable.Dropdown_labelGap, dpToPx(5f))
             
             if (label.isNotEmpty()) {
                 labelTextView.text = label

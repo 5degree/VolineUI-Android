@@ -17,12 +17,566 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="VolineUI Dropdown Demo"
+            android:text="VolineUI Dropdown - 50 Examples"
             android:textSize="24sp"
             android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Section 1: Basic Dropdowns with XML Arrays (1-10) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1-10: XML Array Support"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 1. Basic XML array -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/countries"
+            app:label="1. Countries (XML Array)"
+            android:hint="Select a country"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 2. XML array with clear button -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/difficulty_levels"
+            app:label="2. Difficulty (Clear Button)"
+            app:showClearButton="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 3. XML array with custom colors -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/priorities"
+            app:label="3. Priority (Custom Colors)"
+            app:borderColor="#FF5722"
+            app:focusedBorderColor="#F44336"
+            app:labelTextColor="#D32F2F"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 4. XML array with padding -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/status_options"
+            app:label="4. Status (Custom Padding)"
+            app:horizontalPadding="24dp"
+            app:leadingIcon="@drawable/account_balance_24px"
+            app:verticalPadding="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 5. XML array with rounded corners -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/categories"
+            app:label="5. Category (Rounded)"
+            app:cornerRadius="16dp"
+            app:borderWidth="2dp"
+            app:leadingIcon="@drawable/check_box_24px"
+            app:leadingIconTint="#ff0000"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 6. XML array filled style -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/colors"
+            app:label="6. Color (Filled Style)"
+            app:trailingIcon="@drawable/chess_queen_24px"
+            app:triggerStyle="filled"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 7. XML array ghost style -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/sizes"
+            app:label="7. Size (Ghost Style)"
+            app:triggerStyle="ghost"
+            app:trailingIcon="@drawable/dataset_24px"
+            app:trailingIconTint="#40187c"
+            app:animateTrailingIcon="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 8. XML array with searchable -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/languages"
+            app:label="8. Language (Searchable)"
+            app:searchable="true"
+            app:searchHint="Search languages..."
+            android:layout_marginBottom="16dp" />
+
+        <!-- 9. XML array disabled -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/time_zones"
+            app:label="9. Time Zone (Disabled)"
+            android:enabled="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 10. XML array multi-select -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/departments"
+            app:label="10. Departments (Multi-Select)"
+            app:selectionMode="multi"
+            app:showClearButton="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Section 2: Icon Customization (11-20) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="11-20: Icon Features"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 11. Custom trailing icon color -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/countries"
+            app:label="11. Custom Icon Color"
+            app:trailingIconTint="#2196F3"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 12. No icon animation -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/difficulty_levels"
+            app:label="12. No Icon Animation"
+            app:animateTrailingIcon="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 13. Clear button with custom icon color -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/priorities"
+            app:label="13. Clear Button (Red)"
+            app:showClearButton="true"
+            app:clearIconTint="#F44336"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 14. Leading icon (requires programmatic setup) -->
+        <com.cropintellix.volineui.Dropdown
+            android:id="@+id/dropdown14"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/status_options"
+            app:label="14. With Leading Icon"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 15. Both icons custom colors -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/categories"
+            app:label="15. Multi-Color Icons"
+            app:trailingIconTint="#4CAF50"
+            app:showClearButton="true"
+            app:clearIconTint="#FF9800"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 16-20: More icon variations -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/colors"
+            app:label="16. Purple Icons"
+            app:trailingIconTint="#9C27B0"
+            android:layout_marginBottom="16dp" />
+
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/sizes"
+            app:label="17. Orange Icons"
+            app:trailingIconTint="#FF5722"
+            app:showClearButton="true"
+            android:layout_marginBottom="16dp" />
+
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/languages"
+            app:label="18. Teal Icons"
+            app:trailingIconTint="#009688"
+            android:layout_marginBottom="16dp" />
+
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/time_zones"
+            app:label="19. Indigo Icons"
+            app:trailingIconTint="#3F51B5"
+            android:layout_marginBottom="16dp" />
+
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/departments"
+            app:label="20. Amber Icons"
+            app:trailingIconTint="#FFC107"
+            app:showClearButton="true"
+            app:clearIconTint="#FF6F00"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Section 3: Padding & Spacing (21-30) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="21-30: Padding &amp; Spacing"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 21. Large horizontal padding -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/countries"
+            app:label="21. Large H-Padding (32dp)"
+            app:horizontalPadding="32dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 22. Small horizontal padding -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/difficulty_levels"
+            app:label="22. Small H-Padding (8dp)"
+            app:horizontalPadding="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 23. Large vertical padding -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/priorities"
+            app:label="23. Large V-Padding (20dp)"
+            app:verticalPadding="20dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 24. Small vertical padding -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/status_options"
+            app:label="24. Small V-Padding (6dp)"
+            app:verticalPadding="6dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 25. Both large -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/categories"
+            app:label="25. Large Both (24dp)"
+            app:horizontalPadding="24dp"
+            app:verticalPadding="18dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 26. Both small -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/colors"
+            app:label="26. Small Both (8dp)"
+            app:horizontalPadding="8dp"
+            app:verticalPadding="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 27. Asymmetric padding -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/sizes"
+            app:label="27. Asymmetric (H:28, V:10)"
+            app:horizontalPadding="28dp"
+            app:verticalPadding="10dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 28. Label gap -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/languages"
+            app:label="28. Large Label Gap"
+            app:labelGap="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 29. Compact -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/time_zones"
+            app:label="29. Compact"
+            app:horizontalPadding="12dp"
+            app:verticalPadding="8dp"
+            app:labelGap="2dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 30. Spacious -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/departments"
+            app:label="30. Spacious"
+            app:horizontalPadding="28dp"
+            app:verticalPadding="16dp"
+            app:labelGap="10dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Section 4: Border & Styling (31-40) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="31-40: Borders &amp; Styles"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 31. Thick border -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/countries"
+            app:label="31. Thick Border (3dp)"
+            app:borderWidth="3dp"
+            app:borderColor="#2196F3"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 32. Thin border -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/difficulty_levels"
+            app:label="32. Thin Border (0.5dp)"
+            app:borderWidth="0.5dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 33. Sharp corners -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/priorities"
+            app:label="33. Sharp Corners"
+            app:cornerRadius="0dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 34. Very rounded -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/status_options"
+            app:label="34. Very Rounded (24dp)"
+            app:cornerRadius="24dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 35. Outlined style (default) -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/categories"
+            app:label="35. Outlined Style"
+            app:triggerStyle="outlined"
+            app:borderColor="#4CAF50"
+            app:borderWidth="2dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 36. Filled style -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/colors"
+            app:label="36. Filled Style"
+            app:triggerStyle="filled"
+            app:backgroundColor="#F5F5F5"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 37. Ghost style -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/sizes"
+            app:label="37. Ghost Style"
+            app:triggerStyle="ghost"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 38. Custom background color -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/languages"
+            app:label="38. Custom Background"
+            app:backgroundColor="#E3F2FD"
+            app:borderColor="#2196F3"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 39. Focused border color -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/time_zones"
+            app:label="39. Custom Focus Color"
+            app:focusedBorderColor="#FF5722"
+            app:expandedBorderColor="#F44336"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 40. All custom colors -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/departments"
+            app:label="40. All Custom Colors"
+            app:borderColor="#9C27B0"
+            app:focusedBorderColor="#7B1FA2"
+            app:expandedBorderColor="#6A1B9A"
+            app:backgroundColor="#F3E5F5"
+            app:labelTextColor="#4A148C"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Section 5: Advanced Features (41-50) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="41-50: Advanced Features"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 41. Multi-select with chips -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/countries"
+            app:label="41. Multi-Select Chips"
+            app:selectionMode="multi"
+            app:collapseChipsAfter="3"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 42. Multi-select with max -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/difficulty_levels"
+            app:label="42. Max 2 Selections"
+            app:selectionMode="multi"
+            app:maxSelections="2"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 43. Searchable with highlight -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/priorities"
+            app:label="43. Searchable + Highlight"
+            app:searchable="true"
+            app:highlightMatches="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 44. Custom search hint -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/status_options"
+            app:label="44. Custom Search Hint"
+            app:searchable="true"
+            app:searchHint="Type to filter..."
+            android:layout_marginBottom="16dp" />
+
+        <!-- 45. No checkmarks -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/categories"
+            app:label="45. No Checkmarks"
+            app:showCheckmarks="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 46. With dividers -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/colors"
+            app:label="46. With Dividers"
+            app:showDividers="middle"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 47. Custom option colors -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/sizes"
+            app:label="47. Custom Option Colors"
+            app:optionSelectedColor="#E8F5E9"
+            app:optionSelectedTextColor="#2E7D32"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 48. Tall options -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/languages"
+            app:label="48. Tall Options (64dp)"
+            app:optionHeight="64dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 49. Compact options -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/time_zones"
+            app:label="49. Compact Options (36dp)"
+            app:optionHeight="36dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 50. Everything combined -->
+        <com.cropintellix.volineui.Dropdown
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:options="@array/departments"
+            app:label="50. Kitchen Sink"
+            android:hint="Select departments..."
+            app:selectionMode="multi"
+            app:showClearButton="true"
+            app:searchable="true"
+            app:searchHint="Search departments..."
+            app:triggerStyle="filled"
+            app:cornerRadius="12dp"
+            app:horizontalPadding="20dp"
+            app:verticalPadding="14dp"
+            app:trailingIconTint="#1976D2"
+            app:clearIconTint="#D32F2F"
+            app:borderColor="#1976D2"
+            app:borderWidth="2dp"
+            app:focusedBorderColor="#0D47A1"
+            app:backgroundColor="#E3F2FD"
+            app:labelTextColor="#0D47A1"
+            app:optionSelectedColor="#BBDEFB"
+            app:optionSelectedTextColor="#0D47A1"
+            app:showCheckmarks="true"
+            app:collapseChipsAfter="2"
             android:layout_marginBottom="24dp" />
-
-
 
     </LinearLayout>
 
