@@ -22,6 +22,7 @@ import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupWindow
@@ -63,7 +64,8 @@ class Dropdown @JvmOverloads constructor(
     private var loadingProgressBar: ProgressBar? = null
     private val errorTextView: TextView
     
-    // Chips container for multi-select
+    // Chips scroll container for multi-select
+    private val chipsScrollView: HorizontalScrollView
     private val chipsContainer: LinearLayout
     
     // Paint for trigger border
@@ -189,13 +191,21 @@ class Dropdown @JvmOverloads constructor(
             textSize = 16f
             setTextColor(0xFF252525.toInt()) // Default #252525
             gravity = Gravity.CENTER_VERTICAL
+            // Apply vertical padding to trigger
+            setPadding(horizontalPadding.toInt(), verticalPadding.toInt(), horizontalPadding.toInt(), verticalPadding.toInt())
         }
         triggerContainer.addView(triggerTextView)
         
         // Create chips container for multi-select
         chipsContainer = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
+        }
+        
+        // Wrap chips in horizontal scroll view
+        chipsScrollView = HorizontalScrollView(context).apply {
             visibility = GONE
+            isHorizontalScrollBarEnabled = false
+            addView(chipsContainer)
         }
         
         // Create error text
@@ -207,7 +217,7 @@ class Dropdown @JvmOverloads constructor(
         
         // Add views
         addView(labelTextView)
-        addView(chipsContainer)
+        addView(chipsScrollView)
         addView(triggerContainer)
         addView(errorTextView)
         
@@ -1030,11 +1040,11 @@ class Dropdown @JvmOverloads constructor(
         chipsContainer.removeAllViews()
         
         if (selectionMode != 1 || selectedOptions.isEmpty()) {
-            chipsContainer.visibility = GONE
+            chipsScrollView.visibility = GONE
             return
         }
         
-        chipsContainer.visibility = VISIBLE
+        chipsScrollView.visibility = VISIBLE
         
         val visibleCount = minOf(selectedOptions.size, collapseChipsAfter)
         selectedOptions.take(visibleCount).forEach { option ->
@@ -1080,7 +1090,7 @@ class Dropdown @JvmOverloads constructor(
         
         // Add remove icon
         val removeIcon = ImageView(context).apply {
-            setImageDrawable(createCloseIconDrawable())
+            setImageResource(R.drawable.ic_clear)
             setColorFilter(chipTextColor)
             layoutParams = LinearLayout.LayoutParams(
                 dpToPx(16f).toInt(),
@@ -1217,13 +1227,13 @@ class Dropdown @JvmOverloads constructor(
         }
 
         // Measure chips
-        if (chipsContainer.isVisible) {
+        if (chipsScrollView.isVisible) {
             measureChild(
-                chipsContainer,
-                MeasureSpec.makeMeasureSpec(width, MeasureSpec.AT_MOST),
+                chipsScrollView,
+                MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
             )
-            totalHeight += chipsContainer.measuredHeight + dpToPx(8f).toInt()
+            totalHeight += chipsScrollView.measuredHeight + dpToPx(8f).toInt()
         }
 
         // Measure trigger
@@ -1262,15 +1272,15 @@ class Dropdown @JvmOverloads constructor(
             currentTop += labelTextView.measuredHeight + labelGap.toInt()
         }
 
-        // Layout chips
-        if (chipsContainer.isVisible) {
-            chipsContainer.layout(
+        // Layout chips  
+        if (chipsScrollView.isVisible) {
+            chipsScrollView.layout(
                 paddingStart,
                 currentTop,
-                paddingStart + chipsContainer.measuredWidth,
-                currentTop + chipsContainer.measuredHeight
+                paddingStart + contentWidth,
+                currentTop + chipsScrollView.measuredHeight
             )
-            currentTop += chipsContainer.measuredHeight + dpToPx(8f).toInt()
+            currentTop += chipsScrollView.measuredHeight + dpToPx(8f).toInt()
         }
 
         // Layout trigger
@@ -1363,8 +1373,8 @@ class Dropdown @JvmOverloads constructor(
             labelTextView.measuredHeight + labelGap
         } else 0f
 
-        val chipsHeight = if (chipsContainer.isVisible) {
-            chipsContainer.measuredHeight + dpToPx(8f)
+        val chipsHeight = if (chipsScrollView.isVisible) {
+            chipsScrollView.measuredHeight + dpToPx(8f)
         } else 0f
 
         val triggerTop = paddingTop + labelHeight + chipsHeight
