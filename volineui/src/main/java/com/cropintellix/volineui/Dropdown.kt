@@ -431,7 +431,7 @@ class Dropdown @JvmOverloads constructor(
         selectedOptions.clear()
         if (option != null) {
             if (!options.contains(option)) {
-                throw InvalidSelectionException(option.id)
+                throw InvalidSelectionException(option.text)
             }
             selectedOptions.add(option)
         }
@@ -860,7 +860,8 @@ class Dropdown @JvmOverloads constructor(
             
             // Refresh dropdown to show updated checkmarks
             dropdownContentView?.let { contentView ->
-                val scrollView = contentView.findViewById<ScrollView>(android.R.id.custom)
+                val optionsContainer = contentView.findViewById<LinearLayout>(android.R.id.custom)
+                val scrollView = optionsContainer?.parent as? ScrollView
                 scrollView?.removeAllViews()
                 scrollView?.addView(createOptionsContainer())
             }

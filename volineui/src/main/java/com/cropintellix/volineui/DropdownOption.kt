@@ -7,7 +7,6 @@ import android.graphics.drawable.Drawable
 /**
  * Data class representing a single option in a dropdown menu.
  * 
- * @property id Unique identifier for this option
  * @property text Display text for the option
  * @property value Optional value associated with the option (can be any type)
  * @property description Optional subtitle/description shown below main text
@@ -22,7 +21,6 @@ import android.graphics.drawable.Drawable
  * @property customData Optional map for storing custom metadata
  */
 data class DropdownOption(
-    val id: String,
     val text: String,
     val value: Any? = null,
     val description: String? = null,
@@ -67,8 +65,8 @@ data class DropdownOption(
          * Creates a simple text-only option.
          */
         @JvmStatic
-        fun simple(id: String, text: String, value: Any? = null): DropdownOption {
-            return DropdownOption(id = id, text = text, value = value)
+        fun simple(text: String, value: Any? = null): DropdownOption {
+            return DropdownOption(text = text, value = value)
         }
         
         /**
@@ -77,7 +75,6 @@ data class DropdownOption(
         @JvmStatic
         fun header(text: String): DropdownOption {
             return DropdownOption(
-                id = "header_$text",
                 text = text,
                 isHeader = true,
                 isEnabled = false
@@ -90,7 +87,6 @@ data class DropdownOption(
         @JvmStatic
         fun divider(id: String = "divider_${System.currentTimeMillis()}"): DropdownOption {
             return DropdownOption(
-                id = id,
                 text = "",
                 isDivider = true,
                 isEnabled = false

@@ -43,6 +43,7 @@
 
         <!-- 2. XML array with clear button -->
         <com.cropintellix.volineui.Dropdown
+            android:id="@+id/dropdown2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/difficulty_levels"
@@ -371,6 +372,7 @@
             app:options="@array/difficulty_levels"
             app:label="32. Thin Border (0.5dp)"
             app:borderWidth="0.5dp"
+            app:focusedBorderWidth="0.5dp"
             android:layout_marginBottom="16dp" />
 
         <!-- 33. Sharp corners -->
