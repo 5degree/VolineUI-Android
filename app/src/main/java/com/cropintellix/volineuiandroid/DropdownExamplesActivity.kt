@@ -1,19 +1,13 @@
 package com.cropintellix.volineuiandroid
 
-import android.content.res.XmlResourceParser
-import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.cropintellix.volineui.Dropdown
 import com.cropintellix.volineui.DropdownOption
 import com.cropintellix.volineuiandroid.databinding.ActivityDropdownExamplesBinding
-import org.xmlpull.v1.XmlPullParser
 
 class DropdownExamplesActivity : AppCompatActivity() {
 
