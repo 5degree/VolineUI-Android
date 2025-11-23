@@ -158,6 +158,7 @@ class Dropdown @JvmOverloads constructor(
     private var options: List<DropdownOption> = emptyList()
     private var filteredOptions: List<DropdownOption> = emptyList()
     private val selectedOptions: MutableSet<DropdownOption> = mutableSetOf()
+    private val expandedParents: MutableSet<DropdownOption> = mutableSetOf()
     
     // Dropdown menu
     private var popupWindow: PopupWindow? = null
@@ -183,7 +184,7 @@ class Dropdown @JvmOverloads constructor(
         
         // Create trigger container
         triggerContainer = FrameLayout(context).apply {
-            minimumHeight = dpToPx(48f).toInt()
+            minimumHeight = (verticalPadding * 2).toInt()
         }
         
         // Create trigger text
@@ -772,13 +773,7 @@ class Dropdown @JvmOverloads constructor(
         }
         
         for (option in filteredOptions) {
-            if (option.isHeader) {
-                container.addView(createHeaderView(option))
-            } else if (option.isDivider) {
-                container.addView(createDividerView())
-            } else {
-                container.addView(createOptionView(option))
-            }
+            addOptionWithChildren(container, option, depth = 0)
         }
         
         // Empty state
@@ -787,6 +782,23 @@ class Dropdown @JvmOverloads constructor(
         }
         
         return container
+    }
+    
+    private fun addOptionWithChildren(container: LinearLayout, option: DropdownOption, depth: Int) {
+        if (option.isHeader) {
+            container.addView(createHeaderView(option))
+        } else if (option.isDivider) {
+            container.addView(createDividerView())
+        } else {
+            container.addView(createOptionView(option, depth))
+            
+            // Add children if this parent is expanded
+            if (!option.children.isNullOrEmpty() && expandedParents.contains(option)) {
+                for (child in option.children) {
+                    addOptionWithChildren(container, child, depth + 1)
+                }
+            }
+        }
     }
 
     private fun createHeaderView(option: DropdownOption): View {
@@ -814,7 +826,7 @@ class Dropdown @JvmOverloads constructor(
         }
     }
 
-    private fun createOptionView(option: DropdownOption): View {
+    private fun createOptionView(option: DropdownOption, depth: Int = 0): View {
         val optionContainer = FrameLayout(context).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -826,7 +838,7 @@ class Dropdown @JvmOverloads constructor(
             
             if (option.isEnabled) {
                 setOnClickListener {
-                    handleOptionClick(option)
+                    handleOptionClick(if(depth == 0) option else options.find { it.children?.contains(option) == true }!!)
                 }
             }
             
@@ -846,12 +858,41 @@ class Dropdown @JvmOverloads constructor(
             ).apply {
                 gravity = Gravity.CENTER_VERTICAL
             }
+            
+            // Apply indentation based on depth
+            val indent = depth * dpToPx(24f).toInt()
             setPadding(
-                optionPadding.toInt(),
+                optionPadding.toInt() + indent,
                 if (option.description.isNullOrEmpty()) 0 else dpToPx(8f).toInt(),
                 optionPadding.toInt(),
                 if (option.description.isNullOrEmpty()) 0 else dpToPx(8f).toInt()
             )
+        }
+        
+        // Add expand/collapse chevron for parents with children
+        if (!option.children.isNullOrEmpty()) {
+            val chevron = ImageView(context).apply {
+                setImageResource(R.drawable.ic_chevron_down)
+                setColorFilter(optionTextColor)
+                rotation = if (expandedParents.contains(option)) 180f else 0f
+                layoutParams = LinearLayout.LayoutParams(
+                    dpToPx(20f).toInt(),
+                    dpToPx(20f).toInt()
+                ).apply {
+                    marginEnd = dpToPx(8f).toInt()
+                }
+                // Toggle expand/collapse on chevron click
+                setOnClickListener {
+                    if (expandedParents.contains(option)) {
+                        expandedParents.remove(option)
+                    } else {
+                        expandedParents.add(option)
+                    }
+                    // Refresh dropdown to show/hide children
+                    refreshDropdownContent()
+                }
+            }
+            contentLayout.addView(chevron)
         }
         
         // Add leading icon if present
@@ -977,6 +1018,15 @@ class Dropdown @JvmOverloads constructor(
                 optionPadding.toInt(),
                 dpToPx(32f).toInt()
             )
+        }
+    }
+
+    private fun refreshDropdownContent() {
+        dropdownContentView?.let { contentView ->
+            val optionsContainer = contentView.findViewById<LinearLayout>(android.R.id.custom)
+            val scrollView = optionsContainer?.parent as? ScrollView
+            scrollView?.removeAllViews()
+            scrollView?.addView(createOptionsContainer())
         }
     }
 
@@ -1242,7 +1292,7 @@ class Dropdown @JvmOverloads constructor(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         )
-        totalHeight += triggerContainer.measuredHeight.coerceAtLeast(dpToPx(48f).toInt())
+        totalHeight += triggerContainer.measuredHeight.coerceAtLeast((verticalPadding * 2).toInt())
 
         // Measure error text
         if (errorTextView.isVisible) {
@@ -1284,7 +1334,7 @@ class Dropdown @JvmOverloads constructor(
         }
 
         // Layout trigger
-        val triggerHeight = triggerContainer.measuredHeight.coerceAtLeast(dpToPx(48f).toInt())
+        val triggerHeight = triggerContainer.measuredHeight.coerceAtLeast((verticalPadding * 2).toInt())
         triggerContainer.layout(
             paddingStart,
             currentTop,

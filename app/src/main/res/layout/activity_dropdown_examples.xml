@@ -263,7 +263,7 @@
             android:layout_height="wrap_content"
             app:options="@array/difficulty_levels"
             app:label="22. Small H-Padding (8dp)"
-            app:horizontalPadding="8dp"
+            app:horizontalPadding="10dp"
             android:layout_marginBottom="16dp" />
 
         <!-- 23. Large vertical padding -->
@@ -272,7 +272,7 @@
             android:layout_height="wrap_content"
             app:options="@array/priorities"
             app:label="23. Large V-Padding (20dp)"
-            app:verticalPadding="20dp"
+            app:verticalPadding="40dp"
             android:layout_marginBottom="16dp" />
 
         <!-- 24. Small vertical padding -->
