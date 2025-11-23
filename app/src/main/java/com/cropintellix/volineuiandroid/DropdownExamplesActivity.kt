@@ -35,12 +35,21 @@ class DropdownExamplesActivity : AppCompatActivity() {
         val options = countries.map {
             DropdownOption(
                 text = it,
+                value = "val_$it",
+                description = "Description for $it",
+                leadingIcon = ResourcesCompat.getDrawable(resources, R.drawable.crossword_24px, theme),
+                trailingIcon = ResourcesCompat.getDrawable(resources, R.drawable.frame_bug_24px, theme),
+                badge = "Badge $it",
                 children = if (it == "Russia") listOf(DropdownOption("Russia A"), DropdownOption("Russia B"), DropdownOption("Russia C")) else null,
-                groupId = null,
-                customData = null
             )
         }
-        b.dropdown2.setOptions(options)
+        b.dropdown2.setOptionsData(options)
+
+        b.dropdown2.onSelection { println("selection:: $it") }
+        b.dropdown2.onSelectionData { println("selection data:: $it") }
+
+        b.dropdown41.onMultiSelection { println("multi selection:: $it") }
+        b.dropdown41.onMultiSelectionData { println("multi selection data:: $it") }
     }
 
     override fun onDestroy() {

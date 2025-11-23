@@ -162,8 +162,8 @@ class Dropdown @JvmOverloads constructor(
     private var dropdownContentView: View? = null
     
     // Listeners
-    private var onSelectionChangeListener: ((List<DropdownOption>) -> Unit)? = null
-    private var onSingleSelectionChangeListener: ((DropdownOption?) -> Unit)? = null
+    private var multiSelectionChangeListener: ((List<DropdownOption>) -> Unit)? = null
+    private var singleSelectionChangeListener: ((DropdownOption?) -> Unit)? = null
     
     // Debounce handler for search
     private val searchHandler = Handler(Looper.getMainLooper())
@@ -252,7 +252,7 @@ class Dropdown @JvmOverloads constructor(
             if (optionsArrayRes != 0) {
                 val optionsArray = context.resources.getStringArray(optionsArrayRes)
                 val optionsList = optionsArray.map { DropdownOption.simple(it, it) }
-                setOptions(optionsList)
+                setOptionsData(optionsList)
             }
             
             // Visual customization
@@ -395,7 +395,7 @@ class Dropdown @JvmOverloads constructor(
     /**
      * Set dropdown options
      */
-    fun setOptions(optionsList: List<DropdownOption>) {
+    fun setOptionsData(optionsList: List<DropdownOption>) {
         if (optionsList.isEmpty()) {
             throw EmptyOptionsException()
         }
@@ -404,6 +404,14 @@ class Dropdown @JvmOverloads constructor(
         this.filteredOptions = optionsList
         updateTriggerText()
         requestLayout()
+    }
+
+    /**
+     * Set dropdown options from string list (convenience method)
+     */
+    fun setOptions(stringList: List<String>) {
+        val optionsList = stringList.map { DropdownOption.simple(it, it) }
+        setOptionsData(optionsList)
     }
 
     /**
@@ -438,8 +446,8 @@ class Dropdown @JvmOverloads constructor(
         
         updateTriggerText()
         updateChips()
-        onSingleSelectionChangeListener?.invoke(option)
-        onSelectionChangeListener?.invoke(selectedOptions.toList())
+        singleSelectionChangeListener?.invoke(option)
+        multiSelectionChangeListener?.invoke(selectedOptions.toList())
     }
 
     /**
@@ -459,7 +467,7 @@ class Dropdown @JvmOverloads constructor(
         
         updateTriggerText()
         updateChips()
-        onSelectionChangeListener?.invoke(selectedOptions.toList())
+        multiSelectionChangeListener?.invoke(selectedOptions.toList())
     }
 
     /**
@@ -469,22 +477,55 @@ class Dropdown @JvmOverloads constructor(
         selectedOptions.clear()
         updateTriggerText()
         updateChips()
-        onSingleSelectionChangeListener?.invoke(null)
-        onSelectionChangeListener?.invoke(emptyList())
+        singleSelectionChangeListener?.invoke(null)
+        multiSelectionChangeListener?.invoke(emptyList())
     }
 
     /**
-     * Set selection change listener
+     * Set selection change listener for multi select dropdown.
+     *
+     * Provides: List of selected options.
+     * @see DropdownOption
      */
-    fun setOnSelectionChangeListener(listener: (List<DropdownOption>) -> Unit) {
-        this.onSelectionChangeListener = listener
+    fun onMultiSelectionData(listener: (List<DropdownOption>) -> Unit) {
+        this.multiSelectionChangeListener = listener
     }
 
     /**
-     * Set single selection change listener
+     * Set selection change listener for multi select dropdown.
+     *
+     * Provides: List of pair of index and value of selected options.
      */
-    fun setOnSingleSelectionChangeListener(listener: (DropdownOption?) -> Unit) {
-        this.onSingleSelectionChangeListener = listener
+    fun onMultiSelection(listener: (List<Pair<Int, String>>) -> Unit) {
+        this.multiSelectionChangeListener = { selectedOptions ->
+            val indexedValues = selectedOptions.map { option ->
+                val index = options.indexOf(option)
+                Pair(index, option.text)
+            }
+            listener(indexedValues)
+        }
+    }
+
+    /**
+     * Set single selection change listener.
+     *
+     * Provides: DropdownOption of selected option
+     * @see DropdownOption
+     */
+    fun onSelectionData(listener: (DropdownOption?) -> Unit) {
+        this.singleSelectionChangeListener = listener
+    }
+
+    /**
+     * Set single selection change listener.
+     *
+     * Provides: Pair<Int, String> of selected option
+     */
+    fun onSelection(listener: (Pair<Int, String>) -> Unit) {
+        this.singleSelectionChangeListener = { selectedOption ->
+            val index = options.indexOf(selectedOption)
+            listener(Pair(index, selectedOption!!.text))
+        }
     }
 
     /**
@@ -700,11 +741,13 @@ class Dropdown @JvmOverloads constructor(
     private fun filterOptions(query: String) {
         filteredOptions = customFilter.filter(query, options)
         
-        // Recreate options container
-        val container = dropdownContentView?.findViewById<ScrollView>(android.R.id.custom)
-        if (container != null) {
-            container.removeAllViews()
-            container.addView(createOptionsContainer())
+        // Find the options container (LinearLayout with id custom) inside the ScrollView
+        val optionsContainer = dropdownContentView?.findViewById<LinearLayout>(android.R.id.custom)
+        if (optionsContainer != null) {
+            // Get parent ScrollView and replace the container
+            val scrollView = optionsContainer.parent as? ScrollView
+            scrollView?.removeAllViews()
+            scrollView?.addView(createOptionsContainer())
         } else {
             // Full refresh
             popupWindow?.dismiss()
@@ -765,43 +808,134 @@ class Dropdown @JvmOverloads constructor(
         val optionContainer = FrameLayout(context).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                optionHeight.toInt()
+                if (option.description.isNullOrEmpty()) optionHeight.toInt() else LinearLayout.LayoutParams.WRAP_CONTENT
             )
             isClickable = option.isEnabled
             isFocusable = option.isEnabled
+            minimumHeight = optionHeight.toInt()
             
             if (option.isEnabled) {
                 setOnClickListener {
                     handleOptionClick(option)
                 }
             }
+            
+            // Highlight if selected
+            if (selectedOptions.contains(option)) {
+                setBackgroundColor(optionSelectedColor)
+            }
         }
         
-        val textView = TextView(context).apply {
-            text = option.text
-            textSize = 16f
-            setTextColor(if (option.isEnabled) optionTextColor else disabledColor)
+        // Create horizontal layout for icons and content
+        val contentLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.CENTER_VERTICAL
+            }
             setPadding(
                 optionPadding.toInt(),
-                0,
+                if (option.description.isNullOrEmpty()) 0 else dpToPx(8f).toInt(),
                 optionPadding.toInt(),
-                0
+                if (option.description.isNullOrEmpty()) 0 else dpToPx(8f).toInt()
             )
         }
         
-        // Add selected indicator
+        // Add leading icon if present
+        option.leadingIcon?.let { drawable ->
+            val iconView = ImageView(context).apply {
+                setImageDrawable(drawable)
+                layoutParams = LinearLayout.LayoutParams(
+                    dpToPx(24f).toInt(),
+                    dpToPx(24f).toInt()
+                ).apply {
+                    marginEnd = dpToPx(12f).toInt()
+                }
+            }
+            contentLayout.addView(iconView)
+        }
+        
+        // Create vertical layout for text and description
+        val textLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+        
+        // Main text
+        val textView = TextView(context).apply {
+            text = option.text
+            textSize = 16f
+            setTextColor(
+                if (selectedOptions.contains(option)) optionSelectedTextColor 
+                else if (option.isEnabled) optionTextColor 
+                else disabledColor
+            )
+        }
+        textLayout.addView(textView)
+        
+        // Description if present
+        option.description?.let { desc ->
+            val descView = TextView(context).apply {
+                text = desc
+                textSize = 14f
+                setTextColor(0xFF757575.toInt())
+                setPadding(0, dpToPx(4f).toInt(), 0, 0)
+            }
+            textLayout.addView(descView)
+        }
+        
+        contentLayout.addView(textLayout)
+        
+        // Add badge if present
+        option.badge?.let { badgeText ->
+            val badgeView = TextView(context).apply {
+                text = badgeText
+                textSize = 12f
+                setTextColor(0xFFFFFFFF.toInt())
+                setBackgroundColor(0xFF2196F3.toInt())
+                setPadding(
+                    dpToPx(8f).toInt(),
+                    dpToPx(4f).toInt(),
+                    dpToPx(8f).toInt(),
+                    dpToPx(4f).toInt()
+                )
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    marginStart = dpToPx(8f).toInt()
+                }
+            }
+            contentLayout.addView(badgeView)
+        }
+        
+        // Add trailing icon if present
+        option.trailingIcon?.let { drawable ->
+            val iconView = ImageView(context).apply {
+                setImageDrawable(drawable)
+                layoutParams = LinearLayout.LayoutParams(
+                    dpToPx(24f).toInt(),
+                    dpToPx(24f).toInt()
+                ).apply {
+                    marginStart = dpToPx(12f).toInt()
+                }
+            }
+            contentLayout.addView(iconView)
+        }
+        
+        optionContainer.addView(contentLayout)
+        
+        // Add selected checkmark indicator
         if (selectedOptions.contains(option) && showCheckmarks) {
             val checkmark = createCheckmarkView()
             optionContainer.addView(checkmark)
-        }
-        
-        optionContainer.addView(textView)
-        
-        // Highlight if selected
-        if (selectedOptions.contains(option)) {
-            optionContainer.setBackgroundColor(optionSelectedColor)
-            textView.setTextColor(optionSelectedTextColor)
         }
         
         return optionContainer
@@ -856,7 +990,7 @@ class Dropdown @JvmOverloads constructor(
             
             updateTriggerText()
             updateChips()
-            onSelectionChangeListener?.invoke(selectedOptions.toList())
+            multiSelectionChangeListener?.invoke(selectedOptions.toList())
             
             // Refresh dropdown to show updated checkmarks
             dropdownContentView?.let { contentView ->
@@ -958,7 +1092,7 @@ class Dropdown @JvmOverloads constructor(
                 selectedOptions.remove(option)
                 updateTriggerText()
                 updateChips()
-                onSelectionChangeListener?.invoke(selectedOptions.toList())
+                multiSelectionChangeListener?.invoke(selectedOptions.toList())
             }
         }
         chipContainer.addView(removeIcon)
