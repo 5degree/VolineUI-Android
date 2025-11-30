@@ -243,4 +243,22 @@
         <attr name="labelTextColor" />
         <attr name="hintTextColor" />
     </declare-styleable>
+
+    <declare-styleable name="SignaturePad">
+        <attr name="penColor" format="color" />
+        <attr name="canvasBackgroundColor" format="color" />
+        <attr name="penThickness" format="dimension" />
+        <attr name="minStrokeCount" format="integer" />
+        <attr name="showToolbar" format="boolean" />
+        <attr name="toolbarPosition" format="integer" />
+        <attr name="promptText" format="string" />
+        <attr name="autoTrimEmptySpace" format="boolean" />
+        <attr name="aspectRatio" format="integer" />
+        <attr name="signatureCornerRadius" format="dimension" />
+        <attr name="signatureBorderColor" format="color" />
+        <attr name="signatureBorderWidth" format="dimension" />
+        <attr name="enablePressureSensitivity" format="boolean" />
+        <attr name="enableSpeedBasedThickness" format="boolean" />
+        <attr name="maxUndoStackSize" format="integer" />
+    </declare-styleable>
 </resources>

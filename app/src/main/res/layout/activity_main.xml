@@ -49,6 +49,12 @@
             android:layout_height="wrap_content"
             android:text="Dropdown Examples" />
 
+        <Button
+            android:id="@+id/btnOpenSignaturePadExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Signature Pad Examples" />
+
     </LinearLayout>
 
 </ScrollView>
