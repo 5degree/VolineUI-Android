@@ -64,11 +64,14 @@ class SignaturePad @JvmOverloads constructor(
     private val btnRedo: ImageView
     private val btnClear: ImageView
     private val btnSave: ImageView
-    
+
+    private var colorSelectorContainer: View? = null
+
     // Drawing properties
     private var penColor: Int = Color.BLACK
     private var penThickness: Float = 20f
     private var canvasBackgroundColor: Int = Color.WHITE
+    private var customColors: IntArray? = null
     
     // Configuration
     private var minStrokeCount: Int = 1
@@ -187,14 +190,25 @@ class SignaturePad @JvmOverloads constructor(
             contentDescription = contentDesc
             setImageResource(iconRes)
             scaleType = ImageView.ScaleType.CENTER_INSIDE
+
+            // Dark background for visibility
+            setBackgroundColor(Color.parseColor("#212121"))
+
+            // Padding
+            val pad = dpToPx(14f)
+            setPadding(pad, pad, pad, pad)
+
+            // White icon on dark background
+            setColorFilter(Color.WHITE)
+
             // Make it circular
             clipToOutline = true
             outlineProvider = object : android.view.ViewOutlineProvider() {
                 override fun getOutline(view: View, outline: Outline) {
-                    outline.setOval(view.height, view.width, view.width, view.height)
+                    outline.setOval(0, 0, view.width, view.height)
                 }
             }
-            elevation = dpToPx(4f).toFloat()
+            elevation = dpToPx(8f).toFloat()
         }
     }
     
@@ -564,7 +578,19 @@ class SignaturePad @JvmOverloads constructor(
         penThickness = thickness
         signatureCanvas.penThickness = thickness
     }
-    
+
+    @JvmOverloads
+    fun setCustomColors(colors: IntArray, areResourceIds: Boolean = false) {
+        customColors = if (areResourceIds) {
+            colors.map { ContextCompat.getColor(context, it) }.toIntArray()
+        } else {
+            colors
+        }
+        colorSelectorContainer?.let { removeView(it) }
+        colorSelectorContainer = createColorSelector()
+        addView(colorSelectorContainer)
+    }
+
     /**
      * Set canvas background color
      */

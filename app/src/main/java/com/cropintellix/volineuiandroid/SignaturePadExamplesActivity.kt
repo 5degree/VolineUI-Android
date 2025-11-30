@@ -18,5 +18,6 @@ class SignaturePadExamplesActivity : AppCompatActivity() {
         signaturePad.setOnSignatureChangeListener { hasSignature ->
             // Can show/hide UI elements based on signature state if needed
         }
+        signaturePad.setCustomColors(intArrayOf(R.color.black, R.color.white, R.color.primary_color_pink, R.color.red, R.color.maroon, R.color.green, R.color.purple, R.color.skyblue, R.color.yellow, R.color.green, R.color.orange))
     }
 }
