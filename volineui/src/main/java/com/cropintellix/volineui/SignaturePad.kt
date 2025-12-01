@@ -1,31 +1,30 @@
-@file:Suppress("unused")
+//@file:Suppress("unused")
 
 package com.cropintellix.volineui
 
 import android.content.Context
-import android.graphics.*
-import android.os.Handler
-import android.os.Looper
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.PointF
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.util.Base64
+import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.LinearLayout
-import androidx.annotation.WorkerThread
-import androidx.annotation.AnyThread
-import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.widget.AppCompatButton
-import androidx.appcompat.widget.AppCompatImageButton
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.DrawableCompat
+import androidx.annotation.AnyThread
+import androidx.annotation.WorkerThread
+import androidx.appcompat.content.res.AppCompatResources.getColorStateList
+import com.google.android.material.button.MaterialButton
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -60,18 +59,15 @@ class SignaturePad @JvmOverloads constructor(
     
     // Toolbar
     private val toolbar: LinearLayout
-    private val btnUndo: ImageView
-    private val btnRedo: ImageView
-    private val btnClear: ImageView
-    private val btnSave: ImageView
-
-    private var colorSelectorContainer: View? = null
-
+    private val btnUndo: MaterialButton
+    private val btnRedo: MaterialButton
+    private val btnClear: MaterialButton
+    private val btnSave: MaterialButton
+    
     // Drawing properties
     private var penColor: Int = Color.BLACK
-    private var penThickness: Float = 20f
+    private var penThickness: Float = 5f
     private var canvasBackgroundColor: Int = Color.WHITE
-    private var customColors: IntArray? = null
     
     // Configuration
     private var minStrokeCount: Int = 1
@@ -101,8 +97,8 @@ class SignaturePad @JvmOverloads constructor(
         const val ASPECT_RATIO_PORTRAIT = 1
         const val ASPECT_RATIO_SQUARE = 2
     }
-    
-    
+
+
     init {
         // Set full screen layout
         setBackgroundColor(Color.WHITE)
@@ -126,7 +122,7 @@ class SignaturePad @JvmOverloads constructor(
         promptText = TextView(context).apply {
             text = promptTextString
             textSize = 18f
-            setTextColor(Color.parseColor("#CCCCCC"))
+            setTextColor(Color.parseColor("#252525"))
             gravity = android.view.Gravity.CENTER
             layoutParams = LayoutParams(
                 LayoutParams.MATCH_PARENT,
@@ -137,14 +133,6 @@ class SignaturePad @JvmOverloads constructor(
         
         // Add canvas to main layout
         addView(canvasContainer)
-        
-        // Create thickness slider (vertical, bottom-left)
-        val thicknessSliderContainer = createThicknessSlider()
-        addView(thicknessSliderContainer)
-        
-        // Create color selector (horizontal, bottom-left, below thickness slider)
-        val colorSelectorContainer = createColorSelector()
-        addView(colorSelectorContainer)
         
         // Create action buttons (vertical, right side)
         btnUndo = createActionButton("Undo", R.drawable.undo_24px)
@@ -185,30 +173,30 @@ class SignaturePad @JvmOverloads constructor(
     /**
      * Create modern action button with circular background
      */
-    private fun createActionButton(contentDesc: String, iconRes: Int): ImageView {
-        return ImageView(context).apply {
-            contentDescription = contentDesc
-            setImageResource(iconRes)
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-
-            // Dark background for visibility
-            setBackgroundColor(Color.parseColor("#212121"))
-
-            // Padding
-            val pad = dpToPx(14f)
-            setPadding(pad, pad, pad, pad)
-
-            // White icon on dark background
-            setColorFilter(Color.WHITE)
-
-            // Make it circular
-            clipToOutline = true
-            outlineProvider = object : android.view.ViewOutlineProvider() {
-                override fun getOutline(view: View, outline: Outline) {
-                    outline.setOval(0, 0, view.width, view.height)
-                }
+    private fun createActionButton(contentDesc: String, iconRes: Int): MaterialButton {
+        return MaterialButton(context).apply {
+            if (contentDesc == "Save") {
+                text = contentDesc
             }
-            elevation = dpToPx(8f).toFloat()
+            setTextColor(Color.BLACK)
+
+            setIconResource(iconRes)
+            iconTint = getColorStateList(context, android.R.color.black)
+            iconPadding = 8
+
+            // Set outlined style
+            strokeColor = getColorStateList(context, android.R.color.black)
+            strokeWidth = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP,
+                2f,
+                resources.displayMetrics
+            ).toInt()
+
+            // Layout params
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         }
     }
     
@@ -221,158 +209,7 @@ class SignaturePad @JvmOverloads constructor(
             bottomMargin = dpToPx(8f)
         }
     }
-    
-    
-    /**
-     * Create horizontal thickness slider with triangular shape (wide at left, narrow at right)
-     */
-    private fun createThicknessSlider(): LinearLayout {
-        return LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            val params = LayoutParams(
-                dpToPx(150f),
-                dpToPx(48f)
-            ).apply {
-                gravity = android.view.Gravity.BOTTOM
-                leftMargin = dpToPx(16f)
-                bottomMargin = dpToPx(16f)
-            }
-            layoutParams = params
-            setPadding(dpToPx(8f), dpToPx(8f), dpToPx(8f), dpToPx(8f))
-            
-            // Create custom triangular slider using a custom view
-            val sliderView = object : View(context) {
-                private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-                private val path = Path()
-                private var thumbX = 0f
-                
-                init {
-                    layoutParams = LinearLayout.LayoutParams(
-                        LayoutParams.MATCH_PARENT,
-                        LayoutParams.MATCH_PARENT
-                    )
-                }
-                
-                override fun onDraw(canvas: Canvas) {
-                    super.onDraw(canvas)
-                    
-                    // Draw triangular gradient background (wide left, narrow right)
-                    path.reset()
-                    val w = width.toFloat()
-                    val h = height.toFloat()
-                    
-                    // Triangle: wide at left, pointy at right
-                    path.moveTo(0f, 0f) // Top left
-                    path.lineTo(w, h * 0.4f) // Right top (narrower)
-                    path.lineTo(w, h * 0.6f) // Right bottom (narrower)
-                    path.lineTo(0f, h) // Bottom left
-                    path.close()
-                    
-                    paint.color = Color.parseColor("#E0E0E0")
-                    canvas.drawPath(path, paint)
-                    
-                    // Draw thumb circle
-                    paint.color = penColor
-                    paint.style = Paint.Style.FILL
-                    canvas.drawCircle(thumbX, h / 2, dpToPx(12f).toFloat(), paint)
-                    
-                    // Draw white border on thumb
-                    paint.color = Color.WHITE
-                    paint.style = Paint.Style.STROKE
-                    paint.strokeWidth = dpToPx(2f).toFloat()
-                    canvas.drawCircle(thumbX, h / 2, dpToPx(12f).toFloat(), paint)
-                }
-                
-                override fun onTouchEvent(event: MotionEvent): Boolean {
-                    when (event.action) {
-                        MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                            val x = event.x.coerceIn(0f, width.toFloat())
-                            thumbX = x
-                            
-                            // Left (0) = thick (20dp), Right (width) = thin (1dp)
-                            val progress = (width - x) / width.toFloat()
-                            val thickness = 1f + (progress * 19f) // 1-20 range
-                            setPenThickness(dpToPx(thickness).toFloat())
-                            
-                            invalidate()
-                            return true
-                        }
-                    }
-                    return super.onTouchEvent(event)
-                }
-            }
-            
-            addView(sliderView)
-        }
-    }
-    
-    /**
-     * Create horizontal color selector with circles - positioned to the right of thickness slider
-     */
-    private fun createColorSelector(): LinearLayout {
-        val colors = arrayOf(
-            Color.parseColor("#FF0000"), // Red
-            Color.parseColor("#FFFF00"), // Yellow
-            Color.parseColor("#00FF00"), // Green
-            Color.parseColor("#00FFFF"), // Cyan
-            Color.parseColor("#0000FF"), // Blue
-            Color.parseColor("#9C27B0"), // Purple (matching wireframe)
-            Color.parseColor("#000000")  // Black
-        )
-        
-        return LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            val params = LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                dpToPx(48f)
-            ).apply {
-                gravity = android.view.Gravity.START or android.view.Gravity.BOTTOM
-                leftMargin = dpToPx(180f) // Position to the right of thickness slider
-                bottomMargin = dpToPx(16f)
-            }
-            layoutParams = params
-            setPadding(dpToPx(8f), 0, dpToPx(8f), 0)
-            
-            colors.forEachIndexed { index, color ->
-                val colorCircle = View(context).apply {
-                    tag = "color_$color"
-                    val isSelected = color == penColor
-                    val size = if (isSelected) dpToPx(40f) else dpToPx(32f)
-                    layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                        marginEnd = dpToPx(8f)
-                        gravity = android.view.Gravity.CENTER_VERTICAL
-                    }
-                    setBackgroundColor(color)
-                    clipToOutline = true
-                    outlineProvider = object : android.view.ViewOutlineProvider() {
-                        override fun getOutline(view: View, outline: android.graphics.Outline) {
-                            outline.setOval(0, 0, view.width, view.height)
-                        }
-                    }
-                    elevation = if (isSelected) dpToPx(4f).toFloat() else dpToPx(2f).toFloat()
-                    
-                    setOnClickListener {
-                        setPenColor(color)
-                        // Update all color circles
-                        val parent = parent as? LinearLayout
-                        for (i in 0 until (parent?.childCount ?: 0)) {
-                            val child = parent?.getChildAt(i)
-                            val childColor = child?.tag.toString().substringAfter("color_").toIntOrNull() ?: 0
-                            val selected = childColor == penColor
-                            val newSize = if (selected) dpToPx(40f) else dpToPx(32f)
-                            child?.layoutParams = LinearLayout.LayoutParams(newSize, newSize).apply {
-                                marginEnd = dpToPx(8f)
-                                gravity = android.view.Gravity.CENTER_VERTICAL
-                            }
-                            child?.elevation = if (selected) dpToPx(4f).toFloat() else dpToPx(2f).toFloat()
-                        }
-                    }
-                }
-                addView(colorCircle)
-            }
-        }
-    }
-    
+
     private fun parseAttributes(attrs: AttributeSet, defStyleAttr: Int) {
 
         val a = context.obtainStyledAttributes(attrs, R.styleable.SignaturePad, defStyleAttr, 0)
@@ -380,7 +217,7 @@ class SignaturePad @JvmOverloads constructor(
         try {
             penColor = a.getColor(R.styleable.SignaturePad_penColor, Color.BLACK)
             canvasBackgroundColor = a.getColor(R.styleable.SignaturePad_canvasBackgroundColor, Color.WHITE)
-            penThickness = a.getDimension(R.styleable.SignaturePad_penThickness, dpToPx(20f).toFloat())
+            penThickness = a.getDimension(R.styleable.SignaturePad_penThickness, dpToPx(5f).toFloat())
             minStrokeCount = a.getInt(R.styleable.SignaturePad_minStrokeCount, 1)
             showToolbar = a.getBoolean(R.styleable.SignaturePad_showToolbar, true)
             toolbarPosition = a.getInt(R.styleable.SignaturePad_toolbarPosition, TOOLBAR_BOTTOM)
@@ -570,6 +407,14 @@ class SignaturePad @JvmOverloads constructor(
         penColor = color
         signatureCanvas.penColor = color
     }
+
+    /**
+     * Set prompt text displayed in center of the pad
+     */
+    fun setPromptText(text: String) {
+        promptTextString = text
+        promptText.text = promptTextString
+    }
     
     /**
      * Set pen thickness
@@ -577,18 +422,6 @@ class SignaturePad @JvmOverloads constructor(
     fun setPenThickness(thickness: Float) {
         penThickness = thickness
         signatureCanvas.penThickness = thickness
-    }
-
-    @JvmOverloads
-    fun setCustomColors(colors: IntArray, areResourceIds: Boolean = false) {
-        customColors = if (areResourceIds) {
-            colors.map { ContextCompat.getColor(context, it) }.toIntArray()
-        } else {
-            colors
-        }
-        colorSelectorContainer?.let { removeView(it) }
-        colorSelectorContainer = createColorSelector()
-        addView(colorSelectorContainer)
     }
 
     /**
