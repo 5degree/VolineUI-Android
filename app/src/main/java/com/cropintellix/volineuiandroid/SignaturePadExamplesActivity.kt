@@ -13,7 +13,6 @@ class SignaturePadExamplesActivity : AppCompatActivity() {
         setContentView(R.layout.activity_signature_pad_examples)
 
         signaturePad = findViewById(R.id.signaturePad1)
-        signaturePad.setPromptText("skdugjeshgmfjkahfkebnsd")
 
     }
 }

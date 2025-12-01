@@ -1,4 +1,4 @@
-//@file:Suppress("unused")
+@file:Suppress("unused")
 
 package com.cropintellix.volineui
 
@@ -13,6 +13,7 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.util.Base64
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
@@ -21,6 +22,10 @@ import android.widget.TextView
 import androidx.annotation.AnyThread
 import androidx.annotation.WorkerThread
 import androidx.appcompat.content.res.AppCompatResources.getColorStateList
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.setMargins
+import androidx.core.view.updatePadding
 import com.google.android.material.button.MaterialButton
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -82,7 +87,8 @@ class SignaturePad @JvmOverloads constructor(
     private var enablePressureSensitivity: Boolean = true
     private var enableSpeedBasedThickness: Boolean = false
     private var maxUndoStackSize: Int = 20
-    
+    private var orientation: Int = 0
+
     // Timestamp
     private var firstStrokeTimestamp: Long? = null
     
@@ -97,7 +103,6 @@ class SignaturePad @JvmOverloads constructor(
         const val ASPECT_RATIO_PORTRAIT = 1
         const val ASPECT_RATIO_SQUARE = 2
     }
-
 
     init {
         // Set full screen layout
@@ -142,13 +147,14 @@ class SignaturePad @JvmOverloads constructor(
 
         // Create vertical action buttons container
         toolbar = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
+            orientation = LinearLayout.HORIZONTAL
             val params = LayoutParams(
                 LayoutParams.WRAP_CONTENT,
                 LayoutParams.WRAP_CONTENT
             ).apply {
-                gravity = android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL
-                marginEnd = dpToPx(16f)
+                gravity = if (orientation == 0) Gravity.END or Gravity.TOP else Gravity.END or Gravity.BOTTOM
+                rotation = if (orientation == 0) 0f else 90f
+                marginEnd = 20
             }
             layoutParams = params
 
@@ -167,8 +173,18 @@ class SignaturePad @JvmOverloads constructor(
         
         // Update button states
         updateButtonStates()
+
+        ViewCompat.setOnApplyWindowInsetsListener(toolbar) {  v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.updatePadding(
+                left = systemBars.left,
+                top = systemBars.top,
+                right = systemBars.right,
+                bottom = systemBars.bottom
+            )
+            insets
+        }
     }
-    
     
     /**
      * Create modern action button with circular background
@@ -194,9 +210,11 @@ class SignaturePad @JvmOverloads constructor(
 
             // Layout params
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
+                LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(20)
+            }
         }
     }
     
@@ -230,7 +248,8 @@ class SignaturePad @JvmOverloads constructor(
             enablePressureSensitivity = a.getBoolean(R.styleable.SignaturePad_enablePressureSensitivity, true)
             enableSpeedBasedThickness = a.getBoolean(R.styleable.SignaturePad_enableSpeedBasedThickness, false)
             maxUndoStackSize = a.getInt(R.styleable.SignaturePad_maxUndoStackSize, 20)
-            
+            orientation = a.getInt(R.styleable.SignaturePad_orientation, 0)
+
             signatureCanvas.penColor = penColor
             signatureCanvas.penThickness = penThickness
             signatureCanvas.canvasBackgroundColor = canvasBackgroundColor
@@ -263,9 +282,7 @@ class SignaturePad @JvmOverloads constructor(
         btnSave.setOnClickListener {
             showSaveDialog()
         }
-        
-        // Remove old color and thickness button listeners - now handled by UI controls
-        
+
         signatureCanvas.onStrokeChangeListener = {
             updatePromptTextVisibility()
             updateButtonStates()
@@ -295,7 +312,6 @@ class SignaturePad @JvmOverloads constructor(
         btnClear.alpha = if (!isEmpty()) 1.0f else 0.5f
         btnSave.alpha = if (!isEmpty()) 1.0f else 0.5f
     }
-
     
     private fun showSaveDialog() {
         val options = arrayOf("Export as PNG", "Export as JPG", "Export as SVG", "Copy as Base64")

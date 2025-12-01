@@ -260,5 +260,9 @@
         <attr name="enablePressureSensitivity" format="boolean" />
         <attr name="enableSpeedBasedThickness" format="boolean" />
         <attr name="maxUndoStackSize" format="integer" />
+        <attr name="orientation" format="enum">
+            <enum name="landscape" value="0" />
+            <enum name="portrait" value="1" />
+        </attr>
     </declare-styleable>
 </resources>
