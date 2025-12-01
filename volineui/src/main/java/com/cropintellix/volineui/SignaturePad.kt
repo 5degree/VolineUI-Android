@@ -67,8 +67,7 @@ class SignaturePad @JvmOverloads constructor(
     private val btnUndo: MaterialButton
     private val btnRedo: MaterialButton
     private val btnClear: MaterialButton
-    private val btnSave: MaterialButton
-    
+
     // Drawing properties
     private var penColor: Int = Color.BLACK
     private var penThickness: Float = 5f
@@ -76,33 +75,20 @@ class SignaturePad @JvmOverloads constructor(
     
     // Configuration
     private var minStrokeCount: Int = 1
-    private var showToolbar: Boolean = true
-    private var toolbarPosition: Int = TOOLBAR_BOTTOM
     private var promptTextString: String = "Sign here"
     private var autoTrimEmptySpace: Boolean = true
-    private var aspectRatio: Int = ASPECT_RATIO_LANDSCAPE
     private var cornerRadius: Float = 0f
     private var borderColor: Int = Color.LTGRAY
     private var borderWidth: Float = 2f
     private var enablePressureSensitivity: Boolean = true
     private var enableSpeedBasedThickness: Boolean = false
     private var maxUndoStackSize: Int = 20
-    private var orientation: Int = 0
 
     // Timestamp
     private var firstStrokeTimestamp: Long? = null
     
     // Listeners
     private var onSignatureChangeListener: ((Boolean) -> Unit)? = null
-    
-    companion object {
-        const val TOOLBAR_TOP = 0
-        const val TOOLBAR_BOTTOM = 1
-        
-        const val ASPECT_RATIO_LANDSCAPE = 0
-        const val ASPECT_RATIO_PORTRAIT = 1
-        const val ASPECT_RATIO_SQUARE = 2
-    }
 
     init {
         // Set full screen layout
@@ -143,7 +129,6 @@ class SignaturePad @JvmOverloads constructor(
         btnUndo = createActionButton("Undo", R.drawable.undo_24px)
         btnRedo = createActionButton("Redo", R.drawable.redo_24px)
         btnClear = createActionButton("Clear", R.drawable.delete_24px)
-        btnSave = createActionButton("Save", R.drawable.check_circle_24px)
 
         // Create vertical action buttons container
         toolbar = LinearLayout(context).apply {
@@ -152,16 +137,14 @@ class SignaturePad @JvmOverloads constructor(
                 LayoutParams.WRAP_CONTENT,
                 LayoutParams.WRAP_CONTENT
             ).apply {
-                gravity = if (orientation == 0) Gravity.END or Gravity.TOP else Gravity.END or Gravity.BOTTOM
-                rotation = if (orientation == 0) 0f else 90f
-                marginEnd = 20
+                gravity = Gravity.END or Gravity.TOP
+                setMargins(10)
             }
             layoutParams = params
 
             addView(btnUndo, createActionButtonParams())
             addView(btnRedo, createActionButtonParams())
             addView(btnClear, createActionButtonParams())
-            addView(btnSave, createActionButtonParams())
         }
         addView(toolbar)
         
@@ -237,18 +220,14 @@ class SignaturePad @JvmOverloads constructor(
             canvasBackgroundColor = a.getColor(R.styleable.SignaturePad_canvasBackgroundColor, Color.WHITE)
             penThickness = a.getDimension(R.styleable.SignaturePad_penThickness, dpToPx(5f).toFloat())
             minStrokeCount = a.getInt(R.styleable.SignaturePad_minStrokeCount, 1)
-            showToolbar = a.getBoolean(R.styleable.SignaturePad_showToolbar, true)
-            toolbarPosition = a.getInt(R.styleable.SignaturePad_toolbarPosition, TOOLBAR_BOTTOM)
             promptTextString = a.getString(R.styleable.SignaturePad_promptText) ?: "Sign here"
             autoTrimEmptySpace = a.getBoolean(R.styleable.SignaturePad_autoTrimEmptySpace, true)
-            aspectRatio = a.getInt(R.styleable.SignaturePad_aspectRatio, ASPECT_RATIO_LANDSCAPE)
             cornerRadius = a.getDimension(R.styleable.SignaturePad_signatureCornerRadius, 0f)
             borderColor = a.getColor(R.styleable.SignaturePad_signatureBorderColor, Color.LTGRAY)
             borderWidth = a.getDimension(R.styleable.SignaturePad_signatureBorderWidth, dpToPx(2f).toFloat())
             enablePressureSensitivity = a.getBoolean(R.styleable.SignaturePad_enablePressureSensitivity, true)
             enableSpeedBasedThickness = a.getBoolean(R.styleable.SignaturePad_enableSpeedBasedThickness, false)
             maxUndoStackSize = a.getInt(R.styleable.SignaturePad_maxUndoStackSize, 20)
-            orientation = a.getInt(R.styleable.SignaturePad_orientation, 0)
 
             signatureCanvas.penColor = penColor
             signatureCanvas.penThickness = penThickness
@@ -278,10 +257,6 @@ class SignaturePad @JvmOverloads constructor(
         btnClear.setOnClickListener {
             clear()
         }
-        
-        btnSave.setOnClickListener {
-            showSaveDialog()
-        }
 
         signatureCanvas.onStrokeChangeListener = {
             updatePromptTextVisibility()
@@ -304,46 +279,11 @@ class SignaturePad @JvmOverloads constructor(
         btnUndo.isEnabled = signatureCanvas.canUndo()
         btnRedo.isEnabled = signatureCanvas.canRedo()
         btnClear.isEnabled = !isEmpty()
-        btnSave.isEnabled = !isEmpty()
-        
+
         // Update button alpha for visual feedback
         btnUndo.alpha = if (signatureCanvas.canUndo()) 1.0f else 0.5f
         btnRedo.alpha = if (signatureCanvas.canRedo()) 1.0f else 0.5f
         btnClear.alpha = if (!isEmpty()) 1.0f else 0.5f
-        btnSave.alpha = if (!isEmpty()) 1.0f else 0.5f
-    }
-    
-    private fun showSaveDialog() {
-        val options = arrayOf("Export as PNG", "Export as JPG", "Export as SVG", "Copy as Base64")
-        
-        android.app.AlertDialog.Builder(context)
-            .setTitle("Export Signature")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> {
-                        val bitmap = exportAsPNG()
-                        // In a real app, you'd save this or share it
-                        android.widget.Toast.makeText(context, "PNG exported", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                    1 -> {
-                        val bitmap = exportAsJPG(85)
-                        android.widget.Toast.makeText(context, "JPG exported", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                    2 -> {
-                        val svg = exportAsSVG()
-                        android.widget.Toast.makeText(context, "SVG exported", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                    3 -> {
-                        val base64 = exportAsBase64(ExportFormat.PNG)
-                        // Copy to clipboard
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                        val clip = android.content.ClipData.newPlainText("Signature", base64)
-                        clipboard.setPrimaryClip(clip)
-                        android.widget.Toast.makeText(context, "Base64 copied to clipboard", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-            .show()
     }
     
     // Public API
