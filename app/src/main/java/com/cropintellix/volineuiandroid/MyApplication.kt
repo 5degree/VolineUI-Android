@@ -3,6 +3,7 @@ package com.cropintellix.volineuiandroid
 import android.Manifest
 import android.app.Application
 import android.os.Build
+import com.cropintellix.volineui.LocationManager
 import com.cropintellix.volineui.PermissionManager
 
 /**
@@ -39,5 +40,6 @@ class MyApplication : Application() {
         }
         
         PermissionManager.init(this, *permissions)
+        LocationManager.init(this)
     }
 }

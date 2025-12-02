@@ -38,6 +38,9 @@
             android:name=".PermissionExamplesActivity"
             android:exported="false" />
         <activity
+            android:name=".LocationExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
