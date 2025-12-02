@@ -2,7 +2,11 @@
 
 package com.cropintellix.volineui
 
+import android.R.attr.inset
+import android.R.attr.insetLeft
+import android.R.attr.insetRight
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -10,6 +14,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PointF
 import android.graphics.RectF
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.util.Base64
 import android.util.TypedValue
@@ -17,16 +22,20 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.AnyThread
 import androidx.annotation.WorkerThread
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.content.res.AppCompatResources.getColorStateList
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.setMargins
+import androidx.core.view.setPadding
 import androidx.core.view.updatePadding
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.shape.MaterialShapes
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -64,9 +73,9 @@ class SignaturePad @JvmOverloads constructor(
     
     // Toolbar
     private val toolbar: LinearLayout
-    private val btnUndo: MaterialButton
-    private val btnRedo: MaterialButton
-    private val btnClear: MaterialButton
+    private val btnUndo: ImageButton
+    private val btnRedo: ImageButton
+    private val btnClear: ImageButton
 
     // Drawing properties
     private var penColor: Int = Color.BLACK
@@ -126,9 +135,9 @@ class SignaturePad @JvmOverloads constructor(
         addView(canvasContainer)
         
         // Create action buttons (vertical, right side)
-        btnUndo = createActionButton("Undo", R.drawable.undo_24px)
-        btnRedo = createActionButton("Redo", R.drawable.redo_24px)
-        btnClear = createActionButton("Clear", R.drawable.delete_24px)
+        btnUndo = createActionButton(R.drawable.undo_24px)
+        btnRedo = createActionButton(R.drawable.redo_24px)
+        btnClear = createActionButton(R.drawable.delete_24px)
 
         // Create vertical action buttons container
         toolbar = LinearLayout(context).apply {
@@ -142,9 +151,9 @@ class SignaturePad @JvmOverloads constructor(
             }
             layoutParams = params
 
-            addView(btnUndo, createActionButtonParams())
-            addView(btnRedo, createActionButtonParams())
-            addView(btnClear, createActionButtonParams())
+            addView(btnUndo)
+            addView(btnRedo)
+            addView(btnClear)
         }
         addView(toolbar)
         
@@ -172,43 +181,20 @@ class SignaturePad @JvmOverloads constructor(
     /**
      * Create modern action button with circular background
      */
-    private fun createActionButton(contentDesc: String, iconRes: Int): MaterialButton {
-        return MaterialButton(context).apply {
-            if (contentDesc == "Save") {
-                text = contentDesc
+    private fun createActionButton(iconRes: Int): ImageButton {
+        val button = ImageButton(context).apply {
+            val size = dpToPx(48f)
+            layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                setPadding(dpToPx(16f))
+                marginEnd = dpToPx(10f)
             }
-            setTextColor(Color.BLACK)
 
-            setIconResource(iconRes)
-            iconTint = getColorStateList(context, android.R.color.black)
-            iconPadding = 8
-
-            // Set outlined style
-            strokeColor = getColorStateList(context, android.R.color.black)
-            strokeWidth = TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_SP,
-                2f,
-                resources.displayMetrics
-            ).toInt()
-
-            // Layout params
-            layoutParams = LinearLayout.LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(20)
-            }
+            setImageResource(iconRes)
+            imageTintList = getColorStateList(context, android.R.color.black)
+            background = AppCompatResources.getDrawable(context, R.drawable.icon_btn_bg)
         }
-    }
-    
-    /**
-     * Create layout params for action buttons
-     */
-    private fun createActionButtonParams(): LinearLayout.LayoutParams {
-        return LinearLayout.LayoutParams(dpToPx(48f), dpToPx(48f)).apply {
-            topMargin = dpToPx(8f)
-            bottomMargin = dpToPx(8f)
-        }
+
+        return button
     }
 
     private fun parseAttributes(attrs: AttributeSet, defStyleAttr: Int) {
