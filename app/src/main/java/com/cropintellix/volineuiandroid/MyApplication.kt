@@ -5,12 +5,13 @@ import android.app.Application
 import android.os.Build
 import com.cropintellix.volineui.LocationManager
 import com.cropintellix.volineui.PermissionManager
+import com.cropintellix.volineui.PhotoCaptureManager
 
 /**
  * Application class for VolineUI Android Demo
  * 
- * This is where we initialize the PermissionManager once for the entire app.
- * After this initialization, all activities can use PermissionManager.instance
+ * This is where we initialize the managers once for the entire app.
+ * After this initialization, all activities can use the manager instances
  * without any additional setup!
  */
 class MyApplication : Application() {
@@ -39,7 +40,9 @@ class MyApplication : Application() {
             )
         }
         
+        // Initialize all managers
         PermissionManager.init(this, *permissions)
         LocationManager.init(this)
+        PhotoCaptureManager.init(this)
     }
 }

@@ -42,5 +42,8 @@ class MainActivity : AppCompatActivity() {
         b.btnOpenLocationExamples.setOnClickListener {
             startActivity(Intent(this, LocationExamplesActivity::class.java))
         }
+        b.btnOpenPhotoCaptureExamples.setOnClickListener {
+            startActivity(Intent(this, PhotoCaptureExamplesActivity::class.java))
+        }
     }
 }

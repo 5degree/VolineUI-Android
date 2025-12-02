@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- External files directory for camera output -->
+    <external-files-path
+        name="external_files"
+        path="." />
+    
+    <!-- Pictures directory for photo storage -->
+    <external-files-path
+        name="pictures"
+        path="Pictures/" />
+    
+    <!-- Cache directory for temporary files -->
+    <cache-path
+        name="cache"
+        path="." />
+</paths>
