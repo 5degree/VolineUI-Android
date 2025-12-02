@@ -55,6 +55,12 @@
             android:layout_height="wrap_content"
             android:text="Signature Pad Examples" />
 
+        <Button
+            android:id="@+id/btnOpenPermissionExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Permission Examples" />
+
     </LinearLayout>
 
 </ScrollView>

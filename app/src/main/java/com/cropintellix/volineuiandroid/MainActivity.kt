@@ -36,5 +36,8 @@ class MainActivity : AppCompatActivity() {
         b.btnOpenSignaturePadExamples.setOnClickListener {
             startActivity(Intent(this, SignaturePadExamplesActivity::class.java))
         }
+        b.btnOpenPermissionExamples.setOnClickListener {
+            startActivity(Intent(this, PermissionExamplesActivity::class.java))
+        }
     }
 }
