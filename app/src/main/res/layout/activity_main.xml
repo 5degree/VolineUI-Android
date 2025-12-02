@@ -59,7 +59,13 @@
             android:id="@+id/btnOpenPermissionExamples"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Permission Examples" />
+            android:text="Permission Examples" />/>
+
+        <Button
+            android:id="@+id/btnOpenLocationExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location Examples" />
 
     </LinearLayout>
 

@@ -39,5 +39,8 @@ class MainActivity : AppCompatActivity() {
         b.btnOpenPermissionExamples.setOnClickListener {
             startActivity(Intent(this, PermissionExamplesActivity::class.java))
         }
+        b.btnOpenLocationExamples.setOnClickListener {
+            startActivity(Intent(this, LocationExamplesActivity::class.java))
+        }
     }
 }

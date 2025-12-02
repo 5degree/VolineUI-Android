@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    tools:context=".LocationExamplesActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location Manager Examples"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Demonstrates all features of the LocationManager"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"
+            android:alpha="0.7" />
+
+        <!-- Location Status Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📍 Location Status"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tvLocationStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Checking..."
+                    android:textSize="14sp"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Current Location Display -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
+
+            <TextView
+                android:id="@+id/tvCurrentLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="📌 No location data yet"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:minHeight="100dp" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Section: Get Location -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Get Location"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGetCached"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚡ Get Cached Location (Instant)"
+            android:textAllCaps="false"
+            app:cornerRadius="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGetLatest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🎯 Get Latest Location (Fresh)"
+            android:textAllCaps="false"
+            app:cornerRadius="8dp"
+            android:layout_marginTop="8dp" />
+
+        <!-- Section: Location Streaming -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location Streaming"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStart5s"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="▶️ Stream (5s)"
+                android:textAllCaps="false"
+                app:cornerRadius="8dp"
+                android:layout_marginEnd="4dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStart10s"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="▶️ Stream (10s)"
+                android:textAllCaps="false"
+                app:cornerRadius="8dp"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:layout_marginTop="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStopRecent"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⏸️ Stop Recent"
+                android:textAllCaps="false"
+                app:cornerRadius="8dp"
+                android:layout_marginEnd="4dp"
+                style="@style/Widget.Material3.Button.OutlinedButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStopAll"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⏹️ Stop All"
+                android:textAllCaps="false"
+                app:cornerRadius="8dp"
+                android:layout_marginStart="4dp"
+                style="@style/Widget.Material3.Button.OutlinedButton" />
+        </LinearLayout>
+
+        <!-- Active Subscriptions -->
+        <TextView
+            android:id="@+id/tvSubscriptions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Active subscriptions: 0"
+            android:textSize="12sp"
+            android:layout_marginTop="8dp"
+            android:alpha="0.7" />
+
+        <!-- Section: Utilities -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Utilities"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCheckStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="📊 Check Status"
+                android:textAllCaps="false"
+                app:cornerRadius="8dp"
+                android:layout_marginEnd="4dp"
+                style="@style/Widget.Material3.Button.OutlinedButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOpenMaps"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🗺️ Open Maps"
+                android:textAllCaps="false"
+                app:cornerRadius="8dp"
+                android:layout_marginStart="4dp"
+                style="@style/Widget.Material3.Button.OutlinedButton" />
+        </LinearLayout>
+
+        <!-- Section: Settings -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRequestPermission"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔑 Permission"
+                android:textAllCaps="false"
+                app:cornerRadius="8dp"
+                android:layout_marginEnd="4dp"
+                style="@style/Widget.Material3.Button.TonalButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOpenLocationSettings"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⚙️ Location Settings"
+                android:textAllCaps="false"
+                app:cornerRadius="8dp"
+                android:layout_marginStart="4dp"
+                style="@style/Widget.Material3.Button.TonalButton" />
+        </LinearLayout>
+
+        <!-- Info Text -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💡 Tip: Move around to see location updates in real-time when streaming is active."
+            android:textSize="12sp"
+            android:layout_marginTop="24dp"
+            android:padding="12dp"
+            android:background="@android:color/transparent"
+            android:alpha="0.6" />
+
+    </LinearLayout>
+
+</ScrollView>
