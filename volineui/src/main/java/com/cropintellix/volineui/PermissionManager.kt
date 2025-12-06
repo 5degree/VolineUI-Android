@@ -4,7 +4,6 @@ package com.cropintellix.volineui
 
 import android.app.Activity
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -350,8 +349,7 @@ class PermissionManager private constructor(
      * Check if location permissions are granted (either fine or coarse)
      */
     val isLocationPermissionGranted: Boolean
-        get() = checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PermissionStatus.GRANTED ||
-                checkPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PermissionStatus.GRANTED
+        get() = checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PermissionStatus.GRANTED
     
     /**
      * Request camera permission with convenience method
@@ -376,12 +374,11 @@ class PermissionManager private constructor(
     }
     
     /**
-     * Request location permissions (fine and coarse)
+     * Request location permissions (fine location)
      */
-    fun requestLocationPermission(callback: (Map<String, PermissionResult>) -> Unit) {
-        requestPermissions(
+    fun requestLocationPermission(callback: (PermissionResult) -> Unit) {
+        requestPermission(
             android.Manifest.permission.ACCESS_FINE_LOCATION,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION,
             callback = callback
         )
     }

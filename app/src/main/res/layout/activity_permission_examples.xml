@@ -51,6 +51,14 @@
                 android:fontFamily="monospace" />
         </com.google.android.material.card.MaterialCardView>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReq"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Request Location Permission"
+            android:textAllCaps="false"
+            app:cornerRadius="8dp" />
+
         <!-- Section: Single Permission -->
         <TextView
             android:layout_width="match_parent"

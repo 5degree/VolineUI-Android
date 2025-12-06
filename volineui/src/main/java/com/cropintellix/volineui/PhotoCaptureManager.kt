@@ -2,7 +2,7 @@
 
 package com.cropintellix.volineui
 
-import android.Manifest
+
 import android.app.Activity
 import android.app.Application
 import android.app.Dialog
@@ -14,7 +14,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.graphics.Rect
+import android.graphics.Typeface
 import android.media.ExifInterface
 import android.net.Uri
 import android.os.Build
@@ -470,16 +470,21 @@ class PhotoCaptureManager private constructor(
             
             if (fetchFresh) {
                 // Fetch fresh location (blocking call with short timeout)
-                locationManager.getLatestLocation(timeout = 5000) { location ->
-                    result = location
-                }
+                locationManager.getLatestLocation(
+                    timeout = 5000,
+                    callback = { location ->
+                        result = location
+                    }
+                )
                 // Wait a bit for callback (simplified - in production use coroutines)
                 Thread.sleep(5500)
             } else {
                 // Use cached location
-                locationManager.getCachedLocation { location ->
-                    result = location
-                }
+                locationManager.getCachedLocation(
+                    callback = { location ->
+                        result = location
+                    }
+                )
             }
             
             result
@@ -498,47 +503,55 @@ class PhotoCaptureManager private constructor(
         location: LocationResult?,
         position: PhotoCaptureConfig.WatermarkPosition
     ): Bitmap {
-        var bitmap = bitmap
-        var bitmapConfig = bitmap.config
-        // set default bitmap config if none
-        if (bitmapConfig == null) {
-            bitmapConfig = Bitmap.Config.ARGB_8888
-        }
-        // resource bitmaps are imutable,
-        // so we need to convert it to mutable one
-        bitmap = bitmap.copy(bitmapConfig, true)
-        val canvas = Canvas(bitmap)
-        // new antialised Paint
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        val canvas = Canvas(mutableBitmap)
 
-        // text color - #3D3D3D
-        paint.color = Color.WHITE
-        // text size in pixels
-        paint.textSize = bitmap.height * 0.02f
-        // text shadow
-        paint.setShadowLayer(1f, 0f, 1f, Color.WHITE)
+        val textPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = bitmap.width * 0.03f
+            isAntiAlias = true
+            style = Paint.Style.FILL
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+            setShadowLayer(12f, 0f, 0f, Color.BLACK)
+        }
 
-        // draw text to the Canvas center
-        val bounds = Rect()
-        var noOfLines = 0
-        for (line in watermarkText.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
-            noOfLines++
+        // Format timestamp
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val timestampStr = dateFormat.format(Date(timestamp))
+
+        // Create watermark lines
+        val lines = mutableListOf<String>()
+        lines.add(watermarkText)
+        lines.add(timestampStr)
+        if (location != null) {
+            lines.add("Lat: ${String.format("%.5f", location.latitude)}, Lng: ${String.format("%.5f", location.longitude)}")
         }
-        paint.getTextBounds(watermarkText, 0, watermarkText.length, bounds)
-        val x = 20
-        var y = bitmap.height - bounds.height() * noOfLines
-        val mPaint = Paint()
-        mPaint.color = Color.BLACK
-        val left = 0
-        val top = bitmap.height - bounds.height() * (noOfLines + 1)
-        val right = bitmap.width
-        val bottom = bitmap.height
-        canvas.drawRect(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat(), mPaint)
-        for (line in watermarkText.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
-            canvas.drawText(line, x.toFloat(), y.toFloat(), paint)
-            y += (paint.descent() - paint.ascent()).toInt()
+
+        // Calculate text bounds
+        val lineHeight = textPaint.textSize * 1.3f
+        val maxTextWidth = lines.maxOfOrNull { textPaint.measureText(it) } ?: 0f
+        val totalHeight = lines.size * lineHeight
+        val padding = 20f
+
+        val (x, y) = when (position) {
+            PhotoCaptureConfig.WatermarkPosition.TOP_LEFT ->
+                padding to padding + lineHeight
+            PhotoCaptureConfig.WatermarkPosition.TOP_RIGHT ->
+                (bitmap.width - maxTextWidth - padding) to padding + lineHeight
+            PhotoCaptureConfig.WatermarkPosition.BOTTOM_LEFT ->
+                padding to (bitmap.height - totalHeight)
+            PhotoCaptureConfig.WatermarkPosition.BOTTOM_RIGHT ->
+                (bitmap.width - maxTextWidth - padding) to (bitmap.height - totalHeight)
+            PhotoCaptureConfig.WatermarkPosition.CENTER ->
+                ((bitmap.width - maxTextWidth) / 2) to ((bitmap.height - totalHeight) / 2 + lineHeight)
         }
-        return bitmap
+
+        // Draw each line of text
+        lines.forEachIndexed { index, line ->
+            canvas.drawText(line, x, y + (index * lineHeight), textPaint)
+        }
+
+        return mutableBitmap
     }
     
     /**
