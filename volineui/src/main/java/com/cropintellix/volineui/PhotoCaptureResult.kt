@@ -83,6 +83,11 @@ sealed class PhotoCaptureResult {
     object Cancelled : PhotoCaptureResult()
     
     /**
+     * Processing - Photo is being processed (compression, watermark, location fetch)
+     */
+    object Processing : PhotoCaptureResult()
+    
+    /**
      * Convenience property - true if result is Success
      */
     val isSuccess: Boolean
@@ -99,4 +104,10 @@ sealed class PhotoCaptureResult {
      */
     val isCancelled: Boolean
         get() = this is Cancelled
+    
+    /**
+     * Convenience property - true if result is Processing
+     */
+    val isProcessing: Boolean
+        get() = this is Processing
 }

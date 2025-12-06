@@ -2,8 +2,8 @@
 
 package com.cropintellix.volineui
 
-
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.Application
 import android.app.Dialog
 import android.content.ContentValues
@@ -20,6 +20,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.view.Window
 import android.widget.ImageView
@@ -34,6 +36,8 @@ import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * PhotoCaptureManager - A comprehensive and reusable photo capture manager for Android
@@ -109,6 +113,8 @@ class PhotoCaptureManager private constructor(
     private var tempCameraFile: File? = null
     private var tempCameraUri: Uri? = null
     
+    private val mainHandler = Handler(Looper.getMainLooper())
+    
     init {
         // Register activity lifecycle callbacks to automatically track current activity
         application.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
@@ -151,16 +157,22 @@ class PhotoCaptureManager private constructor(
         cameraLauncher = activity.registerForActivityResult(
             ActivityResultContracts.TakePicture()
         ) { success ->
-            if (success && tempCameraUri != null) {
-                tempCameraFile?.let { file ->
-                    processImage(file, currentConfig ?: PhotoCaptureConfig(), currentCallback)
-                }
-            } else if (!success) {
+            if (success && tempCameraUri != null && tempCameraFile != null) {
+                val file = tempCameraFile!!
+                val config = currentConfig ?: PhotoCaptureConfig()
+                val callback = currentCallback
+                
+                // Notify processing started
+                callback?.invoke(PhotoCaptureResult.Processing)
+                
+                // Process image asynchronously
+                processImage(file, config, callback)
+            } else {
                 currentCallback?.invoke(PhotoCaptureResult.Cancelled)
                 cleanupTempFiles()
+                currentCallback = null
+                currentConfig = null
             }
-            currentCallback = null
-            currentConfig = null
         }
         
         // Gallery picker launcher
@@ -170,20 +182,28 @@ class PhotoCaptureManager private constructor(
             if (uri != null) {
                 try {
                     val tempFile = copyUriToTempFile(uri)
-                    processImage(tempFile, currentConfig ?: PhotoCaptureConfig(), currentCallback)
+                    val config = currentConfig ?: PhotoCaptureConfig()
+                    val callback = currentCallback
+                    
+                    // Notify processing started
+                    callback?.invoke(PhotoCaptureResult.Processing)
+                    
+                    processImage(tempFile, config, callback)
                 } catch (e: Exception) {
                     currentCallback?.invoke(
                         PhotoCaptureResult.Error(
                             PhotoCaptureException(PhotoCaptureException.ERROR_IMAGE_PROCESSING_FAILED),
-                            "Failed to load image from gallery"
+                            "Failed to load image from gallery: ${e.message}"
                         )
                     )
+                    currentCallback = null
+                    currentConfig = null
                 }
             } else {
                 currentCallback?.invoke(PhotoCaptureResult.Cancelled)
+                currentCallback = null
+                currentConfig = null
             }
-            currentCallback = null
-            currentConfig = null
         }
     }
     
@@ -199,14 +219,23 @@ class PhotoCaptureManager private constructor(
         callback: (PhotoCaptureResult) -> Unit
     ) {
         // Ensure we have an active activity
-        val activity = currentActivityRef?.get() 
+        val activity = currentActivityRef?.get()
             ?: throw PhotoCaptureException(PhotoCaptureException.ERROR_ACTIVITY_DESTROYED)
         
-        // Check camera permission
+        // Step 1: Check camera permission
         if (!PermissionManager.instance.isCameraPermissionGranted) {
             PermissionManager.instance.requestCameraPermission { result ->
                 if (result.isGranted) {
-                    launchCamera(config, callback)
+                    // Permission granted, now check location if needed
+                    checkLocationRequirementsAndLaunchCamera(config, callback)
+                } else if (result.isPermanentlyDenied) {
+                    showPermissionPermanentlyDeniedDialog(activity, "Camera")
+                    callback(
+                        PhotoCaptureResult.Error(
+                            PhotoCaptureException(PhotoCaptureException.ERROR_PERMISSION_DENIED),
+                            "Camera permission is permanently denied. Please enable it in settings."
+                        )
+                    )
                 } else {
                     callback(
                         PhotoCaptureResult.Error(
@@ -219,7 +248,101 @@ class PhotoCaptureManager private constructor(
             return
         }
         
+        // Step 2: Check location requirements if watermark with location
+        checkLocationRequirementsAndLaunchCamera(config, callback)
+    }
+    
+    /**
+     * Check location requirements before launching camera
+     */
+    private fun checkLocationRequirementsAndLaunchCamera(
+        config: PhotoCaptureConfig,
+        callback: (PhotoCaptureResult) -> Unit
+    ) {
+        val activity = currentActivityRef?.get() ?: return
+        
+        // If watermark with location is requested, check location permission and services
+        if (config.watermarkText != null) {
+            // Re-check permission in case it was just granted
+            if (!PermissionManager.instance.isLocationPermissionGranted) {
+                PermissionManager.instance.requestLocationPermission { result ->
+                    if (result.isGranted) {
+                        // Permission granted, check location services
+                        checkLocationServicesAndLaunchCamera(config, callback)
+                    } else if (result.isPermanentlyDenied) {
+                        showPermissionPermanentlyDeniedDialog(activity, "Location")
+                        callback(
+                            PhotoCaptureResult.Error(
+                                PhotoCaptureException(PhotoCaptureException.ERROR_PERMISSION_DENIED),
+                                "Location permission is permanently denied. Watermark will not include coordinates."
+                            )
+                        )
+                    } else {
+                        callback(
+                            PhotoCaptureResult.Error(
+                                PhotoCaptureException(PhotoCaptureException.ERROR_PERMISSION_DENIED),
+                                "Location permission is required for watermark with coordinates"
+                            )
+                        )
+                    }
+                }
+                return
+            }
+            
+            // Permission already granted, check location services
+            checkLocationServicesAndLaunchCamera(config, callback)
+        } else {
+            // No watermark or watermark without location
+            launchCamera(config, callback)
+        }
+    }
+    
+    /**
+     * Check if location services are enabled
+     */
+    private fun checkLocationServicesAndLaunchCamera(
+        config: PhotoCaptureConfig,
+        callback: (PhotoCaptureResult) -> Unit
+    ) {
+        val activity = currentActivityRef?.get() ?: return
+        
+        if (!LocationManager.instance.isLocationEnabled) {
+            // Show dialog to enable location services
+            AlertDialog.Builder(activity)
+                .setTitle("Location Services Disabled")
+                .setMessage("Location services are turned off. Please enable GPS to add location to watermark.")
+                .setPositiveButton("Open Settings") { _, _ ->
+                    LocationManager.instance.openLocationSettings()
+                    callback(
+                        PhotoCaptureResult.Error(
+                            PhotoCaptureException("Location services disabled"),
+                            "Please enable location services and try again"
+                        )
+                    )
+                }
+                .setNegativeButton("Cancel") { _, _ ->
+                    callback(PhotoCaptureResult.Cancelled)
+                }
+                .setCancelable(false)
+                .show()
+            return
+        }
+        
         launchCamera(config, callback)
+    }
+    
+    /**
+     * Show dialog for permanently denied permissions
+     */
+    private fun showPermissionPermanentlyDeniedDialog(context: Context, permissionName: String) {
+        AlertDialog.Builder(context)
+            .setTitle("$permissionName Permission Required")
+            .setMessage("$permissionName permission has been permanently denied. Please enable it in app settings.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                PermissionManager.instance.openAppSettings()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
     
     /**
@@ -234,7 +357,7 @@ class PhotoCaptureManager private constructor(
         callback: (PhotoCaptureResult) -> Unit
     ) {
         // Ensure we have an active activity
-        val activity = currentActivityRef?.get() 
+        val activity = currentActivityRef?.get()
             ?: throw PhotoCaptureException(PhotoCaptureException.ERROR_ACTIVITY_DESTROYED)
         
         // Check storage permission
@@ -242,6 +365,14 @@ class PhotoCaptureManager private constructor(
             PermissionManager.instance.requestStoragePermission { results ->
                 if (results.values.any { it.isGranted }) {
                     launchGalleryPicker(config, callback)
+                } else if (results.values.any { it.isPermanentlyDenied }) {
+                    showPermissionPermanentlyDeniedDialog(activity, "Storage")
+                    callback(
+                        PhotoCaptureResult.Error(
+                            PhotoCaptureException(PhotoCaptureException.ERROR_PERMISSION_DENIED),
+                            "Storage permission is permanently denied. Please enable it in settings."
+                        )
+                    )
                 } else {
                     callback(
                         PhotoCaptureResult.Error(
@@ -299,7 +430,7 @@ class PhotoCaptureManager private constructor(
                 "${application.packageName}.provider",
                 tempCameraFile!!
             )
-            
+
             currentCallback = callback
             currentConfig = config
             
@@ -325,68 +456,120 @@ class PhotoCaptureManager private constructor(
     }
     
     /**
-     * Process captured or picked image
+     * Process captured or picked image - runs async after photo capture
      */
     private fun processImage(
         sourceFile: File,
         config: PhotoCaptureConfig,
         callback: ((PhotoCaptureResult) -> Unit)?
     ) {
-        try {
-            val timestamp = System.currentTimeMillis()
+        // Run processing in background thread
+        Thread {
+            try {
+                val timestamp = System.currentTimeMillis()
+                
+                // Step 1: Decode and resize bitmap
+                var bitmap = decodeAndResizeBitmap(sourceFile, config.maxImageDimension)
+                    ?: throw PhotoCaptureException(PhotoCaptureException.ERROR_IMAGE_PROCESSING_FAILED)
+                
+                // Step 2: Fix rotation based on EXIF data
+                bitmap = rotateBitmapIfNeeded(sourceFile, bitmap)
+                
+                // Step 3: Apply watermark if configured
+                var location: LocationResult? = null
+                if (config.watermarkText != null) {
+                    // Fetch location synchronously in background thread
+                    location = getLocationForWatermarkSync(config.printFreshLatLng)
+                    bitmap = drawWatermarkOnBitmap(bitmap, config.watermarkText, timestamp, location, config.watermarkPosition)
+                }
+                
+                // Step 4: Compress and save
+                val finalFile = compressAndSaveImage(bitmap, config, timestamp)
+                
+                // Step 5: Optionally save to gallery
+                if (config.saveToGallery) {
+                    saveToGallery(bitmap, "IMG_$timestamp", config.galleryFolder)
+                }
+                
+                val fileSizeKB = (finalFile.length() / 1024).toInt()
+                
+                // Return success result on main thread
+                mainHandler.post {
+                    callback?.invoke(
+                        PhotoCaptureResult.Success(
+                            file = finalFile,
+                            bitmap = bitmap,
+                            fileSizeKB = fileSizeKB,
+                            dimensions = bitmap.width to bitmap.height,
+                            location = location,
+                            timestamp = timestamp,
+                            hasWatermark = config.watermarkText != null
+                        )
+                    )
+                }
+                
+                cleanupTempFiles()
+            } catch (e: PhotoCaptureException) {
+                mainHandler.post {
+                    callback?.invoke(
+                        PhotoCaptureResult.Error(e, e.message ?: "Unknown error")
+                    )
+                }
+                cleanupTempFiles()
+            } catch (e: Exception) {
+                mainHandler.post {
+                    callback?.invoke(
+                        PhotoCaptureResult.Error(
+                            PhotoCaptureException(PhotoCaptureException.ERROR_IMAGE_PROCESSING_FAILED),
+                            "Failed to process image: ${e.message}"
+                        )
+                    )
+                }
+                cleanupTempFiles()
+            }
+        }.start()
+    }
+    
+    /**
+     * Get location for watermark - sync version using CountDownLatch
+     * Must be called from background thread
+     */
+    private fun getLocationForWatermarkSync(fetchFresh: Boolean): LocationResult?  {
+        return try {
+            val latch = CountDownLatch(1)
+            var result: LocationResult? = null
             
-            // Step 1: Decode and resize bitmap
-            var bitmap = decodeAndResizeBitmap(sourceFile, config.maxImageDimension)
-                ?: throw PhotoCaptureException(PhotoCaptureException.ERROR_IMAGE_PROCESSING_FAILED)
-            
-            // Step 2: Fix rotation based on EXIF data
-            bitmap = rotateBitmapIfNeeded(sourceFile, bitmap)
-            
-            // Step 3: Apply watermark if configured
-            var location: LocationResult? = null
-            if (config.watermarkText != null) {
-                location = getLocationForWatermark(config.printFreshLatLng)
-                bitmap = drawWatermarkOnBitmap(bitmap, config.watermarkText, timestamp, location, config.watermarkPosition)
+            // LocationManager must be called on main thread
+            mainHandler.post {
+                try {
+                    val locationManager = LocationManager.instance
+                    
+                    if (fetchFresh) {
+                        // Fetch fresh location
+                        locationManager.getLatestLocation(timeout = 15000) { location ->
+                            result = location
+                            latch.countDown()
+                        }
+                    } else {
+                        // Use cached location
+                        locationManager.getCachedLocation { location ->
+                            result = location
+                            latch.countDown()
+                        }
+                    }
+                } catch (e: Exception) {
+                    // If location fetch fails, continue without location
+                    latch.countDown()
+                }
             }
             
-            // Step 4: Compress and save
-            val finalFile = compressAndSaveImage(bitmap, config, timestamp)
+            // Wait for location fetch to complete
+            val timeout = if (fetchFresh) 20L else 3L
+            latch.await(timeout, TimeUnit.SECONDS)
             
-            // Step 5: Optionally save to gallery
-            if (config.saveToGallery) {
-                saveToGallery(bitmap, "IMG_$timestamp", config.galleryFolder)
-            }
-            
-            // Calculate file size
-            val fileSizeKB = (finalFile.length() / 1024).toInt()
-            
-            // Return success result
-            callback?.invoke(
-                PhotoCaptureResult.Success(
-                    file = finalFile,
-                    bitmap = bitmap,
-                    fileSizeKB = fileSizeKB,
-                    dimensions = bitmap.width to bitmap.height,
-                    location = location,
-                    timestamp = timestamp,
-                    hasWatermark = config.watermarkText != null
-                )
-            )
-            
-            cleanupTempFiles()
-        } catch (e: PhotoCaptureException) {
-            callback?.invoke(
-                PhotoCaptureResult.Error(e, e.message ?: "Unknown error")
-            )
-            cleanupTempFiles()
+            result
         } catch (e: Exception) {
-            callback?.invoke(
-                PhotoCaptureResult.Error(
-                    PhotoCaptureException(PhotoCaptureException.ERROR_IMAGE_PROCESSING_FAILED),
-                    "Failed to process image: ${e.message}"
-                )
-            )
-            cleanupTempFiles()
+            null
         }
     }
     
@@ -395,7 +578,7 @@ class PhotoCaptureManager private constructor(
      */
     private fun decodeAndResizeBitmap(file: File, maxDimension: Int): Bitmap? {
         // First decode with inJustDecodeBounds to get dimensions
-        val options = BitmapFactory.Options().apply { 
+        val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = true 
         }
         BitmapFactory.decodeFile(file.absolutePath, options)
@@ -457,39 +640,6 @@ class PhotoCaptureManager private constructor(
             }
         } catch (e: IOException) {
             bitmap
-        }
-    }
-    
-    /**
-     * Get location for watermark
-     */
-    private fun getLocationForWatermark(fetchFresh: Boolean): LocationResult? {
-        return try {
-            var result: LocationResult? = null
-            val locationManager = LocationManager.instance
-            
-            if (fetchFresh) {
-                // Fetch fresh location (blocking call with short timeout)
-                locationManager.getLatestLocation(
-                    timeout = 5000,
-                    callback = { location ->
-                        result = location
-                    }
-                )
-                // Wait a bit for callback (simplified - in production use coroutines)
-                Thread.sleep(5500)
-            } else {
-                // Use cached location
-                locationManager.getCachedLocation(
-                    callback = { location ->
-                        result = location
-                    }
-                )
-            }
-            
-            result
-        } catch (e: Exception) {
-            null
         }
     }
     

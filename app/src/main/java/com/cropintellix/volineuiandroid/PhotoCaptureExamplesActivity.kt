@@ -6,7 +6,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.cropintellix.volineui.LocationManager
 import com.cropintellix.volineui.PhotoCaptureConfig
 import com.cropintellix.volineui.PhotoCaptureManager
 import com.cropintellix.volineui.PhotoCaptureResult
@@ -70,22 +69,19 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
 
         // Capture with watermark (cached location)
         btnCaptureCachedLocation.setOnClickListener {
-            PhotoCaptureManager.instance.capturePhoto(
-                PhotoCaptureConfig("Farm Survey - Cached Location")
-            ) { result ->
-                if (result is PhotoCaptureResult.Success) {
-                    val f: File = result.file
-                }
+            val config = PhotoCaptureConfig(
+                watermarkText = "Farm Survey - Cached Location",
+                printFreshLatLng = false,
+                targetFileSizeKB = 200,
+                watermarkPosition = PhotoCaptureConfig.WatermarkPosition.BOTTOM_LEFT
+            )
+            PhotoCaptureManager.instance.capturePhoto(config) { result ->
+                handlePhotoResult(result)
             }
         }
 
         // Capture with watermark (fresh location)
         btnCaptureFreshLocation.setOnClickListener {
-            Toast.makeText(
-                this,
-                "Fetching fresh location... This may take a few seconds",
-                Toast.LENGTH_SHORT
-            ).show()
             val config = PhotoCaptureConfig(
                 watermarkText = "Farm Survey - Fresh Location",
                 printFreshLatLng = true,
@@ -120,6 +116,13 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
 
     private fun handlePhotoResult(result: PhotoCaptureResult) {
         when (result) {
+            is PhotoCaptureResult.Processing -> {
+                // Show loading indicator
+                ivPhoto.setImageResource(R.drawable.loading_gif)
+                tvMetadata.text = "⏳ Processing image...\nApplying watermark and fetching location..."
+                btnPreview.isEnabled = false
+            }
+            
             is PhotoCaptureResult.Success -> {
                 currentPhotoFile = result.file
 
@@ -151,6 +154,7 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
             }
 
             is PhotoCaptureResult.Error -> {
+                ivPhoto.setImageDrawable(null)
                 tvMetadata.text = "❌ Error: ${result.message}"
                 Toast.makeText(this, "Error: ${result.message}", Toast.LENGTH_LONG).show()
             }

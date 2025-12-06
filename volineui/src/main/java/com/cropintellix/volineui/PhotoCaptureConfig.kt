@@ -23,7 +23,7 @@ data class PhotoCaptureConfig(
     val maxImageDimension: Int = 1920,
     val compressionQuality: Int = 90,
     val saveToGallery: Boolean = true,
-    val galleryFolder: String = "Photos",
+    val galleryFolder: String = "Cropintellix",
     val watermarkPosition: WatermarkPosition = WatermarkPosition.BOTTOM_LEFT
 ) {
     /**
