@@ -73,6 +73,12 @@
             android:layout_height="wrap_content"
             android:text="Photo Capture Examples" />
 
+        <Button
+            android:id="@+id/btnOpenImageViewExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ImageView Examples" />
+
     </LinearLayout>
 
 </ScrollView>

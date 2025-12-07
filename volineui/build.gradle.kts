@@ -38,16 +38,20 @@ android {
     }
 }
 
+//noinspection UseTomlInstead
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     
     // Google Play Services for Location
-    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
     
     // ExifInterface for image rotation
-    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    implementation("androidx.exifinterface:exifinterface:1.4.2")
+    
+    // Glide for image loading, caching, and GIF support
+    implementation("com.github.bumptech.glide:glide:5.0.5")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

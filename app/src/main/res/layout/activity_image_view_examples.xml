@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    tools:context=".ImageViewExamplesActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VolineUI ImageView Demo"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Basic ImageView with Label -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/imageViewBasic"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:imageLabel="Basic Image View"
+            app:imageCornerRadius="12dp"
+            app:imageBorderWidth="1dp"
+            app:imageBorderColor="#E0E0E0"
+            android:layout_marginBottom="16dp" />
+
+        <!-- ImageView with Camera Capture -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/imageViewCamera"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:imageLabel="Tap to Capture Photo"
+            app:imageCornerRadius="16dp"
+            app:enableCameraCapture="true"
+            app:showDeleteIcon="true"
+            app:emptyStateText="Tap to capture photo"
+            android:layout_marginBottom="16dp" />
+
+        <!-- ImageView with Different Scale Types -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Scale Types"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <com.cropintellix.volineui.AdvancedImageView
+                android:id="@+id/imageViewFit"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="100dp"
+                app:imageLabel="Fit"
+                app:imageScaleType="fit"
+                app:imageCornerRadius="8dp"
+                app:imageBorderWidth="1dp"
+                app:imageBorderColor="#CCCCCC"
+                android:layout_marginEnd="8dp" />
+
+            <com.cropintellix.volineui.AdvancedImageView
+                android:id="@+id/imageViewCrop"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="100dp"
+                app:imageLabel="Crop"
+                app:imageScaleType="crop"
+                app:imageCornerRadius="8dp"
+                app:imageBorderWidth="1dp"
+                app:imageBorderColor="#CCCCCC"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- ImageView with Aspect Ratio -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/imageViewAspect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:imageLabel="16:9 Aspect Ratio"
+            app:imageAspectRatio="1.77"
+            app:imageScaleType="crop"
+            app:imageCornerRadius="12dp"
+            app:imageBorderWidth="2dp"
+            app:imageBorderColor="#2196F3"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Circular ImageView -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/imageViewCircle"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center_horizontal"
+            app:imageLabel="Profile"
+            app:imageScaleType="crop"
+            app:imageCornerRadius="60dp"
+            app:imageBorderWidth="3dp"
+            app:imageBorderColor="#4CAF50"
+            app:showDeleteIcon="true"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Load Options Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Load Images"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btnLoadUrl"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Load URL"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/btnLoadDrawable"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Load Drawable"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btnCapturePhoto"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Capture Photo"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/btnPickGallery"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pick Gallery"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnClearAll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear All Images"
+            android:layout_marginTop="8dp" />
+
+        <!-- Status Display -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Status: Ready"
+            android:textSize="14sp"
+            android:padding="12dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="16dp"
+            android:gravity="center" />
+
+    </LinearLayout>
+
+</ScrollView>

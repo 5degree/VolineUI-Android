@@ -258,4 +258,44 @@
         <attr name="enableSpeedBasedThickness" format="boolean" />
         <attr name="maxUndoStackSize" format="integer" />
     </declare-styleable>
+
+    <declare-styleable name="AdvancedImageView">
+        <!-- Label -->
+        <attr name="imageLabel" format="string" />
+        <attr name="imageLabelGap" format="dimension" />
+        <attr name="imageLabelTextSize" format="dimension" />
+        <attr name="imageLabelTextColor" format="color" />
+        
+        <!-- Image Display -->
+        <attr name="imageScaleType" format="enum">
+            <enum name="fit" value="0" />
+            <enum name="fill" value="1" />
+            <enum name="crop" value="2" />
+            <enum name="center" value="3" />
+            <enum name="stretch" value="4" />
+        </attr>
+        <attr name="imageAspectRatio" format="float" />
+        <attr name="placeholderImage" format="reference" />
+        <attr name="errorImage" format="reference" />
+        
+        <!-- Visual Styling -->
+        <attr name="imageCornerRadius" format="dimension" />
+        <attr name="imageBorderWidth" format="dimension" />
+        <attr name="imageBorderColor" format="color" />
+        <attr name="imageBackgroundColor" format="color" />
+        
+        <!-- Features -->
+        <attr name="showDeleteIcon" format="boolean" />
+        <attr name="deleteIconTint" format="color" />
+        <attr name="showLoadingIndicator" format="boolean" />
+        <attr name="enableFullScreenPreview" format="boolean" />
+        <attr name="enableCameraCapture" format="boolean" />
+        
+        <!-- Empty State -->
+        <attr name="emptyStateText" format="string" />
+        <attr name="emptyStateIcon" />
+        
+        <!-- Accessibility -->
+        <attr name="android:contentDescription" />
+    </declare-styleable>
 </resources>
