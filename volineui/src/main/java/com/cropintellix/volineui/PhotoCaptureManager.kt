@@ -389,34 +389,6 @@ class PhotoCaptureManager private constructor(
     }
     
     /**
-     * Preview photo in full-screen dialog
-     * 
-     * @param context Context to show dialog
-     * @param file Photo file to preview
-     */
-    fun previewPhoto(context: Context, file: File) {
-        val dialog = Dialog(context)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setCancelable(true)
-        
-        // Create ImageView programmatically
-        val imageView = ImageView(context).apply {
-            adjustViewBounds = true
-            scaleType = ImageView.ScaleType.FIT_CENTER
-            setBackgroundColor(Color.BLACK)
-            setImageBitmap(BitmapFactory.decodeFile(file.absolutePath))
-            setOnClickListener { dialog.dismiss() }
-        }
-        
-        dialog.setContentView(imageView)
-        dialog.window?.setLayout(
-            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-            android.widget.LinearLayout.LayoutParams.MATCH_PARENT
-        )
-        dialog.show()
-    }
-    
-    /**
      * Launch camera
      */
     private fun launchCamera(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {

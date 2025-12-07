@@ -27,7 +27,6 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
     private lateinit var btnCaptureCachedLocation: Button
     private lateinit var btnCaptureFreshLocation: Button
     private lateinit var btnPickFromGallery: Button
-    private lateinit var btnPreview: Button
 
     private lateinit var ivPhoto: ImageView
     private lateinit var tvMetadata: TextView
@@ -47,12 +46,10 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
         btnCaptureCachedLocation = findViewById(R.id.btnCaptureCachedLocation)
         btnCaptureFreshLocation = findViewById(R.id.btnCaptureFreshLocation)
         btnPickFromGallery = findViewById(R.id.btnPickFromGallery)
-        btnPreview = findViewById(R.id.btnPreview)
 
         ivPhoto = findViewById(R.id.ivPhoto)
         tvMetadata = findViewById(R.id.tvMetadata)
 
-        btnPreview.isEnabled = false
     }
 
     private fun setupClickListeners() {
@@ -105,13 +102,6 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                 handlePhotoResult(result)
             }
         }
-
-        // Preview photo
-        btnPreview.setOnClickListener {
-            currentPhotoFile?.let { file ->
-                PhotoCaptureManager.instance.previewPhoto(this, file)
-            }
-        }
     }
 
     private fun handlePhotoResult(result: PhotoCaptureResult) {
@@ -120,7 +110,6 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                 // Show loading indicator
                 ivPhoto.setImageResource(R.drawable.loading_gif)
                 tvMetadata.text = "⏳ Processing image...\nApplying watermark and fetching location..."
-                btnPreview.isEnabled = false
             }
             
             is PhotoCaptureResult.Success -> {
@@ -148,7 +137,6 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                 }
 
                 tvMetadata.text = metadata
-                btnPreview.isEnabled = true
 
                 Toast.makeText(this, "Photo captured successfully!", Toast.LENGTH_SHORT).show()
             }
