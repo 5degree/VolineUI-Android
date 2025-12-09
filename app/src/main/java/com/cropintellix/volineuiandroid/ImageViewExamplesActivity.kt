@@ -110,10 +110,7 @@ class ImageViewExamplesActivity : AppCompatActivity() {
 
         // Capture photo
         btnCapturePhoto.setOnClickListener {
-            val config = PhotoCaptureConfig(
-                targetFileSizeKB = 200,
-                saveToGallery = true
-            )
+                val config = PhotoCaptureConfig("Test watermark", true)
             capturePhotoFor(imageViewBasic, config)
         }
 

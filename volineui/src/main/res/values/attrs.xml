@@ -266,6 +266,9 @@
         <attr name="imageLabelTextSize" format="dimension" />
         <attr name="imageLabelTextColor" format="color" />
         
+        <!-- Image Source -->
+        <attr name="imageSrc" format="reference" />
+        
         <!-- Image Display -->
         <attr name="imageScaleType" format="enum">
             <enum name="fit" value="0" />
@@ -297,5 +300,31 @@
         
         <!-- Accessibility -->
         <attr name="android:contentDescription" />
+    </declare-styleable>
+
+    <declare-styleable name="ImageCarousel">
+        <!-- Label -->
+        <attr name="carouselLabel" format="string" />
+        <attr name="carouselLabelGap" format="dimension" />
+        
+        <!-- Item Styling -->
+        <attr name="carouselItemWidth" format="dimension" />
+        <attr name="carouselItemHeight" format="dimension" />
+        <attr name="carouselItemSpacing" format="dimension" />
+        <attr name="carouselCornerRadius" format="dimension" />
+        
+        <!-- Indicators -->
+        <attr name="showIndicators" format="boolean" />
+        <attr name="indicatorSize" format="dimension" />
+        <attr name="indicatorSpacing" format="dimension" />
+        <attr name="indicatorActiveColor" format="color" />
+        <attr name="indicatorInactiveColor" format="color" />
+        
+        <!-- Features -->
+        <attr name="showItemDeleteIcon" format="boolean" />
+        <attr name="enableCarouselFullScreen" format="boolean" />
+        
+        <!-- Empty State -->
+        <attr name="carouselEmptyText" format="string" />
     </declare-styleable>
 </resources>
