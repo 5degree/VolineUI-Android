@@ -1,59 +1,260 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    tools:context=".ImageViewExamplesActivity">
+    android:background="#FFFFFF">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="16dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="VolineUI ImageView Demo"
+            android:text="ImageView Examples"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Basic ImageView with Label -->
-        <com.cropintellix.volineui.AdvancedImageView
-            android:id="@+id/imageViewBasic"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            app:imageLabel="Basic Image View"
-            app:imageCornerRadius="12dp"
-            app:imageBorderWidth="1dp"
-            app:imageBorderColor="#E0E0E0"
-            app:enableFullScreenPreview="true"
+            android:textColor="#212121"
             android:layout_marginBottom="16dp" />
 
-        <!-- ImageView with Camera Capture -->
+        <!-- Example 1: Basic ImageView with Drawable -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1. Image from XML (imageSrc)"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="4dp" />
+
         <com.cropintellix.volineui.AdvancedImageView
-            android:id="@+id/imageViewCamera"
+            android:id="@+id/imageFromXml"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            app:imageLabel="Tap to Capture Photo"
-            app:imageCornerRadius="16dp"
-            app:enableCameraCapture="true"
+            android:layout_height="150dp"
+            app:enableFullScreenPreview="true"
+            app:placeholderImage="@drawable/browse_24px"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 2: With Label -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/imageWithLabel"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            app:imageLabel="2. With Label"
+            app:imageLabelGap="8dp"
+            app:imageCornerRadius="12dp"
             app:showDeleteIcon="true"
+            app:enableCameraCapture="true"
             app:emptyStateText="Tap to capture photo"
             android:layout_marginBottom="16dp" />
 
-        <!-- ImageView with Different Scale Types -->
+        <!-- Example 3: Circular Image -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Scale Types"
-            android:textSize="18sp"
+            android:text="3. Circular Image"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="4dp" />
+
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/circularImage"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            app:imageCornerRadius="60dp"
+            app:imageBorderWidth="2dp"
+            app:imageBorderColor="#2196F3"
+            app:showDeleteIcon="true"
+            app:enableCameraCapture="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 4: Aspect Ratio 16:9 -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/aspect16_9"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:imageLabel="4. Aspect Ratio 16:9"
+            app:imageAspectRatio="1.78"
+            app:imageCornerRadius="8dp"
+            app:enableCameraCapture="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 5: Square with no border -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/squareNoBorder"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            app:imageLabel="5. Square (No Border)"
+            app:imageBorderWidth="0dp"
+            app:imageCornerRadius="0dp"
+            app:enableCameraCapture="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 6: URL Loading -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/imageFromUrl"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:imageLabel="6. Load from URL"
+            app:imageCornerRadius="16dp"
+            app:showDeleteIcon="true"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnLoadUrl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Load Sample URL"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 7: Custom Placeholder -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/customPlaceholder"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            app:imageLabel="7. Custom Placeholder"
+            app:placeholderImage="@drawable/ic_launcher_foreground"
+            app:imageCornerRadius="12dp"
+            app:enableCameraCapture="true"
+            app:showDeleteIcon="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 8: Scale Type FIT -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/scaleFit"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            app:imageLabel="8. Scale Type: FIT"
+            app:imageScaleType="fit"
+            app:imageCornerRadius="8dp"
+            app:enableCameraCapture="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 9: Scale Type CENTER -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/scaleCenter"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            app:imageLabel="9. Scale Type: CENTER"
+            app:imageScaleType="center"
+            app:imageCornerRadius="8dp"
+            app:enableCameraCapture="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 10: Thick Border -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/thickBorder"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            app:imageLabel="10. Thick Border (4dp)"
+            app:imageBorderWidth="4dp"
+            app:imageBorderColor="#FF5722"
+            app:imageCornerRadius="20dp"
+            app:enableCameraCapture="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- CAROUSEL EXAMPLES -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Carousel Examples"
+            android:textSize="24sp"
             android:textStyle="bold"
+            android:textColor="#212121"
             android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 11: Basic Carousel -->
+        <com.cropintellix.volineui.ImageCarousel
+            android:id="@+id/carousel1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:carouselLabel="11. Basic Carousel"
+            app:carouselItemWidth="140dp"
+            app:carouselItemHeight="140dp"
+            app:carouselCornerRadius="12dp"
+            app:showItemDeleteIcon="true"
+            app:showIndicators="true"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnAddToCarousel1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Sample Images"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 12: Large Items Carousel -->
+        <com.cropintellix.volineui.ImageCarousel
+            android:id="@+id/carousel2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:carouselLabel="12. Large Items (200x150)"
+            app:carouselItemWidth="200dp"
+            app:carouselItemHeight="150dp"
+            app:carouselItemSpacing="12dp"
+            app:carouselCornerRadius="16dp"
+            app:showIndicators="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 13: Small Thumbnails -->
+        <com.cropintellix.volineui.ImageCarousel
+            android:id="@+id/carousel3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:carouselLabel="13. Small Thumbnails (80x80)"
+            app:carouselItemWidth="80dp"
+            app:carouselItemHeight="80dp"
+            app:carouselItemSpacing="6dp"
+            app:carouselCornerRadius="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 14: Circular Carousel Items -->
+        <com.cropintellix.volineui.ImageCarousel
+            android:id="@+id/carousel4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:carouselLabel="14. Circular Items"
+            app:carouselItemWidth="100dp"
+            app:carouselItemHeight="100dp"
+            app:carouselCornerRadius="50dp"
+            app:showIndicators="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 15: No Delete Icons -->
+        <com.cropintellix.volineui.ImageCarousel
+            android:id="@+id/carousel5"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:carouselLabel="15. No Delete Icons"
+            app:carouselItemWidth="120dp"
+            app:carouselItemHeight="120dp"
+            app:showItemDeleteIcon="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- MORE IMAGEVIEW EXAMPLES -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="More ImageView Examples"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#212121"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 16: Camera Capture with Gallery -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/cameraCapture"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:imageLabel="16. Camera Capture"
+            app:imageCornerRadius="12dp"
+            app:showDeleteIcon="true"
+            app:enableCameraCapture="true"
+            app:emptyStateText="Tap to capture photo"
             android:layout_marginBottom="8dp" />
 
         <LinearLayout
@@ -62,132 +263,76 @@
             android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
-            <com.cropintellix.volineui.AdvancedImageView
-                android:id="@+id/imageViewFit"
+            <Button
+                android:id="@+id/btnCapture"
                 android:layout_width="0dp"
                 android:layout_weight="1"
-                android:layout_height="100dp"
-                app:imageLabel="Fit"
-                app:imageScaleType="fit"
-                app:imageCornerRadius="8dp"
-                app:imageBorderWidth="1dp"
-                app:imageBorderColor="#CCCCCC"
+                android:layout_height="wrap_content"
+                android:text="Capture"
                 android:layout_marginEnd="8dp" />
-
-            <com.cropintellix.volineui.AdvancedImageView
-                android:id="@+id/imageViewCrop"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="100dp"
-                app:imageLabel="Crop"
-                app:imageScaleType="crop"
-                app:imageCornerRadius="8dp"
-                app:imageBorderWidth="1dp"
-                app:imageBorderColor="#CCCCCC"
-                android:layout_marginStart="8dp" />
-        </LinearLayout>
-
-        <!-- ImageView with Aspect Ratio -->
-        <com.cropintellix.volineui.AdvancedImageView
-            android:id="@+id/imageViewAspect"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:imageLabel="16:9 Aspect Ratio"
-            app:imageAspectRatio="1.77"
-            app:imageScaleType="crop"
-            app:imageCornerRadius="12dp"
-            app:imageBorderWidth="2dp"
-            app:imageBorderColor="#2196F3"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Circular ImageView -->
-        <com.cropintellix.volineui.AdvancedImageView
-            android:id="@+id/imageViewCircle"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:layout_gravity="center_horizontal"
-            app:imageLabel="Profile"
-            app:imageScaleType="crop"
-            app:imageCornerRadius="60dp"
-            app:imageBorderWidth="3dp"
-            app:imageBorderColor="#4CAF50"
-            app:showDeleteIcon="true"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Load Options Section -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Load Images"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-
-            <Button
-                android:id="@+id/btnLoadUrl"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Load URL"
-                android:layout_marginEnd="4dp" />
-
-            <Button
-                android:id="@+id/btnLoadDrawable"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Load Drawable"
-                android:layout_marginStart="4dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-
-            <Button
-                android:id="@+id/btnCapturePhoto"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Capture Photo"
-                android:layout_marginEnd="4dp" />
 
             <Button
                 android:id="@+id/btnPickGallery"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Pick Gallery"
-                android:layout_marginStart="4dp" />
+                android:layout_height="wrap_content"
+                android:text="Gallery" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btnClearAll"
+        <!-- Example 17: With Loading Indicator Off -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/noLoading"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Clear All Images"
-            android:layout_marginTop="8dp" />
+            android:layout_height="150dp"
+            app:imageLabel="17. No Loading Indicator"
+            app:showLoadingIndicator="false"
+            app:imageCornerRadius="8dp"
+            app:enableCameraCapture="true"
+            android:layout_marginBottom="16dp" />
 
-        <!-- Status Display -->
-        <TextView
-            android:id="@+id/tvStatus"
+        <!-- Example 18: Colored Background -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/coloredBg"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            app:imageLabel="18. Custom Background Color"
+            app:imageBackgroundColor="#E3F2FD"
+            app:imageBorderColor="#2196F3"
+            app:imageCornerRadius="12dp"
+            app:enableCameraCapture="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 19: Full Screen Preview Off -->
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/noFullscreen"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            app:imageLabel="19. No Fullscreen Preview"
+            app:enableFullScreenPreview="false"
+            app:imageCornerRadius="8dp"
+            app:enableCameraCapture="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 20: Picture Gallery Demo -->
+        <com.cropintellix.volineui.ImageCarousel
+            android:id="@+id/galleryDemo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Status: Ready"
-            android:textSize="14sp"
-            android:padding="12dp"
-            android:background="#F5F5F5"
-            android:layout_marginTop="16dp"
-            android:gravity="center" />
+            app:carouselLabel="20. Photo Gallery Demo"
+            app:carouselItemWidth="160dp"
+            app:carouselItemHeight="160dp"
+            app:carouselCornerRadius="8dp"
+            app:carouselItemSpacing="10dp"
+            app:showItemDeleteIcon="true"
+            app:showIndicators="true"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnAddToGallery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Photo to Gallery"
+            android:layout_marginBottom="32dp" />
 
     </LinearLayout>
-
 </ScrollView>

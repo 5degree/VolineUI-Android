@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -27,50 +28,16 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import java.io.File
-import kotlin.math.abs
-import kotlin.math.max
 import kotlin.math.min
 
 /**
- * FullScreenImageViewer - A full-screen image viewer with zoom and pan capabilities
- * 
- * Features:
- * - Pinch-to-zoom gesture support
- * - Double-tap to zoom in/out (toggle between 1x and 2x)
- * - Smooth zoom animations
- * - Pan/drag when zoomed beyond 1x
- * - Momentum scrolling with velocity
- * - Boundary constraints (image snaps back if over-panned)
- * - Close button (X) on top-right
- * - Image counter for multi-image mode (1/10)
- * - Configurable min/max zoom levels (0.5x - 5x default)
- * 
- * Usage:
- * ```kotlin
- * // Show from file
- * FullScreenImageViewer.show(context, imageFile)
- * 
- * // Show from bitmap
- * FullScreenImageViewer.show(context, bitmap)
- * 
- * // Show from URL
- * FullScreenImageViewer.show(context, imageUrl)
- * 
- * // Show with options
- * FullScreenImageViewer.Builder(context)
- *     .setImageFile(file)
- *     .setMinZoom(0.5f)
- *     .setMaxZoom(10f)
- *     .setShowCloseButton(true)
- *     .show()
- * ```
+ * FullScreenImageViewer - Full-screen image viewer with zoom and pan
  */
 class FullScreenImageViewer private constructor(
     context: Context,
@@ -83,7 +50,7 @@ class FullScreenImageViewer private constructor(
         val imageUri: Uri? = null,
         val imageUrl: String? = null,
         val imageDrawableRes: Int = 0,
-        val minZoom: Float = 0.5f,
+        val minZoom: Float = 1f,      // Min zoom = fit (no zoom out)
         val maxZoom: Float = 5f,
         val showCloseButton: Boolean = true,
         val imageIndex: Int = 0,
@@ -92,7 +59,6 @@ class FullScreenImageViewer private constructor(
         val onDismissListener: (() -> Unit)? = null
     )
 
-    // Views
     private lateinit var rootLayout: FrameLayout
     private lateinit var zoomableImageView: ZoomableImageView
     private lateinit var closeButton: ImageView
@@ -102,11 +68,11 @@ class FullScreenImageViewer private constructor(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Remove title and set fullscreen
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         window?.apply {
             setBackgroundDrawable(ColorDrawable(options.backgroundColor))
             setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+            @Suppress("DEPRECATION")
             addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
             addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         }
@@ -128,7 +94,6 @@ class FullScreenImageViewer private constructor(
         zoomableImageView = ZoomableImageView(context).apply {
             minZoom = options.minZoom
             maxZoom = options.maxZoom
-            setOnSingleTapListener { toggleUI() }
         }
         rootLayout.addView(zoomableImageView, FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -136,51 +101,47 @@ class FullScreenImageViewer private constructor(
         ))
 
         // Loading indicator
-        loadingIndicator = ProgressBar(context).apply {
-            isIndeterminate = true
-        }
-        val loadingParams = FrameLayout.LayoutParams(
+        loadingIndicator = ProgressBar(context).apply { isIndeterminate = true }
+        rootLayout.addView(loadingIndicator, FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT,
             Gravity.CENTER
-        )
-        rootLayout.addView(loadingIndicator, loadingParams)
+        ))
 
-        // Close button
+        // Close button - black icon with white shadow, no bg
         if (options.showCloseButton) {
             closeButton = ImageView(context).apply {
                 setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
-                setColorFilter(Color.WHITE)
-                setPadding(dpToPx(16f), dpToPx(16f), dpToPx(16f), dpToPx(16f))
-                setBackgroundResource(android.R.drawable.dialog_holo_dark_frame)
+                setColorFilter(0xFF222222.toInt())  // Dark/black icon
+                setPadding(dpToPx(12f), dpToPx(12f), dpToPx(12f), dpToPx(12f))
+                // White shadow effect via layer
+                elevation = dpToPx(4f).toFloat()
                 setOnClickListener { dismiss() }
-                alpha = 0.9f
             }
             val closeParams = FrameLayout.LayoutParams(
-                dpToPx(56f),
-                dpToPx(56f),
+                dpToPx(48f), dpToPx(48f),
                 Gravity.TOP or Gravity.END
             )
-            closeParams.topMargin = dpToPx(24f)
+            closeParams.topMargin = dpToPx(32f)
             closeParams.marginEnd = dpToPx(16f)
             rootLayout.addView(closeButton, closeParams)
         }
 
-        // Image counter (for multi-image mode)
+        // Image counter
         if (options.totalImages > 1) {
             counterText = TextView(context).apply {
                 text = "${options.imageIndex + 1}/${options.totalImages}"
                 setTextColor(Color.WHITE)
-                textSize = 16f
-                setPadding(dpToPx(12f), dpToPx(8f), dpToPx(12f), dpToPx(8f))
-                setBackgroundColor(0x80000000.toInt())
+                textSize = 14f
+                setPadding(dpToPx(10f), dpToPx(6f), dpToPx(10f), dpToPx(6f))
+                setBackgroundColor(0x66000000.toInt())
             }
             val counterParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.TOP or Gravity.CENTER_HORIZONTAL
             )
-            counterParams.topMargin = dpToPx(24f)
+            counterParams.topMargin = dpToPx(32f)
             rootLayout.addView(counterText, counterParams)
         }
     }
@@ -203,41 +164,21 @@ class FullScreenImageViewer private constructor(
         glideRequest
             .listener(object : RequestListener<Drawable> {
                 override fun onLoadFailed(
-                    e: GlideException?,
-                    model: Any?,
-                    target: Target<Drawable>,
-                    isFirstResource: Boolean
+                    e: GlideException?, model: Any?, target: Target<Drawable>, isFirstResource: Boolean
                 ): Boolean {
                     loadingIndicator.visibility = View.GONE
                     return false
                 }
 
                 override fun onResourceReady(
-                    resource: Drawable,
-                    model: Any,
-                    target: Target<Drawable>,
-                    dataSource: DataSource,
-                    isFirstResource: Boolean
+                    resource: Drawable, model: Any, target: Target<Drawable>,
+                    dataSource: DataSource, isFirstResource: Boolean
                 ): Boolean {
                     loadingIndicator.visibility = View.GONE
                     return false
                 }
             })
             .into(zoomableImageView)
-    }
-
-    private var uiVisible = true
-
-    private fun toggleUI() {
-        uiVisible = !uiVisible
-        val alpha = if (uiVisible) 1f else 0f
-        
-        if (options.showCloseButton) {
-            closeButton.animate().alpha(if (uiVisible) 0.9f else 0f).setDuration(200).start()
-        }
-        if (options.totalImages > 1 && ::counterText.isInitialized) {
-            counterText.animate().alpha(alpha).setDuration(200).start()
-        }
     }
 
     override fun dismiss() {
@@ -250,59 +191,50 @@ class FullScreenImageViewer private constructor(
     }
 
     /**
-     * ZoomableImageView - An ImageView with pinch-to-zoom and pan support
+     * ZoomableImageView - ImageView with pinch-zoom, double-tap, and pan
+     * Default shows image fit to screen (no zoom out below fit)
      */
     inner class ZoomableImageView(context: Context) : androidx.appcompat.widget.AppCompatImageView(context) {
 
-        var minZoom = 0.5f
+        var minZoom = 1f
         var maxZoom = 5f
 
-        private var onSingleTapListener: (() -> Unit)? = null
-
         private val matrix = Matrix()
-        private val savedMatrix = Matrix()
         private val matrixValues = FloatArray(9)
 
-        // Touch mode constants
+        // Touch constants
         private val TOUCH_NONE = 0
         private val TOUCH_DRAG = 1
         private val TOUCH_ZOOM = 2
 
-        // Touch handling
         private var mode = TOUCH_NONE
-        private val start = android.graphics.PointF()
-        private val mid = android.graphics.PointF()
-        private var oldDist = 1f
+        private var lastTouchX = 0f
+        private var lastTouchY = 0f
+        private var baseScale = 1f  // Scale that fits image to screen
 
-        // Gesture detectors
+        private val displayRect = RectF()
         private val scaleGestureDetector: ScaleGestureDetector
         private val gestureDetector: GestureDetector
-
-        // Boundary calculation
-        private val displayRect = RectF()
-        private val viewRect = RectF()
-
-        // Animation
         private var zoomAnimator: ValueAnimator? = null
 
         init {
             scaleType = ScaleType.MATRIX
-            
+
             scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
                 override fun onScale(detector: ScaleGestureDetector): Boolean {
                     val scaleFactor = detector.scaleFactor
                     val focusX = detector.focusX
                     val focusY = detector.focusY
-                    
+
                     val currentScale = getCurrentScale()
                     val newScale = currentScale * scaleFactor
-                    
-                    if (newScale in minZoom..maxZoom) {
+
+                    // Clamp to min/max (baseScale is the "fit" scale which is minZoom)
+                    if (newScale >= baseScale * minZoom && newScale <= baseScale * maxZoom) {
                         matrix.postScale(scaleFactor, scaleFactor, focusX, focusY)
                         constrainMatrix()
                         imageMatrix = matrix
                     }
-                    
                     return true
                 }
             })
@@ -310,69 +242,48 @@ class FullScreenImageViewer private constructor(
             gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
                 override fun onDoubleTap(e: MotionEvent): Boolean {
                     val currentScale = getCurrentScale()
-                    val targetScale = if (currentScale < 1.5f) 2f else 1f
+                    // Toggle between fit (baseScale) and 2x
+                    val targetScale = if (currentScale < baseScale * 1.5f) baseScale * 2f else baseScale
                     animateZoom(currentScale, targetScale, e.x, e.y)
                     return true
                 }
 
                 override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                    onSingleTapListener?.invoke()
-                    return true
-                }
-
-                override fun onFling(
-                    e1: MotionEvent?,
-                    e2: MotionEvent,
-                    velocityX: Float,
-                    velocityY: Float
-                ): Boolean {
-                    // Apply momentum scrolling
-                    if (getCurrentScale() > 1f) {
-                        animateFling(velocityX, velocityY)
-                    }
+                    dismiss()  // Single tap closes the viewer
                     return true
                 }
             })
-        }
-
-        fun setOnSingleTapListener(listener: () -> Unit) {
-            onSingleTapListener = listener
         }
 
         override fun onTouchEvent(event: MotionEvent): Boolean {
             scaleGestureDetector.onTouchEvent(event)
             gestureDetector.onTouchEvent(event)
 
-            when (event.action and MotionEvent.ACTION_MASK) {
+            when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    savedMatrix.set(matrix)
-                    start.set(event.x, event.y)
+                    lastTouchX = event.x
+                    lastTouchY = event.y
                     mode = TOUCH_DRAG
                 }
                 MotionEvent.ACTION_POINTER_DOWN -> {
-                    oldDist = spacing(event)
-                    if (oldDist > 10f) {
-                        savedMatrix.set(matrix)
-                        midPoint(mid, event)
-                        mode = TOUCH_ZOOM
-                    }
+                    mode = TOUCH_ZOOM
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    if (mode == TOUCH_DRAG && getCurrentScale() > 1f) {
-                        matrix.set(savedMatrix)
-                        val dx = event.x - start.x
-                        val dy = event.y - start.y
+                    if (mode == TOUCH_DRAG && getCurrentScale() > baseScale) {
+                        val dx = event.x - lastTouchX
+                        val dy = event.y - lastTouchY
                         matrix.postTranslate(dx, dy)
                         constrainMatrix()
                         imageMatrix = matrix
                     }
+                    lastTouchX = event.x
+                    lastTouchY = event.y
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
                     mode = TOUCH_NONE
-                    constrainMatrixAnimated()
+                    snapBack()
                 }
             }
-
             return true
         }
 
@@ -381,101 +292,55 @@ class FullScreenImageViewer private constructor(
             return matrixValues[Matrix.MSCALE_X]
         }
 
-        private fun spacing(event: MotionEvent): Float {
-            if (event.pointerCount < 2) return 0f
-            val x = event.getX(0) - event.getX(1)
-            val y = event.getY(0) - event.getY(1)
-            return kotlin.math.sqrt(x * x + y * y)
-        }
-
-        private fun midPoint(point: android.graphics.PointF, event: MotionEvent) {
-            if (event.pointerCount < 2) return
-            point.x = (event.getX(0) + event.getX(1)) / 2
-            point.y = (event.getY(0) + event.getY(1)) / 2
-        }
-
         private fun constrainMatrix() {
             val drawable = drawable ?: return
-            
-            val drawableWidth = drawable.intrinsicWidth.toFloat()
-            val drawableHeight = drawable.intrinsicHeight.toFloat()
-            
-            displayRect.set(0f, 0f, drawableWidth, drawableHeight)
+            val dw = drawable.intrinsicWidth.toFloat()
+            val dh = drawable.intrinsicHeight.toFloat()
+
+            displayRect.set(0f, 0f, dw, dh)
             matrix.mapRect(displayRect)
-            
-            viewRect.set(0f, 0f, width.toFloat(), height.toFloat())
-            
+
             var dx = 0f
             var dy = 0f
-            
-            // Constrain horizontal
-            if (displayRect.width() <= viewRect.width()) {
-                dx = (viewRect.width() - displayRect.width()) / 2 - displayRect.left
+
+            // Center if smaller than view, otherwise constrain edges
+            if (displayRect.width() <= width) {
+                dx = (width - displayRect.width()) / 2 - displayRect.left
             } else {
                 if (displayRect.left > 0) dx = -displayRect.left
-                else if (displayRect.right < viewRect.width()) dx = viewRect.width() - displayRect.right
+                else if (displayRect.right < width) dx = width - displayRect.right
             }
-            
-            // Constrain vertical
-            if (displayRect.height() <= viewRect.height()) {
-                dy = (viewRect.height() - displayRect.height()) / 2 - displayRect.top
+
+            if (displayRect.height() <= height) {
+                dy = (height - displayRect.height()) / 2 - displayRect.top
             } else {
                 if (displayRect.top > 0) dy = -displayRect.top
-                else if (displayRect.bottom < viewRect.height()) dy = viewRect.height() - displayRect.bottom
+                else if (displayRect.bottom < height) dy = height - displayRect.bottom
             }
-            
+
             matrix.postTranslate(dx, dy)
         }
 
-        private fun constrainMatrixAnimated() {
-            val drawable = drawable ?: return
-            
+        private fun snapBack() {
             val currentScale = getCurrentScale()
-            if (currentScale < 1f) {
-                // Animate back to scale 1
-                matrix.getValues(matrixValues)
-                val centerX = width / 2f
-                val centerY = height / 2f
-                animateZoom(currentScale, 1f, centerX, centerY)
+            if (currentScale < baseScale) {
+                animateZoom(currentScale, baseScale, width / 2f, height / 2f)
             }
         }
 
         private fun animateZoom(fromScale: Float, toScale: Float, focusX: Float, focusY: Float) {
             zoomAnimator?.cancel()
-            
             val startMatrix = Matrix(matrix)
-            
-            zoomAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-                duration = 300
-                interpolator = DecelerateInterpolator()
-                addUpdateListener { animation ->
-                    val progress = animation.animatedValue as Float
-                    val scale = fromScale + (toScale - fromScale) * progress
-                    val scaleFactor = scale / getCurrentScale()
-                    
-                    matrix.set(startMatrix)
-                    val scaleFromStart = scale / fromScale
-                    matrix.postScale(scaleFromStart, scaleFromStart, focusX, focusY)
-                    constrainMatrix()
-                    imageMatrix = matrix
-                }
-                start()
-            }
-        }
 
-        private fun animateFling(velocityX: Float, velocityY: Float) {
-            val startMatrix = Matrix(matrix)
-            val maxTranslate = 500f
-            
-            val dx = (velocityX / 10f).coerceIn(-maxTranslate, maxTranslate)
-            val dy = (velocityY / 10f).coerceIn(-maxTranslate, maxTranslate)
-            
-            ValueAnimator.ofFloat(1f, 0f).apply {
-                duration = 300
+            zoomAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 250
                 interpolator = DecelerateInterpolator()
-                addUpdateListener { animation ->
-                    val progress = animation.animatedValue as Float
-                    matrix.postTranslate(dx * progress * 0.1f, dy * progress * 0.1f)
+                addUpdateListener { anim ->
+                    val t = anim.animatedValue as Float
+                    val scale = fromScale + (toScale - fromScale) * t
+                    matrix.set(startMatrix)
+                    val factor = scale / fromScale
+                    matrix.postScale(factor, factor, focusX, focusY)
                     constrainMatrix()
                     imageMatrix = matrix
                 }
@@ -485,37 +350,33 @@ class FullScreenImageViewer private constructor(
 
         override fun setImageDrawable(drawable: Drawable?) {
             super.setImageDrawable(drawable)
-            resetZoom()
+            resetToFit()
         }
 
-        private fun resetZoom() {
+        private fun resetToFit() {
             val drawable = drawable ?: return
-            
             post {
-                val drawableWidth = drawable.intrinsicWidth.toFloat()
-                val drawableHeight = drawable.intrinsicHeight.toFloat()
-                
-                val scaleX = width.toFloat() / drawableWidth
-                val scaleY = height.toFloat() / drawableHeight
-                val scale = min(scaleX, scaleY)
-                
+                val dw = drawable.intrinsicWidth.toFloat()
+                val dh = drawable.intrinsicHeight.toFloat()
+
+                val scaleX = width.toFloat() / dw
+                val scaleY = height.toFloat() / dh
+                baseScale = min(scaleX, scaleY)  // Fit scale
+
                 matrix.reset()
-                matrix.postScale(scale, scale)
-                
-                val scaledWidth = drawableWidth * scale
-                val scaledHeight = drawableHeight * scale
-                val dx = (width - scaledWidth) / 2
-                val dy = (height - scaledHeight) / 2
-                
+                matrix.postScale(baseScale, baseScale)
+
+                val scaledW = dw * baseScale
+                val scaledH = dh * baseScale
+                val dx = (width - scaledW) / 2
+                val dy = (height - scaledH) / 2
+
                 matrix.postTranslate(dx, dy)
                 imageMatrix = matrix
             }
         }
     }
 
-    /**
-     * Builder for creating FullScreenImageViewer with custom options
-     */
     class Builder(private val context: Context) {
         private var options = ViewerOptions()
 
@@ -540,32 +401,9 @@ class FullScreenImageViewer private constructor(
     }
 
     companion object {
-        /**
-         * Show fullscreen viewer for a file
-         */
-        fun show(context: Context, file: File) {
-            Builder(context).setImageFile(file).show()
-        }
-
-        /**
-         * Show fullscreen viewer for a bitmap
-         */
-        fun show(context: Context, bitmap: Bitmap) {
-            Builder(context).setImageBitmap(bitmap).show()
-        }
-
-        /**
-         * Show fullscreen viewer for a URL
-         */
-        fun show(context: Context, url: String) {
-            Builder(context).setImageUrl(url).show()
-        }
-
-        /**
-         * Show fullscreen viewer for a URI
-         */
-        fun show(context: Context, uri: Uri) {
-            Builder(context).setImageUri(uri).show()
-        }
+        fun show(context: Context, file: File) = Builder(context).setImageFile(file).show()
+        fun show(context: Context, bitmap: Bitmap) = Builder(context).setImageBitmap(bitmap).show()
+        fun show(context: Context, url: String) = Builder(context).setImageUrl(url).show()
+        fun show(context: Context, uri: Uri) = Builder(context).setImageUri(uri).show()
     }
 }
