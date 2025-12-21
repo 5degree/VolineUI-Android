@@ -12,10 +12,9 @@ import android.graphics.Shader
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.GestureDetector
-import android.view.HapticFeedbackConstants
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
-import android.view.View
 import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
 import android.widget.TextView

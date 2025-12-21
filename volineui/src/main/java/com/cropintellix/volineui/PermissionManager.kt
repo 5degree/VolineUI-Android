@@ -238,7 +238,7 @@ class PermissionManager private constructor(
         }
         
         // Ensure we have an active activity
-        val activity = currentActivityRef?.get() 
+        currentActivityRef?.get()
             ?: throw PermissionException(PermissionException.ERROR_ACTIVITY_DESTROYED)
         
         // Store callback and mark permission as requested
@@ -272,7 +272,7 @@ class PermissionManager private constructor(
         }
         
         // Ensure we have an active activity
-        val activity = currentActivityRef?.get() 
+        currentActivityRef?.get()
             ?: throw PermissionException(PermissionException.ERROR_ACTIVITY_DESTROYED)
         
         // Store callback and mark permissions as requested

@@ -659,14 +659,14 @@ class AdvancedButton @JvmOverloads constructor(
             ButtonStyle.ICON -> {
                 minimumWidth = minHeight.toInt()
                 minimumHeight = minHeight.toInt()
-                textView.visibility = View.GONE
+                textView.visibility = GONE
             }
             ButtonStyle.FAB -> {
                 elevation = dpToPx(6f)
                 cornerRadius = minHeight / 2
                 minimumWidth = dpToPx(56f).toInt()
                 minimumHeight = dpToPx(56f).toInt()
-                textView.visibility = View.GONE
+                textView.visibility = GONE
             }
             ButtonStyle.EXTENDED_FAB -> {
                 elevation = dpToPx(6f)
@@ -701,7 +701,7 @@ class AdvancedButton @JvmOverloads constructor(
             ButtonState.NORMAL -> {
                 stopAllAnimations()
                 textView.text = transformText(originalText)
-                textView.visibility = if (buttonType == ButtonStyle.ICON || buttonType == ButtonStyle.FAB) View.GONE else View.VISIBLE
+                textView.visibility = if (buttonType == ButtonStyle.ICON || buttonType == ButtonStyle.FAB) GONE else VISIBLE
                 showProgressBar(false)
                 applyNormalColors()
                 isClickable = true
@@ -810,7 +810,7 @@ class AdvancedButton @JvmOverloads constructor(
         
         when (loadingType) {
             LoadingType.SPINNER -> {
-                textView.visibility = View.GONE
+                textView.visibility = GONE
                 showProgressBar(true)
             }
             LoadingType.DOTS -> {
@@ -820,13 +820,13 @@ class AdvancedButton @JvmOverloads constructor(
                 startShimmerAnimation()
             }
             LoadingType.PROGRESS -> {
-                textView.visibility = View.VISIBLE
+                textView.visibility = VISIBLE
                 updateProgressText()
             }
         }
         
         loadingText?.let {
-            textView.visibility = View.VISIBLE
+            textView.visibility = VISIBLE
             textView.text = it
         }
     }
@@ -844,9 +844,9 @@ class AdvancedButton @JvmOverloads constructor(
                 containerLayout.removeAllViews()
                 containerLayout.addView(progressBar)
             }
-            progressBar?.visibility = View.VISIBLE
+            progressBar?.visibility = VISIBLE
         } else {
-            progressBar?.visibility = View.GONE
+            progressBar?.visibility = GONE
             containerLayout.removeAllViews()
             leadingIconView?.let { containerLayout.addView(it) }
             containerLayout.addView(textView)
@@ -855,7 +855,7 @@ class AdvancedButton @JvmOverloads constructor(
     }
     
     private fun startDotsAnimation() {
-        textView.visibility = View.VISIBLE
+        textView.visibility = VISIBLE
         dotsAnimator?.cancel()
         
         dotsAnimator = ValueAnimator.ofFloat(0f, 3f).apply {
@@ -966,8 +966,8 @@ class AdvancedButton @JvmOverloads constructor(
             return
         }
         
-        val scaleX = ObjectAnimator.ofFloat(this, View.SCALE_X, scaleX, targetScale)
-        val scaleY = ObjectAnimator.ofFloat(this, View.SCALE_Y, scaleY, targetScale)
+        val scaleX = ObjectAnimator.ofFloat(this, SCALE_X, scaleX, targetScale)
+        val scaleY = ObjectAnimator.ofFloat(this, SCALE_Y, scaleY, targetScale)
         
         AnimatorSet().apply {
             playTogether(scaleX, scaleY)
@@ -985,7 +985,7 @@ class AdvancedButton @JvmOverloads constructor(
     private fun animateElevation(targetElevation: Float) {
         if (!enableElevationAnimation) return
         
-        ObjectAnimator.ofFloat(this, View.TRANSLATION_Z, elevation, targetElevation).apply {
+        ObjectAnimator.ofFloat(this, TRANSLATION_Z, elevation, targetElevation).apply {
             duration = animationDuration / 2
             start()
         }
@@ -993,7 +993,7 @@ class AdvancedButton @JvmOverloads constructor(
     
     private fun performShakeAnimation(onComplete: (() -> Unit)? = null) {
         val shakeAnimator = ObjectAnimator.ofFloat(
-            this, View.TRANSLATION_X,
+            this, TRANSLATION_X,
             0f, -10f, 10f, -10f, 10f, -5f, 5f, 0f
         )
         shakeAnimator.duration = 400
@@ -1261,7 +1261,7 @@ class AdvancedButton @JvmOverloads constructor(
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
-        val heightMode = MeasureSpec.getMode(heightMeasureSpec)
+        MeasureSpec.getMode(heightMeasureSpec)
         
         var measuredWidth = measuredWidth
         var measuredHeight = measuredHeight

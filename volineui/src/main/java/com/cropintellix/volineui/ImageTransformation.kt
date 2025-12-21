@@ -2,6 +2,7 @@
 
 package com.cropintellix.volineui
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
@@ -16,8 +17,6 @@ import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicBlur
-import android.content.Context
-import kotlin.math.max
 import kotlin.math.min
 
 /**

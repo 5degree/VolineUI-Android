@@ -6,10 +6,8 @@ import android.animation.ValueAnimator
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
-import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -524,9 +522,7 @@ class CarouselViewer(
 
     private fun loadImage(index: Int) {
         loadingIndicator.visibility = View.VISIBLE
-        val source = sources[index]
-
-        val req = when (source) {
+        val req = when (val source = sources[index]) {
             is ImageCarousel.ImageSource.FileSource -> Glide.with(context).load(source.file)
             is ImageCarousel.ImageSource.BitmapSource -> Glide.with(context).load(source.bitmap)
             is ImageCarousel.ImageSource.UrlSource -> Glide.with(context).load(source.url)

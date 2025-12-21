@@ -1,7 +1,6 @@
 package com.cropintellix.volineui
 
 import android.util.Patterns
-import java.util.regex.Pattern
 
 /**
  * Utility class for validating input field values

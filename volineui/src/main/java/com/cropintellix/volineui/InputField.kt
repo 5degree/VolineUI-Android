@@ -120,7 +120,7 @@ class InputField @JvmOverloads constructor(
         
         // Create label
         labelTextView = TextView(context).apply {
-            visibility = View.GONE
+            visibility = GONE
             textSize = 14f
             setTextColor(0xFF757575.toInt())
         }
@@ -140,14 +140,14 @@ class InputField @JvmOverloads constructor(
         
         // Create error text
         errorTextView = TextView(context).apply {
-            visibility = View.GONE
+            visibility = GONE
             textSize = 12f
             setTextColor(errorColor)
         }
         
         // Create counter
         counterTextView = TextView(context).apply {
-            visibility = View.GONE
+            visibility = GONE
             textSize = 12f
             setTextColor(0xFF757575.toInt())
             gravity = Gravity.END
@@ -190,10 +190,10 @@ class InputField @JvmOverloads constructor(
 
             if (!label.isNullOrEmpty()) {
                 labelTextView.text = label
-                labelTextView.visibility = View.VISIBLE
+                labelTextView.visibility = VISIBLE
             } else if (!hint.isNullOrEmpty()) {
                 labelTextView.text = hint
-                labelTextView.visibility = View.VISIBLE
+                labelTextView.visibility = VISIBLE
             }
 
             // Input type
@@ -379,7 +379,7 @@ class InputField @JvmOverloads constructor(
 
         // Setup character counter
         if (showCharacterCounter) {
-            counterTextView.visibility = View.VISIBLE
+            counterTextView.visibility = VISIBLE
             updateCharacterCounter()
         }
 
@@ -411,7 +411,7 @@ class InputField @JvmOverloads constructor(
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 // Update clear icon visibility
-                clearIconView?.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
+                clearIconView?.visibility = if (s.isNullOrEmpty()) GONE else VISIBLE
                 
                 // Update character counter
                 if (showCharacterCounter) {
@@ -430,7 +430,7 @@ class InputField @JvmOverloads constructor(
         clearIconView = ImageView(context).apply {
             setImageDrawable(createClearIconDrawable())
             scaleType = ImageView.ScaleType.FIT_CENTER
-            visibility = if (inputEditText.text.isNullOrEmpty()) View.GONE else View.VISIBLE
+            visibility = if (inputEditText.text.isNullOrEmpty()) GONE else VISIBLE
             setOnClickListener {
                 inputEditText.text?.clear()
             }
@@ -509,7 +509,7 @@ class InputField @JvmOverloads constructor(
      */
     fun showError(errorMessage: String) {
         errorTextView.text = errorMessage
-        errorTextView.visibility = View.VISIBLE
+        errorTextView.visibility = VISIBLE
         updateState(FieldState.ERROR)
         shakeAnimation()
     }
@@ -519,7 +519,7 @@ class InputField @JvmOverloads constructor(
      */
     fun clearError() {
         errorTextView.text = ""
-        errorTextView.visibility = View.GONE
+        errorTextView.visibility = GONE
         if (currentState == FieldState.ERROR) {
             updateState(FieldState.NORMAL)
         }
@@ -536,11 +536,11 @@ class InputField @JvmOverloads constructor(
                 }
                 addView(loadingProgressBar)
             }
-            loadingProgressBar?.visibility = View.VISIBLE
+            loadingProgressBar?.visibility = VISIBLE
             updateState(FieldState.LOADING)
             inputEditText.isEnabled = false
         } else {
-            loadingProgressBar?.visibility = View.GONE
+            loadingProgressBar?.visibility = GONE
             inputEditText.isEnabled = true
             updateState(FieldState.NORMAL)
         }
@@ -593,10 +593,10 @@ class InputField @JvmOverloads constructor(
                 addView(prefixIconView)
             }
             prefixIconView?.setImageDrawable(drawable)
-            prefixIconView?.visibility = View.VISIBLE
+            prefixIconView?.visibility = VISIBLE
             requestLayout()
         } else {
-            prefixIconView?.visibility = View.GONE
+            prefixIconView?.visibility = GONE
         }
     }
 
@@ -612,10 +612,10 @@ class InputField @JvmOverloads constructor(
                 addView(suffixIconView)
             }
             suffixIconView?.setImageDrawable(drawable)
-            suffixIconView?.visibility = View.VISIBLE
+            suffixIconView?.visibility = VISIBLE
             requestLayout()
         } else {
-            suffixIconView?.visibility = View.GONE
+            suffixIconView?.visibility = GONE
         }
     }
 
@@ -683,7 +683,7 @@ class InputField @JvmOverloads constructor(
         var totalHeight = 0
 
         // Measure label
-        if (labelTextView.visibility == View.VISIBLE) {
+        if (labelTextView.visibility == VISIBLE) {
             measureChild(
                 labelTextView,
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
@@ -696,15 +696,15 @@ class InputField @JvmOverloads constructor(
         val iconSize = dpToPx(24f).toInt()
         var inputWidth = width
         
-        if (prefixIconView?.visibility == View.VISIBLE) {
+        if (prefixIconView?.visibility == VISIBLE) {
             inputWidth -= iconSize + iconPadding.toInt()
         }
         
         val rightIconsCount = listOfNotNull(
-            suffixIconView?.takeIf { it.visibility == View.VISIBLE },
-            clearIconView?.takeIf { it.visibility == View.VISIBLE },
-            passwordToggleView?.takeIf { it.visibility == View.VISIBLE },
-            loadingProgressBar?.takeIf { it.visibility == View.VISIBLE }
+            suffixIconView?.takeIf { it.visibility == VISIBLE },
+            clearIconView?.takeIf { it.visibility == VISIBLE },
+            passwordToggleView?.takeIf { it.visibility == VISIBLE },
+            loadingProgressBar?.takeIf { it.visibility == VISIBLE }
         ).size
         
         inputWidth -= rightIconsCount * (iconSize + iconPadding.toInt())
@@ -719,7 +719,7 @@ class InputField @JvmOverloads constructor(
         totalHeight += inputHeight
 
         // Measure error text
-        if (errorTextView.visibility == View.VISIBLE) {
+        if (errorTextView.visibility == VISIBLE) {
             measureChild(
                 errorTextView,
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
@@ -729,7 +729,7 @@ class InputField @JvmOverloads constructor(
         }
 
         // Measure counter
-        if (counterTextView.visibility == View.VISIBLE) {
+        if (counterTextView.visibility == VISIBLE) {
             measureChild(
                 counterTextView,
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
@@ -746,7 +746,7 @@ class InputField @JvmOverloads constructor(
         val contentWidth = right - left - paddingStart - paddingEnd
 
         // Layout label
-        if (labelTextView.visibility == View.VISIBLE) {
+        if (labelTextView.visibility == VISIBLE) {
             labelTextView.layout(
                 paddingStart,
                 currentTop,
@@ -765,7 +765,7 @@ class InputField @JvmOverloads constructor(
         var rightOffset = right - left - paddingEnd
 
         // Layout prefix icon with proper spacing
-        if (prefixIconView?.visibility == View.VISIBLE) {
+        if (prefixIconView?.visibility == VISIBLE) {
             val iconTop = inputTop + (inputHeight - iconSize) / 2
             val iconMargin = dpToPx(8f).toInt()
             prefixIconView?.layout(
@@ -779,10 +779,10 @@ class InputField @JvmOverloads constructor(
 
         // Layout right icons (from right to left) with proper spacing
         val rightIcons = mutableListOf<View>()
-        loadingProgressBar?.takeIf { it.visibility == View.VISIBLE }?.let { rightIcons.add(it) }
-        passwordToggleView?.takeIf { it.visibility == View.VISIBLE }?.let { rightIcons.add(it) }
-        clearIconView?.takeIf { it.visibility == View.VISIBLE }?.let { rightIcons.add(it) }
-        suffixIconView?.takeIf { it.visibility == View.VISIBLE }?.let { rightIcons.add(it) }
+        loadingProgressBar?.takeIf { it.visibility == VISIBLE }?.let { rightIcons.add(it) }
+        passwordToggleView?.takeIf { it.visibility == VISIBLE }?.let { rightIcons.add(it) }
+        clearIconView?.takeIf { it.visibility == VISIBLE }?.let { rightIcons.add(it) }
+        suffixIconView?.takeIf { it.visibility == VISIBLE }?.let { rightIcons.add(it) }
 
         val iconMargin = dpToPx(8f).toInt()
         for (icon in rightIcons) {
@@ -806,7 +806,7 @@ class InputField @JvmOverloads constructor(
         currentTop += inputHeight
 
         // Layout error text
-        if (errorTextView.visibility == View.VISIBLE) {
+        if (errorTextView.visibility == VISIBLE) {
             currentTop += dpToPx(4f).toInt()
             errorTextView.layout(
                 paddingStart,
@@ -818,7 +818,7 @@ class InputField @JvmOverloads constructor(
         }
 
         // Layout counter
-        if (counterTextView.visibility == View.VISIBLE) {
+        if (counterTextView.visibility == VISIBLE) {
             currentTop += dpToPx(4f).toInt()
             counterTextView.layout(
                 paddingStart,
@@ -831,7 +831,7 @@ class InputField @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         // Calculate input field bounds
-        val inputTop = if (labelTextView.visibility == View.VISIBLE) {
+        val inputTop = if (labelTextView.visibility == VISIBLE) {
             labelTextView.bottom.toFloat() + labelGap
         } else {
             paddingTop.toFloat()

@@ -5,7 +5,6 @@ package com.cropintellix.volineui
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Application
-import android.app.Dialog
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
@@ -23,8 +22,6 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.view.Window
-import android.widget.ImageView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts

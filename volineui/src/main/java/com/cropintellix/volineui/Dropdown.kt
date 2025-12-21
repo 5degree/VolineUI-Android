@@ -651,7 +651,7 @@ class Dropdown @JvmOverloads constructor(
         popupWindow = PopupWindow(
             dropdownContentView,
             width,
-            ViewGroup.LayoutParams.WRAP_CONTENT,
+            LayoutParams.WRAP_CONTENT,
             true
         ).apply {
             isFocusable = true
@@ -852,9 +852,9 @@ class Dropdown @JvmOverloads constructor(
         val contentLayout = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT
+            layoutParams = LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
             ).apply {
                 gravity = Gravity.CENTER_VERTICAL
             }
@@ -994,7 +994,7 @@ class Dropdown @JvmOverloads constructor(
 
     private fun createCheckmarkView(): ImageView {
         return ImageView(context).apply {
-            layoutParams = FrameLayout.LayoutParams(
+            layoutParams = LayoutParams(
                 dpToPx(24f).toInt(),
                 dpToPx(24f).toInt(),
                 Gravity.END or Gravity.CENTER_VERTICAL
@@ -1364,7 +1364,7 @@ class Dropdown @JvmOverloads constructor(
         var rightOffset = contentWidth - paddingEnd
 
         // Apply horizontal padding if no leading icon
-        val effectiveLeftPadding = if (leadingIconView?.isVisible == true) {
+        if (leadingIconView?.isVisible == true) {
             dpToPx(12f).toInt() // Icon margin
         } else {
             horizontalPadding.toInt() // Horizontal padding when no icon

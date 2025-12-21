@@ -2,11 +2,7 @@
 
 package com.cropintellix.volineui
 
-import android.R.attr.inset
-import android.R.attr.insetLeft
-import android.R.attr.insetRight
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -14,10 +10,8 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PointF
 import android.graphics.RectF
-import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.util.Base64
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -34,8 +28,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import androidx.core.view.updatePadding
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.shape.MaterialShapes
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -123,7 +115,7 @@ class SignaturePad @JvmOverloads constructor(
             text = promptTextString
             textSize = 18f
             setTextColor(Color.parseColor("#252525"))
-            gravity = android.view.Gravity.CENTER
+            gravity = Gravity.CENTER
             layoutParams = LayoutParams(
                 LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT
@@ -258,7 +250,7 @@ class SignaturePad @JvmOverloads constructor(
     }
     
     private fun updatePromptTextVisibility() {
-        promptText.visibility = if (isEmpty()) View.VISIBLE else View.GONE
+        promptText.visibility = if (isEmpty()) VISIBLE else GONE
     }
     
     private fun updateButtonStates() {
