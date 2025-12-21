@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.imageview
 
 /**
  * ImageViewException - Exception classes for AdvancedImageView operations

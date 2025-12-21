@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.photocapturemanager
 
 /**
  * PhotoCaptureConfig - Configuration for photo capture operations

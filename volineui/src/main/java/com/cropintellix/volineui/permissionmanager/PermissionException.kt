@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.permissionmanager
 
 /**
  * PermissionException - Custom exception for permission-related errors

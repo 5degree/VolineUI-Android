@@ -7,9 +7,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import com.cropintellix.volineui.AdvancedImageView
 import com.cropintellix.volineui.ImageCarousel
-import com.cropintellix.volineui.PhotoCaptureConfig
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
 import com.cropintellix.volineui.PhotoCaptureManager
-import com.cropintellix.volineui.PhotoCaptureResult
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureResult
 import java.io.File
 
 class ImageViewExamplesActivity : AppCompatActivity() {

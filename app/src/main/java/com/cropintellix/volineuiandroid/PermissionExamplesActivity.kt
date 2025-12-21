@@ -1,7 +1,6 @@
 package com.cropintellix.volineuiandroid
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -11,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.cropintellix.volineui.PermissionManager
-import com.cropintellix.volineui.PermissionStatus
+import com.cropintellix.volineui.permissionmanager.PermissionStatus
 import com.cropintellix.volineuiandroid.databinding.ActivityPermissionExamplesBinding
 
 /**

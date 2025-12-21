@@ -28,6 +28,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.cropintellix.volineui.imageview.FullScreenImageViewer
 import java.io.File
 
 /**

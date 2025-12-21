@@ -20,6 +20,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
+import com.cropintellix.volineui.radio.RadioOptionsException
 
 /**
  * Modern radio/segmented control component with sliding pill indicator.
@@ -325,7 +326,7 @@ class Radio @JvmOverloads constructor(
 
     /**
      * Set options programmatically
-     * @throws RadioOptionsException if options list has fewer than 2 items
+     * @throws com.cropintellix.volineui.radio.RadioOptionsException if options list has fewer than 2 items
      */
     fun setOptions(options: List<String>) {
         if (options.isEmpty()) {

@@ -15,6 +15,9 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.cropintellix.volineui.permissionmanager.PermissionException
+import com.cropintellix.volineui.permissionmanager.PermissionResult
+import com.cropintellix.volineui.permissionmanager.PermissionStatus
 import java.lang.ref.WeakReference
 
 /**
@@ -195,7 +198,7 @@ class PermissionManager private constructor(
      */
     fun hasAllRequiredPermissions(): Boolean {
         return configuredPermissions.all { 
-            checkPermission(it) == PermissionStatus.GRANTED 
+            checkPermission(it) == PermissionStatus.GRANTED
         }
     }
     
@@ -204,7 +207,7 @@ class PermissionManager private constructor(
      */
     val grantedPermissions: List<String>
         get() = configuredPermissions.filter { 
-            checkPermission(it) == PermissionStatus.GRANTED 
+            checkPermission(it) == PermissionStatus.GRANTED
         }
     
     /**
@@ -212,7 +215,7 @@ class PermissionManager private constructor(
      */
     val deniedPermissions: List<String>
         get() = configuredPermissions.filter { 
-            checkPermission(it) == PermissionStatus.DENIED 
+            checkPermission(it) == PermissionStatus.DENIED
         }
     
     /**
@@ -220,7 +223,7 @@ class PermissionManager private constructor(
      */
     val permanentlyDeniedPermissions: List<String>
         get() = configuredPermissions.filter { 
-            checkPermission(it) == PermissionStatus.PERMANENTLY_DENIED 
+            checkPermission(it) == PermissionStatus.PERMANENTLY_DENIED
         }
     
     /**
@@ -228,7 +231,7 @@ class PermissionManager private constructor(
      * 
      * @param permission The permission to request
      * @param callback Callback invoked with the result
-     * @throws PermissionException if no activity is available
+     * @throws com.cropintellix.volineui.permissionmanager.PermissionException if no activity is available
      */
     fun requestPermission(permission: String, callback: (PermissionResult) -> Unit) {
         // Check if already granted
@@ -259,13 +262,13 @@ class PermissionManager private constructor(
     fun requestPermissions(vararg permissions: String, callback: (Map<String, PermissionResult>) -> Unit) {
         // Filter out already granted permissions
         val permissionsToRequest = permissions.filter { 
-            checkPermission(it) != PermissionStatus.GRANTED 
+            checkPermission(it) != PermissionStatus.GRANTED
         }
         
         // If all already granted, return immediately
         if (permissionsToRequest.isEmpty()) {
-            val results = permissions.associateWith { 
-                PermissionResult(it, PermissionStatus.GRANTED, false) 
+            val results = permissions.associateWith {
+                PermissionResult(it, PermissionStatus.GRANTED, false)
             }
             callback(results)
             return

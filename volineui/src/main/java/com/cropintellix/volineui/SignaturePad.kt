@@ -28,6 +28,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import androidx.core.view.updatePadding
+import com.cropintellix.volineui.signaturepad.ExportFormat
+import com.cropintellix.volineui.signaturepad.SignaturePadException
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream

@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.dropdown
 
 /**
  * Base exception class for Dropdown-related errors.

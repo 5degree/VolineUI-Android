@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.dropdown
 
 /**
  * Enum representing the various states a Dropdown component can be in.

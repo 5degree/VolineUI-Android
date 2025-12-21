@@ -1,6 +1,7 @@
-package com.cropintellix.volineui
+package com.cropintellix.volineui.inputfield
 
 import android.util.Patterns
+import com.cropintellix.volineui.inputfield.ValidationType
 
 /**
  * Utility class for validating input field values

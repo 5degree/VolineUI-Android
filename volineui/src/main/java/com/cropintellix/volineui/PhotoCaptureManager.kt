@@ -26,6 +26,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
+import com.cropintellix.volineui.locationmanager.LocationResult
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureException
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureResult
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException

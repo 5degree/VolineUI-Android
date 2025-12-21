@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.locationmanager
 
 /**
  * LocationException - Custom exception for location-related errors

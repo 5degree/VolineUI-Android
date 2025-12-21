@@ -1,14 +1,14 @@
-package com.cropintellix.volineui
+package com.cropintellix.volineui.radio
 
 /**
  * Exception thrown when RadioButton component receives invalid options configuration.
- * 
+ *
  * Common scenarios:
  * - Less than 2 options provided (minimum required)
  * - Null or empty options array
  */
 class RadioOptionsException(message: String) : IllegalArgumentException(message) {
-    
+
     companion object {
         /**
          * Creates exception for insufficient options
@@ -19,7 +19,7 @@ class RadioOptionsException(message: String) : IllegalArgumentException(message)
                 "Please provide a valid string array with 2 or more options."
             )
         }
-        
+
         /**
          * Creates exception for null/empty options
          */

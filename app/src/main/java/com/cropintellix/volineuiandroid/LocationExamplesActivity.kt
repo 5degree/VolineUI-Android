@@ -10,10 +10,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.cropintellix.volineui.LocationException
+import com.cropintellix.volineui.locationmanager.LocationException
 import com.cropintellix.volineui.LocationManager
-import com.cropintellix.volineui.LocationResult
-import com.cropintellix.volineui.LocationStatus
+import com.cropintellix.volineui.locationmanager.LocationResult
+import com.cropintellix.volineui.locationmanager.LocationStatus
 import com.cropintellix.volineui.PermissionManager
 import com.cropintellix.volineuiandroid.databinding.ActivityLocationExamplesBinding
 

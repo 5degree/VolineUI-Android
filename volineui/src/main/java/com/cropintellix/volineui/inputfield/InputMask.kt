@@ -1,7 +1,8 @@
-package com.cropintellix.volineui
+package com.cropintellix.volineui.inputfield
 
 import android.text.Editable
 import android.text.TextWatcher
+import kotlin.text.iterator
 
 /**
  * Utility class for applying input masks to format user input

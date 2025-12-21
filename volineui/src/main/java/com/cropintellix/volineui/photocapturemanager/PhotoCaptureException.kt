@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.photocapturemanager
 
 /**
  * PhotoCaptureException - Custom exception for photo capture-related errors

@@ -31,6 +31,8 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.cropintellix.volineui.imageview.FullScreenImageViewer
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
 import java.io.File
 
 /**

@@ -1,7 +1,8 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.imageview
 
+import android.R
 import android.animation.ValueAnimator
 import android.app.Dialog
 import android.content.Context
@@ -26,11 +27,13 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.cropintellix.volineui.ImageCarousel
 import java.io.File
 import kotlin.math.min
 
@@ -40,7 +43,7 @@ import kotlin.math.min
 class FullScreenImageViewer private constructor(
     context: Context,
     private val options: ViewerOptions
-) : Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen) {
+) : Dialog(context, R.style.Theme_Black_NoTitleBar_Fullscreen) {
 
     data class ViewerOptions(
         val imageFile: File? = null,
@@ -109,7 +112,7 @@ class FullScreenImageViewer private constructor(
         // Close button - black icon with white shadow, no bg
         if (options.showCloseButton) {
             closeButton = ImageView(context).apply {
-                setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+                setImageResource(R.drawable.ic_menu_close_clear_cancel)
                 setColorFilter(0xFF222222.toInt())  // Dark/black icon
                 setPadding(dpToPx(12f), dpToPx(12f), dpToPx(12f), dpToPx(12f))
                 // White shadow effect via layer
@@ -192,7 +195,7 @@ class FullScreenImageViewer private constructor(
      * ZoomableImageView - ImageView with pinch-zoom, double-tap, and pan
      * Default shows image fit to screen (no zoom out below fit)
      */
-    inner class ZoomableImageView(context: Context) : androidx.appcompat.widget.AppCompatImageView(context) {
+    inner class ZoomableImageView(context: Context) : AppCompatImageView(context) {
 
         var minZoom = 1f
         var maxZoom = 5f
@@ -421,7 +424,7 @@ class CarouselViewer(
     context: Context,
     private val sources: List<ImageCarousel.ImageSource>,
     private val startIndex: Int
-) : Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen) {
+) : Dialog(context, R.style.Theme_Black_NoTitleBar_Fullscreen) {
 
     private var currentIndex = startIndex
     private lateinit var imageView: ImageView
@@ -481,7 +484,7 @@ class CarouselViewer(
 
         // Close button
         val closeBtn = ImageView(context).apply {
-            setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            setImageResource(R.drawable.ic_menu_close_clear_cancel)
             setColorFilter(0xFF333333.toInt())
             setPadding(dpToPx(12f), dpToPx(12f), dpToPx(12f), dpToPx(12f))
             elevation = dpToPx(4f).toFloat()

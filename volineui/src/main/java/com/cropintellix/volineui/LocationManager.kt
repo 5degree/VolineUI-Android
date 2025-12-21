@@ -13,6 +13,9 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
+import com.cropintellix.volineui.locationmanager.LocationException
+import com.cropintellix.volineui.locationmanager.LocationResult
+import com.cropintellix.volineui.locationmanager.LocationStatus
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -299,7 +302,7 @@ class LocationManager private constructor(
      * @param priority Location priority (default: HIGH_ACCURACY)
      * @param callback Callback invoked with each location update
      * @return Subscription ID to use for stopping updates
-     * @throws LocationException if permission not granted or services disabled
+     * @throws com.cropintellix.volineui.locationmanager.LocationException if permission not granted or services disabled
      */
     @Suppress("MissingPermission")
     fun startLocationUpdates(

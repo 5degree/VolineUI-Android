@@ -1,6 +1,4 @@
-@file:Suppress("unused")
-
-package com.cropintellix.volineui
+package com.cropintellix.volineui.signaturepad
 
 /**
  * Supported export formats for signature images

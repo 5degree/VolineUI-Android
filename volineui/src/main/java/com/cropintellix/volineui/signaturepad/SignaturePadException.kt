@@ -1,6 +1,4 @@
-@file:Suppress("unused")
-
-package com.cropintellix.volineui
+package com.cropintellix.volineui.signaturepad
 
 /**
  * Exception thrown by SignaturePad for validation and export errors

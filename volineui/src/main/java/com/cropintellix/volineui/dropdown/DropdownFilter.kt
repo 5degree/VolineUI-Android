@@ -1,6 +1,8 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.dropdown
+
+import kotlin.text.iterator
 
 /**
  * Interface for custom filtering logic in searchable dropdowns.

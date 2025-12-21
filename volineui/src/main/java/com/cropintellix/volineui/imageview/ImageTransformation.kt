@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.imageview
 
 import android.content.Context
 import android.graphics.Bitmap

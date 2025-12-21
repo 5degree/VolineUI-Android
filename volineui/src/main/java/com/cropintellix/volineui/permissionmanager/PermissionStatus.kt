@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.permissionmanager
 
 /**
  * PermissionStatus - Represents the current state of a runtime permission

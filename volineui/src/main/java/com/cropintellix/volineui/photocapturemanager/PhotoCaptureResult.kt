@@ -1,8 +1,9 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.photocapturemanager
 
 import android.graphics.Bitmap
+import com.cropintellix.volineui.locationmanager.LocationResult
 import java.io.File
 
 /**

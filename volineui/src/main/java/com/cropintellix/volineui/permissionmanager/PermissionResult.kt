@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.cropintellix.volineui
+package com.cropintellix.volineui.permissionmanager
 
 /**
  * PermissionResult - Result data for a permission request

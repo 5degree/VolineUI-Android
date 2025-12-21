@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.cropintellix.volineui.DropdownOption
+import com.cropintellix.volineui.dropdown.DropdownOption
 import com.cropintellix.volineuiandroid.databinding.ActivityDropdownExamplesBinding
 
 class DropdownExamplesActivity : AppCompatActivity() {

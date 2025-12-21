@@ -6,9 +6,9 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.cropintellix.volineui.PhotoCaptureConfig
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
 import com.cropintellix.volineui.PhotoCaptureManager
-import com.cropintellix.volineui.PhotoCaptureResult
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureResult
 import java.io.File
 
 /**

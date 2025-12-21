@@ -18,7 +18,6 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
-import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -31,6 +30,13 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import com.cropintellix.volineui.dropdown.DefaultDropdownFilter
+import com.cropintellix.volineui.dropdown.DropdownFilter
+import com.cropintellix.volineui.dropdown.DropdownOption
+import com.cropintellix.volineui.dropdown.DropdownState
+import com.cropintellix.volineui.dropdown.EmptyOptionsException
+import com.cropintellix.volineui.dropdown.InvalidSelectionException
+import com.cropintellix.volineui.dropdown.MaxSelectionExceededException
 
 /**
  * Advanced Dropdown component with extensive customization options.
