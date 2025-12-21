@@ -278,8 +278,9 @@
             <enum name="stretch" value="4" />
         </attr>
         <attr name="imageAspectRatio" format="float" />
-        <attr name="placeholderImage" format="reference" />
-        <attr name="errorImage" format="reference" />
+        <attr name="placeholderIcon" format="reference" />
+        <attr name="placeholderText" format="string" />
+        <attr name="loadingGif" format="reference" />
         
         <!-- Visual Styling -->
         <attr name="imageCornerRadius" format="dimension" />
@@ -293,11 +294,7 @@
         <attr name="showLoadingIndicator" format="boolean" />
         <attr name="enableFullScreenPreview" format="boolean" />
         <attr name="enableCameraCapture" format="boolean" />
-        
-        <!-- Empty State -->
-        <attr name="emptyStateText" format="string" />
-        <attr name="emptyStateIcon" />
-        
+
         <!-- Accessibility -->
         <attr name="android:contentDescription" />
     </declare-styleable>
@@ -312,6 +309,8 @@
         <attr name="carouselItemHeight" format="dimension" />
         <attr name="carouselItemSpacing" format="dimension" />
         <attr name="carouselCornerRadius" format="dimension" />
+        <attr name="carouselBorderWidth" format="dimension" />
+        <attr name="carouselBorderColor" format="color" />
         
         <!-- Indicators -->
         <attr name="showIndicators" format="boolean" />
@@ -323,8 +322,6 @@
         <!-- Features -->
         <attr name="showItemDeleteIcon" format="boolean" />
         <attr name="enableCarouselFullScreen" format="boolean" />
-        
-        <!-- Empty State -->
-        <attr name="carouselEmptyText" format="string" />
+        <attr name="maxImageCount" format="integer" />
     </declare-styleable>
 </resources>

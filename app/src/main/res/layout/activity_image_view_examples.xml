@@ -11,6 +11,44 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp">
+
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/aiv1"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            android:layout_weight="1"
+            app:imageLabel="Test Image View"
+            app:placeholderText="Image One"
+            app:loadingGif="@drawable/loading_gif" />
+
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="0dp" />
+
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/aiv2"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            android:layout_weight="1"
+            app:imageLabel="Test Test Image View"
+            app:placeholderIcon="@drawable/explosion_24px"
+            app:placeholderText="Farmer One"
+            app:loadingGif="@drawable/loading_gif" />
+
+        </LinearLayout>
+
+        <com.cropintellix.volineui.ImageCarousel
+            android:id="@+id/ic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:carouselItemHeight="230dp"
+            app:carouselItemWidth="160dp"
+            app:carouselLabel="Test Carousel" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -34,7 +72,7 @@
             android:layout_width="match_parent"
             android:layout_height="150dp"
             app:enableFullScreenPreview="true"
-            app:placeholderImage="@drawable/browse_24px"
+            app:placeholderIcon="@drawable/browse_24px"
             android:layout_marginBottom="16dp" />
 
         <!-- Example 2: With Label -->
@@ -47,7 +85,6 @@
             app:imageCornerRadius="12dp"
             app:showDeleteIcon="true"
             app:enableCameraCapture="true"
-            app:emptyStateText="Tap to capture photo"
             android:layout_marginBottom="16dp" />
 
         <!-- Example 3: Circular Image -->
@@ -115,7 +152,7 @@
             android:layout_width="match_parent"
             android:layout_height="160dp"
             app:imageLabel="7. Custom Placeholder"
-            app:placeholderImage="@drawable/ic_launcher_foreground"
+            app:placeholderIcon="@drawable/ic_launcher_foreground"
             app:imageCornerRadius="12dp"
             app:enableCameraCapture="true"
             app:showDeleteIcon="true"
@@ -254,7 +291,6 @@
             app:imageCornerRadius="12dp"
             app:showDeleteIcon="true"
             app:enableCameraCapture="true"
-            app:emptyStateText="Tap to capture photo"
             android:layout_marginBottom="8dp" />
 
         <LinearLayout

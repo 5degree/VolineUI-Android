@@ -26,6 +26,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.CenterInside
 import com.bumptech.glide.load.resource.bitmap.FitCenter
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import java.io.File
@@ -53,33 +54,31 @@ class AdvancedImageView @JvmOverloads constructor(
     private val imageContainer: FrameLayout
     private val imageView: ImageView
     private val loadingIndicator: ProgressBar
+    private val loadingGifView: ImageView
     private val deleteButton: ImageView
-    private val emptyStateView: FrameLayout
-    private val emptyStateIcon: ImageView
-    private val emptyStateText: TextView
+    private val placeholderContainer: FrameLayout
+    private val placeholderIcon: ImageView
+    private val placeholderTextView: TextView
 
-    // Properties
+    // Properties with defaults
     private var imageLabel: String = ""
-    private var imageLabelGap: Float = dpToPx(8f)
-    private var imageLabelTextSize: Float = dpToPx(14f)
+    private var imageLabelGap: Float = 0f
+    private var imageLabelTextSize: Float = 0f
     private var imageLabelTextColor: Int = 0xFF252525.toInt()
     private var imageScaleType: ImageScaleType = ImageScaleType.CROP
     private var imageAspectRatio: Float = 0f
-    private var placeholderResId: Int = 0
-    private var errorResId: Int = 0
-    private var imageSrcResId: Int = 0
+    private var placeholderIconResId: Int = 0
+    private var placeholderText: String = "Tap to capture"
+    private var loadingGifResId: Int = 0
     private var imageCornerRadius: Float = 0f
-    private var imageBorderWidth: Float = dpToPx(1f)
-    private var imageBorderColor: Int = 0xFFCCCCCC.toInt()  // Default #cccccc
-    private var imageBackgroundColor: Int = Color.WHITE     // Default white
-    private var showDeleteIcon: Boolean = false
-    private var deleteIconTint: Int = 0xFFE53935.toInt()   // Error red
-    private var deleteIconBgColor: Int = 0x33E53935.toInt() // Transparent red
-    private var deleteIconCornerRadius: Float = 0f          // Matches imageCornerRadius
+    private var imageBorderWidth: Float = 0f
+    private var imageBorderColor: Int = 0xFFCCCCCC.toInt()
+    private var imageBackgroundColor: Int = Color.WHITE
+    private var showDeleteIcon: Boolean = true
+    private var deleteIconTint: Int = 0xFFE53935.toInt()
     private var showLoadingIndicator: Boolean = true
     private var enableFullScreenPreview: Boolean = true
-    private var enableCameraCapture: Boolean = false
-    private var emptyStateTextValue: String = "No image"
+    private var enableCameraCapture: Boolean = true
 
     // State
     private var currentState: ImageState = ImageState.EMPTY
@@ -94,15 +93,26 @@ class AdvancedImageView @JvmOverloads constructor(
     private var onCaptureClickListener: ((PhotoCaptureConfig) -> Unit)? = null
     private var onImageLoadListener: ((Boolean) -> Unit)? = null
 
-    // Paint for border and clipping
-    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    // Paint for border
+    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+    }
+    private val borderRect = RectF()
     private val clipPath = Path()
-    private val clipRect = RectF()
 
     init {
         setWillNotDraw(false)
-        clipChildren = true
-        clipToPadding = true
+        clipChildren = false
+        clipToPadding = false
+
+        // Initialize defaults
+        imageLabelGap = dpToPx(5f)
+        imageLabelTextSize = dpToPx(14f)
+        imageBorderWidth = dpToPx(1f)
+        imageCornerRadius = dpToPx(8f)  // Default corner radius
+
+        borderPaint.color = imageBorderColor
+        borderPaint.strokeWidth = imageBorderWidth
 
         // Label
         labelTextView = TextView(context).apply {
@@ -112,11 +122,10 @@ class AdvancedImageView @JvmOverloads constructor(
         }
         addView(labelTextView)
 
-        // Image container with clipping
+        // Image container
         imageContainer = FrameLayout(context).apply {
             clipChildren = true
             clipToPadding = true
-            setBackgroundColor(imageBackgroundColor)
         }
         addView(imageContainer)
 
@@ -127,7 +136,7 @@ class AdvancedImageView @JvmOverloads constructor(
         }
         imageContainer.addView(imageView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
 
-        // Loading indicator
+        // Loading indicator (CircularProgressBar)
         loadingIndicator = ProgressBar(context).apply {
             visibility = GONE
             isIndeterminate = true
@@ -136,53 +145,61 @@ class AdvancedImageView @JvmOverloads constructor(
             LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER
         ))
 
-        // Delete button - styled red
+        // Loading GIF view
+        loadingGifView = ImageView(context).apply {
+            visibility = GONE
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+        }
+        imageContainer.addView(loadingGifView, LayoutParams(
+            dpToPx(48f).toInt(), dpToPx(48f).toInt(), Gravity.CENTER
+        ))
+
+        // Delete button
         deleteButton = ImageView(context).apply {
             visibility = GONE
             setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
             setColorFilter(deleteIconTint)
-            setPadding(dpToPx(6f).toInt(), dpToPx(6f).toInt(), dpToPx(6f).toInt(), dpToPx(6f).toInt())
+            setPadding(dpToPx(5f).toInt(), dpToPx(5f).toInt(), dpToPx(5f).toInt(), dpToPx(5f).toInt())
             setOnClickListener {
                 onDeleteClickListener?.invoke()
-                clearImage()  // Always clear after delete click
+                clearImage()
             }
         }
-        val deleteParams = LayoutParams(dpToPx(28f).toInt(), dpToPx(28f).toInt())
+        val deleteParams = LayoutParams(dpToPx(26f).toInt(), dpToPx(26f).toInt())
         deleteParams.gravity = Gravity.TOP or Gravity.END
         deleteParams.marginEnd = dpToPx(6f).toInt()
         deleteParams.topMargin = dpToPx(6f).toInt()
         imageContainer.addView(deleteButton, deleteParams)
 
-        // Empty state
-        emptyStateView = FrameLayout(context).apply {
+        // Placeholder container
+        placeholderContainer = FrameLayout(context).apply {
             visibility = VISIBLE
             isClickable = true
             isFocusable = true
-            setOnClickListener { handleEmptyStateClick() }
+            setOnClickListener { handlePlaceholderClick() }
         }
-        imageContainer.addView(emptyStateView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        imageContainer.addView(placeholderContainer, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
 
-        emptyStateIcon = ImageView(context).apply {
-            setImageResource(android.R.drawable.ic_menu_camera)
-            alpha = 0.35f
+        placeholderIcon = ImageView(context).apply {
+            setImageResource(R.drawable.ic_add_photo)
             setColorFilter(0xFF666666.toInt())
         }
         val iconParams = LayoutParams(dpToPx(36f).toInt(), dpToPx(36f).toInt(), Gravity.CENTER)
-        iconParams.bottomMargin = dpToPx(12f).toInt()
-        emptyStateView.addView(emptyStateIcon, iconParams)
+        iconParams.bottomMargin = dpToPx(10f).toInt()
+        placeholderContainer.addView(placeholderIcon, iconParams)
 
-        emptyStateText = TextView(context).apply {
-            text = emptyStateTextValue
+        placeholderTextView = TextView(context).apply {
+            text = placeholderText
             gravity = Gravity.CENTER
             alpha = 0.5f
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             setTextColor(0xFF666666.toInt())
         }
         val textParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER)
-        textParams.topMargin = dpToPx(12f).toInt()
-        emptyStateView.addView(emptyStateText, textParams)
+        textParams.topMargin = dpToPx(10f).toInt()
+        placeholderContainer.addView(placeholderTextView, textParams)
 
-        // Parse attributes
+        // Parse XML attributes
         if (attrs != null) parseAttributes(attrs, defStyleAttr)
 
         // Click listener for fullscreen
@@ -194,86 +211,92 @@ class AdvancedImageView @JvmOverloads constructor(
         }
 
         updateDeleteButtonStyle()
+        updateContainerBackground()
         updateState(ImageState.EMPTY)
     }
 
     private fun parseAttributes(attrs: AttributeSet, defStyleAttr: Int) {
-        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.AdvancedImageView, defStyleAttr, 0)
+        val ta = context.obtainStyledAttributes(attrs, R.styleable.AdvancedImageView, defStyleAttr, 0)
 
         try {
-            imageLabel = typedArray.getString(R.styleable.AdvancedImageView_imageLabel) ?: ""
+            imageLabel = ta.getString(R.styleable.AdvancedImageView_imageLabel) ?: ""
             if (imageLabel.isNotEmpty()) {
                 labelTextView.text = imageLabel
                 labelTextView.visibility = VISIBLE
             }
 
-            imageLabelGap = typedArray.getDimension(R.styleable.AdvancedImageView_imageLabelGap, dpToPx(8f))
-            imageLabelTextSize = typedArray.getDimension(R.styleable.AdvancedImageView_imageLabelTextSize, dpToPx(14f))
-            imageLabelTextColor = typedArray.getColor(R.styleable.AdvancedImageView_imageLabelTextColor, 0xFF252525.toInt())
+            imageLabelGap = ta.getDimension(R.styleable.AdvancedImageView_imageLabelGap, imageLabelGap)
+            imageLabelTextSize = ta.getDimension(R.styleable.AdvancedImageView_imageLabelTextSize, imageLabelTextSize)
+            imageLabelTextColor = ta.getColor(R.styleable.AdvancedImageView_imageLabelTextColor, imageLabelTextColor)
             labelTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, imageLabelTextSize)
             labelTextView.setTextColor(imageLabelTextColor)
 
-            imageScaleType = ImageScaleType.fromValue(typedArray.getInt(R.styleable.AdvancedImageView_imageScaleType, ImageScaleType.CROP.value))
-            imageAspectRatio = typedArray.getFloat(R.styleable.AdvancedImageView_imageAspectRatio, 0f)
-            placeholderResId = typedArray.getResourceId(R.styleable.AdvancedImageView_placeholderImage, 0)
-            errorResId = typedArray.getResourceId(R.styleable.AdvancedImageView_errorImage, 0)
-            imageSrcResId = typedArray.getResourceId(R.styleable.AdvancedImageView_imageSrc, 0)
+            imageScaleType = ImageScaleType.fromValue(ta.getInt(R.styleable.AdvancedImageView_imageScaleType, ImageScaleType.CROP.value))
+            imageAspectRatio = ta.getFloat(R.styleable.AdvancedImageView_imageAspectRatio, 0f)
 
-            imageCornerRadius = typedArray.getDimension(R.styleable.AdvancedImageView_imageCornerRadius, 0f)
-            imageBorderWidth = typedArray.getDimension(R.styleable.AdvancedImageView_imageBorderWidth, dpToPx(1f))
-            imageBorderColor = typedArray.getColor(R.styleable.AdvancedImageView_imageBorderColor, 0xFFCCCCCC.toInt())
-            imageBackgroundColor = typedArray.getColor(R.styleable.AdvancedImageView_imageBackgroundColor, Color.WHITE)
-            imageContainer.setBackgroundColor(imageBackgroundColor)
+            placeholderIconResId = ta.getResourceId(R.styleable.AdvancedImageView_placeholderIcon, 0)
+            placeholderText = ta.getString(R.styleable.AdvancedImageView_placeholderText) ?: placeholderText
+            loadingGifResId = ta.getResourceId(R.styleable.AdvancedImageView_loadingGif, 0)
 
-            showDeleteIcon = typedArray.getBoolean(R.styleable.AdvancedImageView_showDeleteIcon, false)
-            deleteIconTint = typedArray.getColor(R.styleable.AdvancedImageView_deleteIconTint, 0xFFE53935.toInt())
-            showLoadingIndicator = typedArray.getBoolean(R.styleable.AdvancedImageView_showLoadingIndicator, true)
-            enableFullScreenPreview = typedArray.getBoolean(R.styleable.AdvancedImageView_enableFullScreenPreview, true)
-            enableCameraCapture = typedArray.getBoolean(R.styleable.AdvancedImageView_enableCameraCapture, false)
+            // Apply placeholder
+            if (placeholderIconResId != 0) {
+                placeholderIcon.setImageResource(placeholderIconResId)
+                placeholderIcon.alpha = 0.7f
+                placeholderIcon.clearColorFilter()
+            }
+            placeholderTextView.text = placeholderText
 
-            emptyStateTextValue = typedArray.getString(R.styleable.AdvancedImageView_emptyStateText)
-                ?: if (enableCameraCapture) "Tap to capture" else "No image"
-            emptyStateText.text = emptyStateTextValue
+            imageCornerRadius = ta.getDimension(R.styleable.AdvancedImageView_imageCornerRadius, imageCornerRadius)
+            imageBorderWidth = ta.getDimension(R.styleable.AdvancedImageView_imageBorderWidth, imageBorderWidth)
+            imageBorderColor = ta.getColor(R.styleable.AdvancedImageView_imageBorderColor, imageBorderColor)
+            imageBackgroundColor = ta.getColor(R.styleable.AdvancedImageView_imageBackgroundColor, imageBackgroundColor)
 
-            val emptyIconRes = typedArray.getResourceId(R.styleable.AdvancedImageView_emptyStateIcon, 0)
-            if (emptyIconRes != 0) emptyStateIcon.setImageResource(emptyIconRes)
+            showDeleteIcon = ta.getBoolean(R.styleable.AdvancedImageView_showDeleteIcon, true)
+            deleteIconTint = ta.getColor(R.styleable.AdvancedImageView_deleteIconTint, deleteIconTint)
+            showLoadingIndicator = ta.getBoolean(R.styleable.AdvancedImageView_showLoadingIndicator, true)
+            enableFullScreenPreview = ta.getBoolean(R.styleable.AdvancedImageView_enableFullScreenPreview, true)
+            enableCameraCapture = ta.getBoolean(R.styleable.AdvancedImageView_enableCameraCapture, true)
 
-            // Delete icon corner radius matches image corner radius (scaled down)
-            deleteIconCornerRadius = (imageCornerRadius * 0.4f).coerceAtLeast(dpToPx(4f))
+            // Load imageSrc from XML
+            val imageSrcResId = ta.getResourceId(R.styleable.AdvancedImageView_imageSrc, 0)
+            if (imageSrcResId != 0) {
+                post { loadFromDrawable(imageSrcResId) }
+            }
 
         } finally {
-            typedArray.recycle()
+            ta.recycle()
         }
 
         borderPaint.color = imageBorderColor
         borderPaint.strokeWidth = imageBorderWidth
-
-        // Show placeholder if provided
-        if (placeholderResId != 0) {
-            emptyStateIcon.setImageResource(placeholderResId)
-            emptyStateIcon.alpha = 1f
-            emptyStateIcon.clearColorFilter()
-            emptyStateText.visibility = GONE
-        }
-
-        // Load image from XML if specified
-        if (imageSrcResId != 0) {
-            post { loadFromDrawable(imageSrcResId) }
-        }
     }
 
     private fun updateDeleteButtonStyle() {
         deleteButton.setColorFilter(deleteIconTint)
-        
-        // Create rounded background
+        val deleteCorner = (imageCornerRadius * 0.4f).coerceAtLeast(dpToPx(4f))
         val bg = GradientDrawable().apply {
-            setColor(deleteIconBgColor)
-            cornerRadius = deleteIconCornerRadius
+            setColor(0x33E53935.toInt())
+            cornerRadius = deleteCorner
         }
         deleteButton.background = bg
     }
 
-    // Load methods
+    private fun updateContainerBackground() {
+        val bg = GradientDrawable().apply {
+            setColor(imageBackgroundColor)
+            cornerRadius = imageCornerRadius
+        }
+        imageContainer.background = bg
+    }
+
+    // Public methods
+
+    /**
+     * Show loading state (for PhotoCaptureResult.Processing)
+     */
+    fun showLoading() {
+        updateState(ImageState.LOADING)
+    }
 
     fun loadFromUrl(url: String) {
         if (url.isBlank()) { updateState(ImageState.EMPTY); return }
@@ -285,10 +308,10 @@ class AdvancedImageView @JvmOverloads constructor(
     }
 
     fun loadFromFile(file: File) {
-        if (!file.exists()) { 
+        if (!file.exists()) {
             updateState(ImageState.ERROR)
             onImageLoadListener?.invoke(false)
-            return 
+            return
         }
         currentImageFile = file
         currentImageUrl = null
@@ -333,12 +356,9 @@ class AdvancedImageView @JvmOverloads constructor(
 
     private fun loadImageWithGlide(source: Any) {
         updateState(ImageState.LOADING)
-        
+
         var request = Glide.with(context).load(source)
-        
-        if (placeholderResId != 0) request = request.placeholder(placeholderResId)
-        if (errorResId != 0) request = request.error(errorResId)
-        
+
         val transforms = mutableListOf<com.bumptech.glide.load.Transformation<Bitmap>>()
         transforms.add(when (imageScaleType) {
             ImageScaleType.FIT -> FitCenter()
@@ -349,20 +369,21 @@ class AdvancedImageView @JvmOverloads constructor(
         if (imageCornerRadius > 0) {
             transforms.add(RoundedCorners(imageCornerRadius.toInt()))
         }
-        
+
         request = request.transform(*transforms.toTypedArray())
-        
+
         request.into(object : CustomTarget<Drawable>() {
             override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
                 imageView.setImageDrawable(resource)
+                if (resource is GifDrawable) resource.start()
                 updateState(ImageState.LOADED)
                 onImageLoadListener?.invoke(true)
             }
-            
+
             override fun onLoadCleared(placeholder: Drawable?) {
                 imageView.setImageDrawable(placeholder)
             }
-            
+
             override fun onLoadFailed(errorDrawable: Drawable?) {
                 imageView.setImageDrawable(errorDrawable)
                 updateState(ImageState.ERROR)
@@ -377,41 +398,50 @@ class AdvancedImageView @JvmOverloads constructor(
             ImageState.EMPTY -> {
                 imageView.visibility = GONE
                 loadingIndicator.visibility = GONE
+                loadingGifView.visibility = GONE
                 deleteButton.visibility = GONE
-                emptyStateView.visibility = VISIBLE
-                // Restore original empty state (with placeholder if provided)
-                if (placeholderResId != 0) {
-                    emptyStateIcon.setImageResource(placeholderResId)
-                    emptyStateIcon.alpha = 1f
-                    emptyStateIcon.clearColorFilter()
-                    emptyStateText.visibility = GONE
+                placeholderContainer.visibility = VISIBLE
+                // Restore placeholder
+                if (placeholderIconResId != 0) {
+                    placeholderIcon.setImageResource(placeholderIconResId)
+                    placeholderIcon.alpha = 0.7f
+                    placeholderIcon.clearColorFilter()
                 } else {
-                    emptyStateIcon.setImageResource(android.R.drawable.ic_menu_camera)
-                    emptyStateIcon.alpha = 0.35f
-                    emptyStateIcon.setColorFilter(0xFF666666.toInt())
-                    emptyStateText.text = emptyStateTextValue
-                    emptyStateText.visibility = VISIBLE
+                    placeholderIcon.setImageResource(android.R.drawable.ic_menu_camera)
+                    placeholderIcon.alpha = 0.4f
+                    placeholderIcon.setColorFilter(0xFF666666.toInt())
                 }
+                placeholderTextView.text = placeholderText
             }
             ImageState.LOADING -> {
                 imageView.visibility = GONE
-                loadingIndicator.visibility = if (showLoadingIndicator) VISIBLE else GONE
+                placeholderContainer.visibility = GONE
                 deleteButton.visibility = GONE
-                emptyStateView.visibility = GONE
+                
+                // Show loading GIF if provided, else show progress bar
+                if (loadingGifResId != 0) {
+                    loadingIndicator.visibility = GONE
+                    loadingGifView.visibility = VISIBLE
+                    Glide.with(context).load(loadingGifResId).into(loadingGifView)
+                } else if (showLoadingIndicator) {
+                    loadingIndicator.visibility = VISIBLE
+                    loadingGifView.visibility = GONE
+                }
             }
             ImageState.LOADED -> {
                 imageView.visibility = VISIBLE
                 loadingIndicator.visibility = GONE
+                loadingGifView.visibility = GONE
                 deleteButton.visibility = if (showDeleteIcon) VISIBLE else GONE
-                emptyStateView.visibility = GONE
+                placeholderContainer.visibility = GONE
             }
             ImageState.ERROR -> {
                 imageView.visibility = GONE
                 loadingIndicator.visibility = GONE
+                loadingGifView.visibility = GONE
                 deleteButton.visibility = GONE
-                emptyStateView.visibility = VISIBLE
-                emptyStateText.text = "Failed to load"
-                emptyStateText.visibility = VISIBLE
+                placeholderContainer.visibility = VISIBLE
+                placeholderTextView.text = "Failed to load"
             }
         }
         invalidate()
@@ -449,8 +479,8 @@ class AdvancedImageView @JvmOverloads constructor(
 
     fun setCornerRadius(radius: Float) {
         imageCornerRadius = radius
-        deleteIconCornerRadius = (radius * 0.4f).coerceAtLeast(dpToPx(4f))
         updateDeleteButtonStyle()
+        updateContainerBackground()
         reloadCurrentImage()
     }
 
@@ -462,20 +492,6 @@ class AdvancedImageView @JvmOverloads constructor(
         invalidate()
     }
 
-    fun setShowDeleteIcon(show: Boolean) {
-        showDeleteIcon = show
-        if (currentState == ImageState.LOADED) {
-            deleteButton.visibility = if (show) VISIBLE else GONE
-        }
-    }
-
-    fun setEnableCameraCapture(enable: Boolean) {
-        enableCameraCapture = enable
-        if (placeholderResId == 0) {
-            emptyStateText.text = if (enable) "Tap to capture" else "No image"
-        }
-    }
-
     private fun reloadCurrentImage() {
         when {
             currentImageFile != null -> loadFromFile(currentImageFile!!)
@@ -485,7 +501,7 @@ class AdvancedImageView @JvmOverloads constructor(
         }
     }
 
-    private fun handleEmptyStateClick() {
+    private fun handlePlaceholderClick() {
         if (enableCameraCapture && onCaptureClickListener != null) {
             onCaptureClickListener?.invoke(PhotoCaptureConfig())
         }
@@ -508,7 +524,7 @@ class AdvancedImageView @JvmOverloads constructor(
         var totalHeight = paddingTop + paddingBottom
 
         if (labelTextView.isVisible) {
-            measureChild(labelTextView, 
+            measureChild(labelTextView,
                 MeasureSpec.makeMeasureSpec(width - paddingStart - paddingEnd, MeasureSpec.AT_MOST),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
             totalHeight += labelTextView.measuredHeight + imageLabelGap.toInt()
@@ -527,7 +543,7 @@ class AdvancedImageView @JvmOverloads constructor(
             }
         }
 
-        measureChild(imageContainer, 
+        measureChild(imageContainer,
             MeasureSpec.makeMeasureSpec(containerWidth, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(containerHeight, MeasureSpec.EXACTLY))
 
@@ -539,7 +555,7 @@ class AdvancedImageView @JvmOverloads constructor(
         var currentTop = paddingTop
 
         if (labelTextView.isVisible) {
-            labelTextView.layout(paddingStart, currentTop, 
+            labelTextView.layout(paddingStart, currentTop,
                 paddingStart + labelTextView.measuredWidth, currentTop + labelTextView.measuredHeight)
             currentTop += labelTextView.measuredHeight + imageLabelGap.toInt()
         }
@@ -549,17 +565,19 @@ class AdvancedImageView @JvmOverloads constructor(
     }
 
     override fun dispatchDraw(canvas: Canvas) {
-        // Clip content to rounded corners
+        // Draw background with rounded corners
+        val labelHeight = if (labelTextView.isVisible) labelTextView.measuredHeight + imageLabelGap else 0f
+        borderRect.set(
+            paddingStart.toFloat(),
+            paddingTop + labelHeight,
+            (width - paddingEnd).toFloat(),
+            (height - paddingBottom).toFloat()
+        )
+
+        // Clip children to rounded corners
         if (imageCornerRadius > 0) {
-            val labelHeight = if (labelTextView.isVisible) labelTextView.measuredHeight + imageLabelGap else 0f
             clipPath.reset()
-            clipRect.set(
-                paddingStart.toFloat(),
-                paddingTop + labelHeight,
-                (width - paddingEnd).toFloat(),
-                (height - paddingBottom).toFloat()
-            )
-            clipPath.addRoundRect(clipRect, imageCornerRadius, imageCornerRadius, Path.Direction.CW)
+            clipPath.addRoundRect(borderRect, imageCornerRadius, imageCornerRadius, Path.Direction.CW)
             canvas.save()
             canvas.clipPath(clipPath)
             super.dispatchDraw(canvas)
@@ -567,21 +585,17 @@ class AdvancedImageView @JvmOverloads constructor(
         } else {
             super.dispatchDraw(canvas)
         }
-    }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        // Draw border
-        if (imageBorderWidth > 0 && imageBorderColor != Color.TRANSPARENT) {
-            val labelHeight = if (labelTextView.isVisible) labelTextView.measuredHeight + imageLabelGap else 0f
+        // Draw border AFTER children (on top)
+        if (imageBorderWidth > 0) {
             val offset = imageBorderWidth / 2
-            clipRect.set(paddingStart + offset, paddingTop + labelHeight + offset,
-                width - paddingEnd - offset, height - paddingBottom - offset)
-            if (imageCornerRadius > 0) {
-                canvas.drawRoundRect(clipRect, imageCornerRadius, imageCornerRadius, borderPaint)
-            } else {
-                canvas.drawRect(clipRect, borderPaint)
-            }
+            borderRect.set(
+                paddingStart + offset,
+                paddingTop + labelHeight + offset,
+                width - paddingEnd - offset,
+                height - paddingBottom - offset
+            )
+            canvas.drawRoundRect(borderRect, imageCornerRadius, imageCornerRadius, borderPaint)
         }
     }
 

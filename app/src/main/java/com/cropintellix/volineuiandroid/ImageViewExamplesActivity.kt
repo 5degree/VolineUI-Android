@@ -4,13 +4,21 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.MutableLiveData
 import com.cropintellix.volineui.AdvancedImageView
 import com.cropintellix.volineui.ImageCarousel
 import com.cropintellix.volineui.PhotoCaptureConfig
 import com.cropintellix.volineui.PhotoCaptureManager
 import com.cropintellix.volineui.PhotoCaptureResult
+import java.io.File
 
 class ImageViewExamplesActivity : AppCompatActivity() {
+
+    private val photoCaptureManager get() = PhotoCaptureManager.instance
+
+    private val aiv1F = MutableLiveData<File?>(null)
+    private val aiv2F = MutableLiveData<File?>(null)
+    private val icFL = MutableLiveData<List<File?>>(emptyList())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,6 +27,53 @@ class ImageViewExamplesActivity : AppCompatActivity() {
         setupImageViewExamples()
         setupCarouselExamples()
         setupCameraCapture()
+
+        val aiv1: AdvancedImageView = findViewById(R.id.aiv1)
+        val aiv2: AdvancedImageView = findViewById(R.id.aiv2)
+        val ic: ImageCarousel = findViewById(R.id.ic)
+
+        aiv1F.observe(this) { file ->
+            file?.let { aiv1.loadFromFile(it) }
+        }
+        aiv2F.observe(this) { file ->
+            file?.let { aiv2.loadFromFile(it) }
+        }
+        icFL.observe(this) { files ->
+            ic.clearImages()
+            ic.addImageFiles(files.filterNotNull())
+        }
+
+        aiv1.setOnCaptureClickListener {
+            photoCaptureManager.capturePhoto(PhotoCaptureConfig("AIV 1 Test")) { result ->
+                when (result) {
+                    is PhotoCaptureResult.Processing -> { }
+                    is PhotoCaptureResult.Success -> { aiv1F.value = result.file }
+                    else -> {}
+                }
+            }
+        }
+
+        aiv2.setOnCaptureClickListener {
+            photoCaptureManager.capturePhoto(PhotoCaptureConfig("AIV 2 Test")) { result ->
+                when (result) {
+                    is PhotoCaptureResult.Processing -> { }
+                    is PhotoCaptureResult.Success -> { aiv2F.value = result.file }
+                    else -> {}
+                }
+            }
+        }
+        ic.setOnAddClickListener {
+            photoCaptureManager.capturePhoto(PhotoCaptureConfig("IC Test")) { result ->
+                when (result) {
+                    is PhotoCaptureResult.Processing -> { }
+                    is PhotoCaptureResult.Success -> { icFL.value = icFL.value?.plus(result.file) ?: listOf(result.file) }
+                    else -> {}
+                }
+            }
+        }
+        ic.setOnImageDeleteListener { index ->
+            icFL.value = icFL.value?.toMutableList()?.apply { removeAt(index) }
+        }
     }
 
     private fun setupImageViewExamples() {

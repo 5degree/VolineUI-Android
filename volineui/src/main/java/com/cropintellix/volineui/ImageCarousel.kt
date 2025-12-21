@@ -7,13 +7,13 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
@@ -27,11 +27,10 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
-import android.graphics.drawable.Drawable
 import java.io.File
 
 /**
- * ImageCarousel - A horizontal scrolling image carousel with delete icons
+ * ImageCarousel - Horizontal scrolling image carousel with add button and delete icons
  */
 class ImageCarousel @JvmOverloads constructor(
     context: Context,
@@ -52,36 +51,48 @@ class ImageCarousel @JvmOverloads constructor(
     private val scrollView: HorizontalScrollView
     private val imageContainer: LinearLayout
     private val indicatorContainer: LinearLayout
-    private val emptyStateView: FrameLayout
-    private val emptyStateText: TextView
+    private lateinit var addButton: FrameLayout
 
-    // Properties (with defaults)
+    // Properties
     private var carouselLabel: String = ""
-    private var carouselLabelGap: Float = dpToPx(8f)
-    private var itemWidth: Float = dpToPx(120f)
-    private var itemHeight: Float = dpToPx(120f)
-    private var itemSpacing: Float = dpToPx(8f)
-    private var carouselCornerRadius: Float = dpToPx(8f)
+    private var carouselLabelGap: Float = 0f
+    private var itemWidth: Float = 0f
+    private var itemHeight: Float = 0f
+    private var itemSpacing: Float = 0f
+    private var carouselCornerRadius: Float = 0f
+    private var carouselBorderWidth: Float = 0f
+    private var carouselBorderColor: Int = 0xFFCCCCCC.toInt()
     private var showIndicators: Boolean = true
-    private var indicatorSize: Float = dpToPx(6f)
-    private var indicatorSpacing: Float = dpToPx(4f)
+    private var indicatorSize: Float = 0f
+    private var indicatorSpacing: Float = 0f
     private var indicatorActiveColor: Int = Color.WHITE
     private var indicatorInactiveColor: Int = 0x80FFFFFF.toInt()
     private var showItemDeleteIcon: Boolean = true
     private var enableFullScreen: Boolean = true
-    private var emptyStateTextValue: String = "No images"
+    private var maxImageCount: Int = Int.MAX_VALUE
 
     // State
+    private val imageFiles = mutableListOf<File>()
     private val imageSources = mutableListOf<ImageSource>()
     private var currentIndex = 0
 
     // Listeners
     private var onImageClickListener: ((Int) -> Unit)? = null
     private var onImageDeleteListener: ((Int) -> Unit)? = null
-    private var onEmptyStateClickListener: (() -> Unit)? = null
+    private var onAddClickListener: (() -> Unit)? = null
 
     init {
         setWillNotDraw(false)
+
+        // Initialize dp values
+        carouselLabelGap = dpToPx(5f)
+        itemWidth = dpToPx(120f)
+        itemHeight = dpToPx(120f)
+        itemSpacing = dpToPx(8f)
+        carouselCornerRadius = dpToPx(8f)
+        carouselBorderWidth = dpToPx(1f)
+        indicatorSize = dpToPx(6f)
+        indicatorSpacing = dpToPx(4f)
 
         // Label
         labelTextView = TextView(context).apply {
@@ -119,32 +130,15 @@ class ImageCarousel @JvmOverloads constructor(
         indParams.bottomMargin = dpToPx(8f).toInt()
         addView(indicatorContainer, indParams)
 
-        // Empty state
-        emptyStateView = FrameLayout(context).apply {
-            visibility = VISIBLE
-            isClickable = true
-            setBackgroundColor(0xFFF5F5F5.toInt())
-            setOnClickListener { onEmptyStateClickListener?.invoke() }
-        }
-        addView(emptyStateView)
-
-        emptyStateText = TextView(context).apply {
-            text = emptyStateTextValue
-            gravity = Gravity.CENTER
-            alpha = 0.5f
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-            setTextColor(0xFF666666.toInt())
-        }
-        emptyStateView.addView(emptyStateText, LayoutParams(
-            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER
-        ))
-
         scrollView.setOnScrollChangeListener { _, scrollX, _, _, _ ->
             updateCurrentIndex(scrollX)
         }
 
         if (attrs != null) parseAttributes(attrs, defStyleAttr)
-        updateEmptyState()
+
+        // Create add button
+        createAddButton()
+        updateAddButtonVisibility()
     }
 
     private fun parseAttributes(attrs: AttributeSet, defStyleAttr: Int) {
@@ -155,60 +149,188 @@ class ImageCarousel @JvmOverloads constructor(
                 labelTextView.text = carouselLabel
                 labelTextView.visibility = VISIBLE
             }
-            carouselLabelGap = ta.getDimension(R.styleable.ImageCarousel_carouselLabelGap, dpToPx(8f))
-            itemWidth = ta.getDimension(R.styleable.ImageCarousel_carouselItemWidth, dpToPx(120f))
-            itemHeight = ta.getDimension(R.styleable.ImageCarousel_carouselItemHeight, dpToPx(120f))
-            itemSpacing = ta.getDimension(R.styleable.ImageCarousel_carouselItemSpacing, dpToPx(8f))
-            carouselCornerRadius = ta.getDimension(R.styleable.ImageCarousel_carouselCornerRadius, dpToPx(8f))
+            carouselLabelGap = ta.getDimension(R.styleable.ImageCarousel_carouselLabelGap, carouselLabelGap)
+            itemWidth = ta.getDimension(R.styleable.ImageCarousel_carouselItemWidth, itemWidth)
+            itemHeight = ta.getDimension(R.styleable.ImageCarousel_carouselItemHeight, itemHeight)
+            itemSpacing = ta.getDimension(R.styleable.ImageCarousel_carouselItemSpacing, itemSpacing)
+            carouselCornerRadius = ta.getDimension(R.styleable.ImageCarousel_carouselCornerRadius, carouselCornerRadius)
+            carouselBorderWidth = ta.getDimension(R.styleable.ImageCarousel_carouselBorderWidth, carouselBorderWidth)
+            carouselBorderColor = ta.getColor(R.styleable.ImageCarousel_carouselBorderColor, carouselBorderColor)
             showIndicators = ta.getBoolean(R.styleable.ImageCarousel_showIndicators, true)
-            indicatorSize = ta.getDimension(R.styleable.ImageCarousel_indicatorSize, dpToPx(6f))
-            indicatorSpacing = ta.getDimension(R.styleable.ImageCarousel_indicatorSpacing, dpToPx(4f))
-            indicatorActiveColor = ta.getColor(R.styleable.ImageCarousel_indicatorActiveColor, Color.WHITE)
-            indicatorInactiveColor = ta.getColor(R.styleable.ImageCarousel_indicatorInactiveColor, 0x80FFFFFF.toInt())
+            indicatorSize = ta.getDimension(R.styleable.ImageCarousel_indicatorSize, indicatorSize)
+            indicatorSpacing = ta.getDimension(R.styleable.ImageCarousel_indicatorSpacing, indicatorSpacing)
+            indicatorActiveColor = ta.getColor(R.styleable.ImageCarousel_indicatorActiveColor, indicatorActiveColor)
+            indicatorInactiveColor = ta.getColor(R.styleable.ImageCarousel_indicatorInactiveColor, indicatorInactiveColor)
             showItemDeleteIcon = ta.getBoolean(R.styleable.ImageCarousel_showItemDeleteIcon, true)
             enableFullScreen = ta.getBoolean(R.styleable.ImageCarousel_enableCarouselFullScreen, true)
-            emptyStateTextValue = ta.getString(R.styleable.ImageCarousel_carouselEmptyText) ?: "No images"
-            emptyStateText.text = emptyStateTextValue
+            maxImageCount = ta.getInt(R.styleable.ImageCarousel_maxImageCount, Int.MAX_VALUE)
         } finally {
             ta.recycle()
         }
     }
 
+    private fun createAddButton() {
+        addButton = FrameLayout(context).apply {
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onAddClickListener?.invoke() }
+        }
+
+        // Background with border (matches image items)
+        val bg = GradientDrawable().apply {
+            setColor(Color.WHITE)
+            setStroke(carouselBorderWidth.toInt(), carouselBorderColor)
+            cornerRadius = carouselCornerRadius
+        }
+        addButton.background = bg
+
+        // Plus icon
+        val plusIcon = ImageView(context).apply {
+            setImageResource(android.R.drawable.ic_input_add)
+            setColorFilter(0xFF666666.toInt())
+        }
+        val iconParams = LayoutParams(dpToPx(32f).toInt(), dpToPx(32f).toInt(), Gravity.CENTER)
+        addButton.addView(plusIcon, iconParams)
+
+        // Add to container
+        val params = LinearLayout.LayoutParams(itemWidth.toInt(), itemHeight.toInt())
+        imageContainer.addView(addButton, params)
+    }
+
+    private fun updateAddButtonVisibility() {
+        val showAdd = imageSources.size < maxImageCount
+        addButton.visibility = if (showAdd) VISIBLE else GONE
+        
+        // Update add button margin
+        val params = addButton.layoutParams as? LinearLayout.LayoutParams
+        params?.marginStart = if (imageSources.isNotEmpty()) itemSpacing.toInt() else 0
+        addButton.layoutParams = params
+
+        // Update add button background to match current styling
+        val bg = GradientDrawable().apply {
+            setColor(Color.WHITE)
+            setStroke(carouselBorderWidth.toInt(), carouselBorderColor)
+            cornerRadius = carouselCornerRadius
+        }
+        addButton.background = bg
+    }
+
     // Public API
 
-    fun addImage(file: File) { addSource(ImageSource.FileSource(file)) }
-    fun addImage(bitmap: Bitmap) { addSource(ImageSource.BitmapSource(bitmap)) }
-    fun addImage(url: String) { addSource(ImageSource.UrlSource(url)) }
-    fun addImage(uri: Uri) { addSource(ImageSource.UriSource(uri)) }
-    fun addImage(drawableResId: Int) { addSource(ImageSource.DrawableSource(drawableResId)) }
+    /**
+     * Get max image count
+     */
+    fun getMaxImageCount(): Int = maxImageCount
 
-    fun addImages(files: List<File>) { files.forEach { addImage(it) } }
-    fun addImageUrls(urls: List<String>) { urls.forEach { addImage(it) } }
-    fun addImageBitmaps(bitmaps: List<Bitmap>) { bitmaps.forEach { addImage(it) } }
+    /**
+     * Check if can add more images
+     */
+    fun canAddMore(): Boolean = imageSources.size < maxImageCount
 
-    private fun addSource(source: ImageSource) {
-        imageSources.add(source)
-        addImageView(source, imageSources.size - 1)
-        updateEmptyState()
+    /**
+     * Add image from File
+     */
+    fun addImage(file: File) {
+        if (!canAddMore()) return
+        imageFiles.add(file)
+        imageSources.add(ImageSource.FileSource(file))
+        addImageView(ImageSource.FileSource(file), imageSources.size - 1)
+        updateAddButtonVisibility()
         updateIndicators()
     }
 
+    /**
+     * Add image from Bitmap
+     */
+    fun addImage(bitmap: Bitmap) {
+        if (!canAddMore()) return
+        imageSources.add(ImageSource.BitmapSource(bitmap))
+        addImageView(ImageSource.BitmapSource(bitmap), imageSources.size - 1)
+        updateAddButtonVisibility()
+        updateIndicators()
+    }
+
+    /**
+     * Add image from URL
+     */
+    fun addImage(url: String) {
+        if (!canAddMore()) return
+        imageSources.add(ImageSource.UrlSource(url))
+        addImageView(ImageSource.UrlSource(url), imageSources.size - 1)
+        updateAddButtonVisibility()
+        updateIndicators()
+    }
+
+    /**
+     * Add multiple images from files
+     */
+    fun addImageFiles(files: List<File>) {
+        files.forEach { addImage(it) }
+    }
+
+    /**
+     * Add multiple images from bitmaps
+     */
+    fun addImageBitmaps(bitmaps: List<Bitmap>) {
+        bitmaps.forEach { addImage(it) }
+    }
+
+    /**
+     * Add multiple images from URLs
+     */
+    fun addImageUrls(urls: List<String>) {
+        urls.forEach { addImage(it) }
+    }
+
+    /**
+     * Get all image files
+     */
+    fun getImageFiles(): List<File> = imageFiles.toList()
+
+    /**
+     * Set images from list of files (clears existing)
+     */
+    fun setImages(files: List<File>) {
+        clearImages()
+        files.take(maxImageCount).forEach { addImage(it) }
+    }
+
+    /**
+     * Remove image at index
+     */
     fun removeImageAt(index: Int) {
         if (index in imageSources.indices) {
-            imageSources.removeAt(index)
-            imageContainer.removeViewAt(index)
-            // Update indices for remaining items
+            // Remove from sources
+            val source = imageSources.removeAt(index)
+            if (source is ImageSource.FileSource) {
+                imageFiles.remove(source.file)
+            }
+            
+            // Remove view (index + 0 since add button is at end now)
+            val viewIndex = index
+            if (viewIndex < imageContainer.childCount - 1) { // -1 for add button
+                imageContainer.removeViewAt(viewIndex)
+            }
+            
+            // Rebuild indices
             rebuildIndices()
-            updateEmptyState()
+            updateAddButtonVisibility()
             updateIndicators()
             onImageDeleteListener?.invoke(index)
         }
     }
 
+    /**
+     * Clear all images
+     */
     fun clearImages() {
+        imageFiles.clear()
         imageSources.clear()
-        imageContainer.removeAllViews()
-        updateEmptyState()
+        // Remove all except add button
+        while (imageContainer.childCount > 1) {
+            imageContainer.removeViewAt(0)
+        }
+        updateAddButtonVisibility()
         updateIndicators()
     }
 
@@ -218,7 +340,7 @@ class ImageCarousel @JvmOverloads constructor(
     // Listeners
     fun setOnImageClickListener(listener: ((Int) -> Unit)?) { onImageClickListener = listener }
     fun setOnImageDeleteListener(listener: ((Int) -> Unit)?) { onImageDeleteListener = listener }
-    fun setOnEmptyStateClickListener(listener: (() -> Unit)?) { onEmptyStateClickListener = listener }
+    fun setOnAddClickListener(listener: (() -> Unit)?) { onAddClickListener = listener }
 
     fun setLabel(text: String) {
         carouselLabel = text
@@ -234,9 +356,10 @@ class ImageCarousel @JvmOverloads constructor(
             clipToPadding = true
         }
 
-        // Rounded background
+        // Background with border
         val bg = GradientDrawable().apply {
-            setColor(0xFFF0F0F0.toInt())
+            setColor(Color.WHITE)
+            setStroke(carouselBorderWidth.toInt(), carouselBorderColor)
             cornerRadius = carouselCornerRadius
         }
         container.background = bg
@@ -258,7 +381,7 @@ class ImageCarousel @JvmOverloads constructor(
             LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER
         ))
 
-        // Delete button (top-right, red)
+        // Delete button
         if (showItemDeleteIcon) {
             val deleteBtn = ImageView(context).apply {
                 setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
@@ -280,8 +403,11 @@ class ImageCarousel @JvmOverloads constructor(
 
         // Layout params
         val params = LinearLayout.LayoutParams(itemWidth.toInt(), itemHeight.toInt())
-        if (imageContainer.childCount > 0) params.marginStart = itemSpacing.toInt()
-        imageContainer.addView(container, params)
+        if (index > 0) params.marginStart = itemSpacing.toInt()
+        
+        // Insert before add button
+        val insertIndex = imageContainer.childCount - 1 // -1 because add button is last
+        imageContainer.addView(container, insertIndex, params)
 
         // Load image
         loadImage(source, imageView, loading)
@@ -307,22 +433,18 @@ class ImageCarousel @JvmOverloads constructor(
             })
     }
 
-    private fun showFullScreen(index: Int) {
-        val source = imageSources.getOrNull(index) ?: return
-        val builder = FullScreenImageViewer.Builder(context).setImageIndex(index, imageSources.size)
-        when (source) {
-            is ImageSource.FileSource -> builder.setImageFile(source.file)
-            is ImageSource.BitmapSource -> builder.setImageBitmap(source.bitmap)
-            is ImageSource.UrlSource -> builder.setImageUrl(source.url)
-            is ImageSource.UriSource -> builder.setImageUri(source.uri)
-            is ImageSource.DrawableSource -> builder.setImageDrawableRes(source.resId)
-        }
-        builder.show()
+    private fun showFullScreen(startIndex: Int) {
+        // Show fullscreen with swipe support for all images
+        FullScreenImageViewer.showCarousel(context, imageSources, startIndex)
     }
 
     private fun rebuildIndices() {
-        for ((i, child) in imageContainer.children.withIndex()) {
-            child.tag = i
+        var idx = 0
+        for (child in imageContainer.children) {
+            if (child != addButton) {
+                child.tag = idx
+                idx++
+            }
         }
     }
 
@@ -333,17 +455,6 @@ class ImageCarousel @JvmOverloads constructor(
         if (newIdx != currentIndex) {
             currentIndex = newIdx
             updateIndicatorSelection()
-        }
-    }
-
-    private fun updateEmptyState() {
-        if (imageSources.isEmpty()) {
-            emptyStateView.visibility = VISIBLE
-            scrollView.visibility = GONE
-            indicatorContainer.visibility = GONE
-        } else {
-            emptyStateView.visibility = GONE
-            scrollView.visibility = VISIBLE
         }
     }
 
@@ -397,8 +508,6 @@ class ImageCarousel @JvmOverloads constructor(
         val carouselH = itemHeight.toInt()
         measureChild(scrollView, MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(carouselH, MeasureSpec.EXACTLY))
-        measureChild(emptyStateView, MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
-            MeasureSpec.makeMeasureSpec(carouselH, MeasureSpec.EXACTLY))
         measureChild(indicatorContainer, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
             MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
 
@@ -415,8 +524,6 @@ class ImageCarousel @JvmOverloads constructor(
         }
         scrollView.layout(paddingStart, top, paddingStart + scrollView.measuredWidth,
             top + scrollView.measuredHeight)
-        emptyStateView.layout(paddingStart, top, paddingStart + emptyStateView.measuredWidth,
-            top + emptyStateView.measuredHeight)
 
         val indLeft = (width - indicatorContainer.measuredWidth) / 2
         val indBottom = top + scrollView.measuredHeight - dpToPx(8f).toInt()
