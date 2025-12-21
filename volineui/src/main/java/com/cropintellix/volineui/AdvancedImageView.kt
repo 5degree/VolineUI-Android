@@ -585,7 +585,12 @@ class AdvancedImageView @JvmOverloads constructor(
     }
 
     override fun dispatchDraw(canvas: Canvas) {
-        // Draw background with rounded corners
+        // Draw label first (not clipped)
+        if (labelTextView.isVisible) {
+            drawChild(canvas, labelTextView, drawingTime)
+        }
+
+        // Calculate image container area (excluding label)
         val labelHeight = if (labelTextView.isVisible) labelTextView.measuredHeight + imageLabelGap else 0f
         borderRect.set(
             paddingStart.toFloat(),
@@ -594,16 +599,16 @@ class AdvancedImageView @JvmOverloads constructor(
             (height - paddingBottom).toFloat()
         )
 
-        // Clip children to rounded corners
+        // Clip and draw image container with rounded corners
         if (imageCornerRadius > 0) {
             clipPath.reset()
             clipPath.addRoundRect(borderRect, imageCornerRadius, imageCornerRadius, Path.Direction.CW)
             canvas.save()
             canvas.clipPath(clipPath)
-            super.dispatchDraw(canvas)
+            drawChild(canvas, imageContainer, drawingTime)
             canvas.restore()
         } else {
-            super.dispatchDraw(canvas)
+            drawChild(canvas, imageContainer, drawingTime)
         }
 
         // Draw border AFTER children (on top)
