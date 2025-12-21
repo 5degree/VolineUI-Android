@@ -2,6 +2,7 @@
 
 package com.cropintellix.volineui
 
+import android.Manifest
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
@@ -42,6 +43,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
+import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
@@ -187,7 +189,7 @@ class AdvancedButton @JvmOverloads constructor(
     private var iconSpacing: Float = dpToPx(8f)
     private var minWidth: Float = dpToPx(64f)
     private var minHeight: Float = dpToPx(44f)
-    private var fullWidth: Boolean = false
+    private var fullWidth: Boolean = true
     
     // Icons
     private var leadingIcon: Drawable? = null
@@ -241,6 +243,7 @@ class AdvancedButton @JvmOverloads constructor(
     
     // ===== STATE =====
     
+    private var isInitialized: Boolean = false
     private var lastClickTime: Long = 0
     private var clickCount: Int = 0
     private val handler = Handler(Looper.getMainLooper())
@@ -249,6 +252,9 @@ class AdvancedButton @JvmOverloads constructor(
     private var shimmerAnimator: ValueAnimator? = null
     private var pulseAnimator: ValueAnimator? = null
     private var dotsAnimator: ValueAnimator? = null
+    private var scaleAnimator: AnimatorSet? = null
+    private var longPressRunnable: Runnable? = null
+    private var isLongPressHandled: Boolean = false
     
     // Paint for custom drawing
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -288,6 +294,7 @@ class AdvancedButton @JvmOverloads constructor(
         setupViews()
         applySizePreset()
         applyStyle()
+        isInitialized = true
         updateState(buttonState)
     }
     
@@ -346,7 +353,7 @@ class AdvancedButton @JvmOverloads constructor(
             iconSpacing = typedArray.getDimension(R.styleable.AdvancedButton_buttonIconSpacing, dpToPx(8f))
             minWidth = typedArray.getDimension(R.styleable.AdvancedButton_buttonMinWidth, dpToPx(64f))
             minHeight = typedArray.getDimension(R.styleable.AdvancedButton_buttonMinHeight, dpToPx(44f))
-            fullWidth = typedArray.getBoolean(R.styleable.AdvancedButton_buttonFullWidth, false)
+            fullWidth = typedArray.getBoolean(R.styleable.AdvancedButton_buttonFullWidth, true)
             
             // Icons
             leadingIcon = typedArray.getDrawable(R.styleable.AdvancedButton_buttonLeadingIcon)
@@ -508,7 +515,11 @@ class AdvancedButton @JvmOverloads constructor(
                         orientation = getGradientOrientation()
                         colors = intArrayOf(gradientStartColor, gradientEndColor)
                     } else {
-                        setColor(backgroundColor)
+                        // Apply 3D effect: lighter top, darker bottom for depth
+                        orientation = GradientDrawable.Orientation.TOP_BOTTOM
+                        val lighterColor = lightenColor(backgroundColor, 0.18f)
+                        val darkerColor = darkenColor(backgroundColor, 0.15f)
+                        colors = intArrayOf(lighterColor, backgroundColor, darkerColor)
                     }
                 }
                 ButtonStyle.OUTLINED, ButtonStyle.TEXT -> {
@@ -518,16 +529,25 @@ class AdvancedButton @JvmOverloads constructor(
                     }
                 }
                 ButtonStyle.ELEVATED -> {
-                    setColor(backgroundColor)
+                    // Apply 3D effect for elevated style too
+                    orientation = GradientDrawable.Orientation.TOP_BOTTOM
+                    val lighterColor = lightenColor(backgroundColor, 0.18f)
+                    val darkerColor = darkenColor(backgroundColor, 0.15f)
+                    colors = intArrayOf(lighterColor, backgroundColor, darkerColor)
                 }
                 ButtonStyle.TONAL -> {
-                    setColor(ColorUtils.setAlphaComponent(backgroundColor, 30))
+                    // Tonal with subtle 3D effect
+                    orientation = GradientDrawable.Orientation.TOP_BOTTOM
+                    val baseAlpha = 40
+                    val lighterTonal = ColorUtils.setAlphaComponent(backgroundColor, baseAlpha + 15)
+                    val darkerTonal = ColorUtils.setAlphaComponent(backgroundColor, baseAlpha - 10)
+                    colors = intArrayOf(lighterTonal, ColorUtils.setAlphaComponent(backgroundColor, baseAlpha), darkerTonal)
                 }
                 ButtonStyle.ICON -> {
                     setColor(Color.TRANSPARENT)
                 }
                 ButtonStyle.CHIP -> {
-                    setColor(ColorUtils.setAlphaComponent(backgroundColor, 20))
+                    setColor(ColorUtils.setAlphaComponent(backgroundColor, 25))
                     setStroke(dpToPx(1f).toInt(), borderColor)
                 }
             }
@@ -568,10 +588,10 @@ class AdvancedButton @JvmOverloads constructor(
                 iconSize = dpToPx(16f)
             }
             ButtonSize.M -> {
-                minHeight = dpToPx(44f)
-                horizontalPadding = dpToPx(16f)
-                verticalPadding = dpToPx(12f)
-                textSize = dpToPx(14f)
+                minHeight = dpToPx(48f)
+                horizontalPadding = dpToPx(20f)
+                verticalPadding = dpToPx(14f)
+                textSize = dpToPx(15f)
                 iconSize = dpToPx(20f)
             }
             ButtonSize.L -> {
@@ -658,6 +678,7 @@ class AdvancedButton @JvmOverloads constructor(
                 cornerRadius = minHeight / 2
                 textView.setTextColor(backgroundColor)
                 iconColor = backgroundColor
+                fullWidth = false
             }
         }
         
@@ -1003,8 +1024,11 @@ class AdvancedButton @JvmOverloads constructor(
         shimmerAnimator?.cancel()
         pulseAnimator?.cancel()
         dotsAnimator?.cancel()
-        scaleX = 1f
-        scaleY = 1f
+        scaleAnimator?.cancel()
+        // Animate scale back to normal smoothly
+        if (scaleX != 1f || scaleY != 1f) {
+            animateScale(1f)
+        }
         shimmerPosition = -1f
     }
     
@@ -1039,6 +1063,7 @@ class AdvancedButton @JvmOverloads constructor(
         }
     }
     
+    @RequiresPermission(Manifest.permission.VIBRATE)
     private fun performErrorHaptic() {
         if (!enableHaptic) return
         
@@ -1065,45 +1090,72 @@ class AdvancedButton @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 if (buttonState == ButtonState.LOADING) return true
                 
+                isLongPressHandled = false
+                
                 if (isEnabled && buttonState != ButtonState.DISABLED) {
-                    updateState(ButtonState.PRESSED)
+                    // Start scale animation
+                    if (enableScaleAnimation && scaleOnPress) {
+                        animateScale(scaleAmount)
+                    }
                     performHapticFeedback()
+                    
+                    // Start long press timer
+                    longPressRunnable = Runnable {
+                        if (!isLongPressHandled) {
+                            isLongPressHandled = true
+                            performHapticFeedback()
+                            onLongClickListener?.invoke()
+                        }
+                    }
+                    handler.postDelayed(longPressRunnable!!, android.view.ViewConfiguration.getLongPressTimeout().toLong())
                 }
                 return true
             }
             MotionEvent.ACTION_UP -> {
+                // Cancel long press
+                longPressRunnable?.let { handler.removeCallbacks(it) }
+                longPressRunnable = null
+                
                 if (buttonState == ButtonState.LOADING) return true
+                
+                // Animate scale back
+                if (enableScaleAnimation && scaleOnPress) {
+                    animateScale(1f)
+                }
                 
                 // Check if touch is within bounds
                 val isWithinBounds = event.x >= 0 && event.x <= width &&
                         event.y >= 0 && event.y <= height
                 
-                if (isWithinBounds) {
+                if (isWithinBounds && !isLongPressHandled) {
                     if (isEnabled && buttonState != ButtonState.DISABLED) {
                         handleClick()
-                    } else if (buttonState == ButtonState.DISABLED) {
+                    } else if (!isEnabled || buttonState == ButtonState.DISABLED) {
                         onDisabledClickListener?.invoke()
                     }
                 }
                 
-                if (buttonState != ButtonState.LOADING && buttonState != ButtonState.SUCCESS && buttonState != ButtonState.ERROR) {
-                    if (isEnabled) {
-                        updateState(ButtonState.NORMAL)
-                    } else {
-                        updateState(ButtonState.DISABLED)
-                    }
-                }
                 return true
             }
             MotionEvent.ACTION_CANCEL -> {
-                if (buttonState != ButtonState.LOADING && buttonState != ButtonState.SUCCESS && buttonState != ButtonState.ERROR) {
-                    if (isEnabled) {
-                        updateState(ButtonState.NORMAL)
-                    } else {
-                        updateState(ButtonState.DISABLED)
-                    }
+                // Cancel long press
+                longPressRunnable?.let { handler.removeCallbacks(it) }
+                longPressRunnable = null
+                
+                // Animate scale back
+                if (enableScaleAnimation && scaleOnPress) {
+                    animateScale(1f)
                 }
                 return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                // Check if moved outside bounds - cancel long press
+                val isWithinBounds = event.x >= 0 && event.x <= width &&
+                        event.y >= 0 && event.y <= height
+                if (!isWithinBounds) {
+                    longPressRunnable?.let { handler.removeCallbacks(it) }
+                    longPressRunnable = null
+                }
             }
         }
         return super.onTouchEvent(event)
@@ -1361,7 +1413,9 @@ class AdvancedButton @JvmOverloads constructor(
     // Enabled state
     override fun setEnabled(enabled: Boolean) {
         super.setEnabled(enabled)
-        updateState(if (enabled) ButtonState.NORMAL else ButtonState.DISABLED)
+        if (isInitialized) {
+            updateState(if (enabled) ButtonState.NORMAL else ButtonState.DISABLED)
+        }
     }
     
     // Listeners
@@ -1477,6 +1531,14 @@ class AdvancedButton @JvmOverloads constructor(
         val r = (Color.red(color) * (1 - factor)).toInt().coerceIn(0, 255)
         val g = (Color.green(color) * (1 - factor)).toInt().coerceIn(0, 255)
         val b = (Color.blue(color) * (1 - factor)).toInt().coerceIn(0, 255)
+        return Color.argb(a, r, g, b)
+    }
+    
+    private fun lightenColor(color: Int, factor: Float): Int {
+        val a = Color.alpha(color)
+        val r = (Color.red(color) + (255 - Color.red(color)) * factor).toInt().coerceIn(0, 255)
+        val g = (Color.green(color) + (255 - Color.green(color)) * factor).toInt().coerceIn(0, 255)
+        val b = (Color.blue(color) + (255 - Color.blue(color)) * factor).toInt().coerceIn(0, 255)
         return Color.argb(a, r, g, b)
     }
     

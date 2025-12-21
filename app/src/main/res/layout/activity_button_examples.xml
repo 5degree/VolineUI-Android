@@ -4,15 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:id="@+id/main"
+    tools:context=".ButtonExamplesActivity">
 
     <LinearLayout
-        android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        tools:context=".ButtonExamplesActivity">
+        android:padding="16dp">
 
         <!-- Title -->
         <TextView
@@ -40,10 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            app:buttonText="Filled Button"
-            app:buttonType="filled"
-            app:buttonBackgroundColor="#6200EE"
-            app:buttonFullWidth="true" />
+            app:buttonText="Filled Button"/>
 
         <!-- Outlined Button -->
         <com.cropintellix.volineui.AdvancedButton
