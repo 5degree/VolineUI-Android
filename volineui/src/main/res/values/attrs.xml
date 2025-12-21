@@ -265,6 +265,12 @@
         <attr name="imageLabelGap" format="dimension" />
         <attr name="imageLabelTextSize" format="dimension" />
         <attr name="imageLabelTextColor" format="color" />
+        <attr name="imageLabelTextStyle" format="enum">
+            <enum name="normal" value="0" />
+            <enum name="bold" value="1" />
+            <enum name="italic" value="2" />
+            <enum name="bold_italic" value="3" />
+        </attr>
         
         <!-- Image Source -->
         <attr name="imageSrc" format="reference" />
@@ -278,8 +284,15 @@
             <enum name="stretch" value="4" />
         </attr>
         <attr name="imageAspectRatio" format="float" />
+        
+        <!-- Placeholder -->
         <attr name="placeholderIcon" format="reference" />
         <attr name="placeholderText" format="string" />
+        <attr name="placeholderIconColor" format="color" />
+        <attr name="placeholderTextColor" format="color" />
+        <attr name="placeholderGap" format="dimension" />
+        
+        <!-- Loading -->
         <attr name="loadingGif" format="reference" />
         
         <!-- Visual Styling -->
@@ -303,6 +316,14 @@
         <!-- Label -->
         <attr name="carouselLabel" format="string" />
         <attr name="carouselLabelGap" format="dimension" />
+        <attr name="carouselLabelTextSize" format="dimension" />
+        <attr name="carouselLabelTextColor" format="color" />
+        <attr name="carouselLabelTextStyle" format="enum">
+            <enum name="normal" value="0" />
+            <enum name="bold" value="1" />
+            <enum name="italic" value="2" />
+            <enum name="bold_italic" value="3" />
+        </attr>
         
         <!-- Item Styling -->
         <attr name="carouselItemWidth" format="dimension" />

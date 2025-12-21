@@ -22,7 +22,10 @@
             android:layout_height="200dp"
             android:layout_weight="1"
             app:imageLabel="Test Image View"
-            app:placeholderText="Image One"
+            app:placeholderGap="30dp"
+            app:placeholderText="TextTextText"
+            app:placeholderIconColor="@color/maroon"
+            app:placeholderTextColor="@color/maroon"
             app:loadingGif="@drawable/loading_gif" />
 
             <Space
@@ -72,6 +75,8 @@
             android:layout_width="match_parent"
             android:layout_height="150dp"
             app:enableFullScreenPreview="true"
+            app:imageLabel="image label label"
+            app:placeholderText="This is a placeholder text."
             app:placeholderIcon="@drawable/browse_24px"
             android:layout_marginBottom="16dp" />
 

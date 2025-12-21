@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
@@ -18,6 +19,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.view.isVisible
@@ -56,19 +58,20 @@ class AdvancedImageView @JvmOverloads constructor(
     private val loadingIndicator: ProgressBar
     private val loadingGifView: ImageView
     private val deleteButton: ImageView
-    private val placeholderContainer: FrameLayout
+    private val placeholderContainer: LinearLayout
     private val placeholderIcon: ImageView
     private val placeholderTextView: TextView
 
-    // Properties with defaults
+    // Label properties (matching Radio component)
     private var imageLabel: String = ""
     private var imageLabelGap: Float = 0f
     private var imageLabelTextSize: Float = 0f
     private var imageLabelTextColor: Int = 0xFF252525.toInt()
+    private var imageLabelTextStyle: Int = Typeface.NORMAL
+
+    // Image properties
     private var imageScaleType: ImageScaleType = ImageScaleType.CROP
     private var imageAspectRatio: Float = 0f
-    private var placeholderIconResId: Int = 0
-    private var placeholderText: String = "Tap to capture"
     private var loadingGifResId: Int = 0
     private var imageCornerRadius: Float = 0f
     private var imageBorderWidth: Float = 0f
@@ -79,6 +82,13 @@ class AdvancedImageView @JvmOverloads constructor(
     private var showLoadingIndicator: Boolean = true
     private var enableFullScreenPreview: Boolean = true
     private var enableCameraCapture: Boolean = true
+
+    // Placeholder properties
+    private var placeholderIconResId: Int = 0
+    private var placeholderText: String = "Tap to capture"
+    private var placeholderIconColor: Int = 0xFF666666.toInt()
+    private var placeholderTextColor: Int = 0xFF666666.toInt()
+    private var placeholderGap: Float = 0f
 
     // State
     private var currentState: ImageState = ImageState.EMPTY
@@ -109,7 +119,8 @@ class AdvancedImageView @JvmOverloads constructor(
         imageLabelGap = dpToPx(5f)
         imageLabelTextSize = dpToPx(14f)
         imageBorderWidth = dpToPx(1f)
-        imageCornerRadius = dpToPx(8f)  // Default corner radius
+        imageCornerRadius = dpToPx(8f)
+        placeholderGap = dpToPx(8f)
 
         borderPaint.color = imageBorderColor
         borderPaint.strokeWidth = imageBorderWidth
@@ -136,7 +147,7 @@ class AdvancedImageView @JvmOverloads constructor(
         }
         imageContainer.addView(imageView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
 
-        // Loading indicator (CircularProgressBar)
+        // Loading indicator
         loadingIndicator = ProgressBar(context).apply {
             visibility = GONE
             isIndeterminate = true
@@ -157,7 +168,7 @@ class AdvancedImageView @JvmOverloads constructor(
         // Delete button
         deleteButton = ImageView(context).apply {
             visibility = GONE
-            setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            setImageResource(R.drawable.ic_clear)
             setColorFilter(deleteIconTint)
             setPadding(dpToPx(5f).toInt(), dpToPx(5f).toInt(), dpToPx(5f).toInt(), dpToPx(5f).toInt())
             setOnClickListener {
@@ -171,9 +182,11 @@ class AdvancedImageView @JvmOverloads constructor(
         deleteParams.topMargin = dpToPx(6f).toInt()
         imageContainer.addView(deleteButton, deleteParams)
 
-        // Placeholder container
-        placeholderContainer = FrameLayout(context).apply {
+        // Placeholder container (LinearLayout for vertical arrangement with gap)
+        placeholderContainer = LinearLayout(context).apply {
             visibility = VISIBLE
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
             isClickable = true
             isFocusable = true
             setOnClickListener { handlePlaceholderClick() }
@@ -182,21 +195,19 @@ class AdvancedImageView @JvmOverloads constructor(
 
         placeholderIcon = ImageView(context).apply {
             setImageResource(R.drawable.ic_add_photo)
-            setColorFilter(0xFF666666.toInt())
+            setColorFilter(placeholderIconColor)
         }
-        val iconParams = LayoutParams(dpToPx(36f).toInt(), dpToPx(36f).toInt(), Gravity.CENTER)
-        iconParams.bottomMargin = dpToPx(10f).toInt()
+        val iconParams = LinearLayout.LayoutParams(dpToPx(36f).toInt(), dpToPx(36f).toInt())
         placeholderContainer.addView(placeholderIcon, iconParams)
 
         placeholderTextView = TextView(context).apply {
             text = placeholderText
             gravity = Gravity.CENTER
-            alpha = 0.5f
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            setTextColor(0xFF666666.toInt())
+            setTextColor(placeholderTextColor)
         }
-        val textParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER)
-        textParams.topMargin = dpToPx(10f).toInt()
+        val textParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        textParams.topMargin = placeholderGap.toInt()
         placeholderContainer.addView(placeholderTextView, textParams)
 
         // Parse XML attributes
@@ -220,37 +231,48 @@ class AdvancedImageView @JvmOverloads constructor(
 
         try {
             imageLabel = ta.getString(R.styleable.AdvancedImageView_imageLabel) ?: ""
+            imageLabelGap = ta.getDimension(R.styleable.AdvancedImageView_imageLabelGap, imageLabelGap)
+            imageLabelTextSize = ta.getDimension(R.styleable.AdvancedImageView_imageLabelTextSize, imageLabelTextSize)
+            imageLabelTextColor = ta.getColor(R.styleable.AdvancedImageView_imageLabelTextColor, imageLabelTextColor)
+            imageLabelTextStyle = ta.getInt(R.styleable.AdvancedImageView_imageLabelTextStyle, Typeface.NORMAL)
+
             if (imageLabel.isNotEmpty()) {
                 labelTextView.text = imageLabel
                 labelTextView.visibility = VISIBLE
             }
-
-            imageLabelGap = ta.getDimension(R.styleable.AdvancedImageView_imageLabelGap, imageLabelGap)
-            imageLabelTextSize = ta.getDimension(R.styleable.AdvancedImageView_imageLabelTextSize, imageLabelTextSize)
-            imageLabelTextColor = ta.getColor(R.styleable.AdvancedImageView_imageLabelTextColor, imageLabelTextColor)
             labelTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, imageLabelTextSize)
             labelTextView.setTextColor(imageLabelTextColor)
+            labelTextView.setTypeface(labelTextView.typeface, imageLabelTextStyle)
 
             imageScaleType = ImageScaleType.fromValue(ta.getInt(R.styleable.AdvancedImageView_imageScaleType, ImageScaleType.CROP.value))
             imageAspectRatio = ta.getFloat(R.styleable.AdvancedImageView_imageAspectRatio, 0f)
+            loadingGifResId = ta.getResourceId(R.styleable.AdvancedImageView_loadingGif, 0)
 
+            // Placeholder
             placeholderIconResId = ta.getResourceId(R.styleable.AdvancedImageView_placeholderIcon, 0)
             placeholderText = ta.getString(R.styleable.AdvancedImageView_placeholderText) ?: placeholderText
-            loadingGifResId = ta.getResourceId(R.styleable.AdvancedImageView_loadingGif, 0)
+            placeholderIconColor = ta.getColor(R.styleable.AdvancedImageView_placeholderIconColor, placeholderIconColor)
+            placeholderTextColor = ta.getColor(R.styleable.AdvancedImageView_placeholderTextColor, placeholderTextColor)
+            placeholderGap = ta.getDimension(R.styleable.AdvancedImageView_placeholderGap, placeholderGap)
 
             // Apply placeholder
             if (placeholderIconResId != 0) {
                 placeholderIcon.setImageResource(placeholderIconResId)
-                placeholderIcon.alpha = 0.7f
                 placeholderIcon.clearColorFilter()
+            } else {
+                placeholderIcon.setColorFilter(placeholderIconColor)
             }
             placeholderTextView.text = placeholderText
+            placeholderTextView.setTextColor(placeholderTextColor)
+            (placeholderTextView.layoutParams as? LinearLayout.LayoutParams)?.topMargin = placeholderGap.toInt()
 
+            // Visual styling
             imageCornerRadius = ta.getDimension(R.styleable.AdvancedImageView_imageCornerRadius, imageCornerRadius)
             imageBorderWidth = ta.getDimension(R.styleable.AdvancedImageView_imageBorderWidth, imageBorderWidth)
             imageBorderColor = ta.getColor(R.styleable.AdvancedImageView_imageBorderColor, imageBorderColor)
             imageBackgroundColor = ta.getColor(R.styleable.AdvancedImageView_imageBackgroundColor, imageBackgroundColor)
 
+            // Features
             showDeleteIcon = ta.getBoolean(R.styleable.AdvancedImageView_showDeleteIcon, true)
             deleteIconTint = ta.getColor(R.styleable.AdvancedImageView_deleteIconTint, deleteIconTint)
             showLoadingIndicator = ta.getBoolean(R.styleable.AdvancedImageView_showLoadingIndicator, true)
@@ -404,21 +426,19 @@ class AdvancedImageView @JvmOverloads constructor(
                 // Restore placeholder
                 if (placeholderIconResId != 0) {
                     placeholderIcon.setImageResource(placeholderIconResId)
-                    placeholderIcon.alpha = 0.7f
                     placeholderIcon.clearColorFilter()
                 } else {
-                    placeholderIcon.setImageResource(android.R.drawable.ic_menu_camera)
-                    placeholderIcon.alpha = 0.4f
-                    placeholderIcon.setColorFilter(0xFF666666.toInt())
+                    placeholderIcon.setImageResource(R.drawable.ic_add_photo)
+                    placeholderIcon.setColorFilter(placeholderIconColor)
                 }
                 placeholderTextView.text = placeholderText
+                placeholderTextView.setTextColor(placeholderTextColor)
             }
             ImageState.LOADING -> {
                 imageView.visibility = GONE
                 placeholderContainer.visibility = GONE
                 deleteButton.visibility = GONE
                 
-                // Show loading GIF if provided, else show progress bar
                 if (loadingGifResId != 0) {
                     loadingIndicator.visibility = GONE
                     loadingGifView.visibility = VISIBLE
