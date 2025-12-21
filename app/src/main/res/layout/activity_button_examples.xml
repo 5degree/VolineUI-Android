@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        tools:context=".ButtonExamplesActivity">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="AdvancedButton Examples"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <!-- Section: Button Styles -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Button Styles"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- Filled Button -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnFilled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:buttonText="Filled Button"
+            app:buttonType="filled"
+            app:buttonBackgroundColor="#6200EE"
+            app:buttonFullWidth="true" />
+
+        <!-- Outlined Button -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnOutlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:buttonText="Outlined Button"
+            app:buttonType="outlined"
+            app:buttonBorderColor="#6200EE"
+            app:buttonFullWidth="true" />
+
+        <!-- Text Button -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:buttonText="Text Button"
+            app:buttonType="text"
+            app:buttonBackgroundColor="#6200EE" />
+
+        <!-- Elevated Button -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnElevated"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:buttonText="Elevated Button"
+            app:buttonType="elevated"
+            app:buttonBackgroundColor="#03DAC5"
+            app:buttonTextColor="#000000"
+            app:buttonElevation="4dp"
+            app:buttonFullWidth="true" />
+
+        <!-- Tonal Button -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnTonal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:buttonText="Tonal Button"
+            app:buttonType="tonal"
+            app:buttonBackgroundColor="#6200EE"
+            app:buttonFullWidth="true" />
+
+        <!-- Chip Button -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:buttonText="Chip Style"
+            app:buttonType="chip"
+            app:buttonSizeType="s"
+            app:buttonBackgroundColor="#6200EE" />
+
+        <!-- Section: Size Variants -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Size Variants"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnXS"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonText="XS"
+                app:buttonSizeType="xs"
+                app:buttonBackgroundColor="#FF5722" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnS"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonText="Small"
+                app:buttonSizeType="s"
+                app:buttonBackgroundColor="#FF9800" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnM"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonText="Medium"
+                app:buttonSizeType="m"
+                app:buttonBackgroundColor="#4CAF50" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnL"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:buttonText="Large"
+                app:buttonSizeType="l"
+                app:buttonBackgroundColor="#2196F3" />
+
+        </LinearLayout>
+
+        <!-- Section: Icons -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Icons"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- Leading Icon -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnLeadingIcon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:buttonText="Add Item"
+            app:buttonLeadingIcon="@android:drawable/ic_input_add"
+            app:buttonBackgroundColor="#4CAF50"
+            app:buttonFullWidth="true" />
+
+        <!-- Trailing Icon (Clickable) -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnTrailingIcon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:buttonText="Send Message"
+            app:buttonTrailingIcon="@android:drawable/ic_menu_send"
+            app:buttonBackgroundColor="#2196F3"
+            app:buttonFullWidth="true" />
+
+        <!-- Both Icons -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnBothIcons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:buttonText="With Both Icons"
+            app:buttonLeadingIcon="@android:drawable/ic_menu_edit"
+            app:buttonTrailingIcon="@android:drawable/ic_menu_more"
+            app:buttonBackgroundColor="#9C27B0"
+            app:buttonFullWidth="true" />
+
+        <!-- Section: Corner Types -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Corner Types"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnSharp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                app:buttonText="Sharp"
+                app:buttonCornerType="sharp"
+                app:buttonBackgroundColor="#E91E63" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnRounded"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="4dp"
+                app:buttonText="Rounded"
+                app:buttonCornerType="rounded"
+                app:buttonBackgroundColor="#9C27B0" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnPill"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                app:buttonText="Pill"
+                app:buttonCornerType="pill"
+                app:buttonBackgroundColor="#673AB7" />
+
+        </LinearLayout>
+
+        <!-- Section: States -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="States"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- Disabled Button -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnDisabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:enabled="false"
+            app:buttonText="Disabled Button"
+            app:buttonFullWidth="true" />
+
+        <!-- Loading Button -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnLoading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:buttonText="Click to Load"
+            app:buttonBackgroundColor="#FF5722"
+            app:buttonFullWidth="true" />
+
+        <!-- Success/Error Button -->
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnSuccessError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:buttonText="Click for Success"
+            app:buttonBackgroundColor="#607D8B"
+            app:buttonFullWidth="true" />
+
+        <!-- Section: Gradient -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Gradient Background"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnGradient"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:buttonText="Gradient Button"
+            app:buttonUseGradient="true"
+            app:buttonGradientStartColor="#FF6B6B"
+            app:buttonGradientEndColor="#556270"
+            app:buttonCornerType="pill"
+            app:buttonFullWidth="true" />
+
+        <!-- Section: Loading Types -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Loading Types"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnLoadingSpinner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                app:buttonText="Spinner"
+                app:buttonLoadingType="spinner"
+                app:buttonBackgroundColor="#009688" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnLoadingDots"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="4dp"
+                app:buttonText="Dots"
+                app:buttonLoadingType="dots"
+                app:buttonBackgroundColor="#00BCD4" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnLoadingShimmer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                app:buttonText="Shimmer"
+                app:buttonLoadingType="shimmer"
+                app:buttonBackgroundColor="#03A9F4" />
+
+        </LinearLayout>
+
+        <!-- Section: Double Click / Long Press -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Click Interactions"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.cropintellix.volineui.AdvancedButton
+            android:id="@+id/btnInteractions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:buttonText="Try Single/Double/Long Click"
+            app:buttonBackgroundColor="#795548"
+            app:buttonFullWidth="true" />
+
+        <!-- Status Display -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="32dp"
+            android:background="#F5F5F5"
+            android:padding="16dp"
+            android:text="Status: Ready"
+            android:textAlignment="center" />
+
+    </LinearLayout>
+</ScrollView>

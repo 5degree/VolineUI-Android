@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.cropintellix.volineuiandroid.databinding.ActivityMainBinding
+import kotlin.jvm.java
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,6 +48,9 @@ class MainActivity : AppCompatActivity() {
         }
         b.btnOpenImageViewExamples.setOnClickListener {
             startActivity(Intent(this, ImageViewExamplesActivity::class.java))
+        }
+        b.btnOpenButtonExamples.setOnClickListener {
+            startActivity(Intent(this, ButtonExamplesActivity::class.java))
         }
     }
 }

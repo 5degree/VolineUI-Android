@@ -23,6 +23,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VolineUIAndroid">
         <activity
+            android:name=".ButtonExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".RadioExamplesActivity"
             android:exported="false" />
         <activity

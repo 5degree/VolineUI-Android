@@ -345,4 +345,130 @@
         <attr name="enableCarouselFullScreen" format="boolean" />
         <attr name="maxImageCount" format="integer" />
     </declare-styleable>
+
+    <declare-styleable name="AdvancedButton">
+        <!-- Text -->
+        <attr name="buttonText" format="string" />
+        
+        <!-- Style and Size -->
+        <attr name="buttonType" format="enum">
+            <enum name="filled" value="0" />
+            <enum name="outlined" value="1" />
+            <enum name="text" value="2" />
+            <enum name="elevated" value="3" />
+            <enum name="tonal" value="4" />
+            <enum name="icon" value="5" />
+            <enum name="fab" value="6" />
+            <enum name="extendedFab" value="7" />
+            <enum name="chip" value="8" />
+        </attr>
+        <attr name="buttonSizeType" format="enum">
+            <enum name="xs" value="0" />
+            <enum name="s" value="1" />
+            <enum name="m" value="2" />
+            <enum name="l" value="3" />
+            <enum name="xl" value="4" />
+        </attr>
+        <attr name="buttonCornerType" format="enum">
+            <enum name="sharp" value="0" />
+            <enum name="rounded" value="1" />
+            <enum name="pill" value="2" />
+        </attr>
+        
+        <!-- Colors -->
+        <attr name="buttonBackgroundColor" format="color" />
+        <attr name="buttonBackgroundColorPressed" format="color" />
+        <attr name="buttonBackgroundColorDisabled" format="color" />
+        <attr name="buttonTextColor" format="color" />
+        <attr name="buttonTextColorPressed" format="color" />
+        <attr name="buttonTextColorDisabled" format="color" />
+        <attr name="buttonBorderColor" format="color" />
+        <attr name="buttonBorderColorPressed" format="color" />
+        <attr name="buttonBorderColorDisabled" format="color" />
+        <attr name="buttonRippleColor" format="color" />
+        <attr name="buttonLoadingColor" format="color" />
+        <attr name="buttonSuccessColor" format="color" />
+        <attr name="buttonErrorColor" format="color" />
+        
+        <!-- Gradient -->
+        <attr name="buttonUseGradient" format="boolean" />
+        <attr name="buttonGradientStartColor" format="color" />
+        <attr name="buttonGradientEndColor" format="color" />
+        <attr name="buttonGradientAngle" format="float" />
+        
+        <!-- Dimensions -->
+        <attr name="buttonCornerRadius" format="dimension" />
+        <attr name="buttonBorderWidth" format="dimension" />
+        <attr name="buttonElevation" format="dimension" />
+        <attr name="buttonElevationPressed" format="dimension" />
+        <attr name="buttonHorizontalPadding" format="dimension" />
+        <attr name="buttonVerticalPadding" format="dimension" />
+        <attr name="buttonIconSpacing" format="dimension" />
+        <attr name="buttonMinWidth" format="dimension" />
+        <attr name="buttonMinHeight" format="dimension" />
+        <attr name="buttonFullWidth" format="boolean" />
+        
+        <!-- Icons -->
+        <attr name="buttonLeadingIcon" format="reference" />
+        <attr name="buttonTrailingIcon" format="reference" />
+        <attr name="buttonIconSize" format="dimension" />
+        <attr name="buttonIconColor" format="color" />
+        <attr name="buttonIconColorPressed" format="color" />
+        <attr name="buttonIconColorDisabled" format="color" />
+        <attr name="buttonShowBadge" format="boolean" />
+        <attr name="buttonBadgeColor" format="color" />
+        <attr name="buttonBadgeCount" format="integer" />
+        
+        <!-- Typography -->
+        <attr name="buttonTextSize" format="dimension" />
+        <attr name="buttonFontFamily" format="reference" />
+        <attr name="buttonTextStyle" format="enum">
+            <enum name="normal" value="0" />
+            <enum name="bold" value="1" />
+            <enum name="italic" value="2" />
+            <enum name="boldItalic" value="3" />
+        </attr>
+        <attr name="buttonLetterSpacing" format="float" />
+        <attr name="buttonTextTransform" format="enum">
+            <enum name="none" value="0" />
+            <enum name="uppercase" value="1" />
+            <enum name="lowercase" value="2" />
+            <enum name="capitalize" value="3" />
+        </attr>
+        <attr name="buttonMaxLines" format="integer" />
+        
+        <!-- Loading -->
+        <attr name="buttonLoadingType" format="enum">
+            <enum name="spinner" value="0" />
+            <enum name="dots" value="1" />
+            <enum name="shimmer" value="2" />
+            <enum name="progress" value="3" />
+        </attr>
+        <attr name="buttonLoadingText" format="string" />
+        <attr name="buttonShowProgressText" format="boolean" />
+        
+        <!-- Behavior -->
+        <attr name="buttonDebounceTime" format="integer" />
+        <attr name="buttonDoubleClickTime" format="integer" />
+        <attr name="buttonEnableHaptic" format="boolean" />
+        <attr name="buttonHapticIntensity" format="enum">
+            <enum name="none" value="0" />
+            <enum name="light" value="1" />
+            <enum name="medium" value="2" />
+            <enum name="heavy" value="3" />
+        </attr>
+        <attr name="buttonAnimationDuration" format="integer" />
+        <attr name="buttonScaleOnPress" format="boolean" />
+        <attr name="buttonScaleAmount" format="float" />
+        
+        <!-- Animation Flags -->
+        <attr name="buttonEnableRipple" format="boolean" />
+        <attr name="buttonEnableScaleAnimation" format="boolean" />
+        <attr name="buttonEnableElevationAnimation" format="boolean" />
+        <attr name="buttonEnablePulseAnimation" format="boolean" />
+        <attr name="buttonEnableShimmer" format="boolean" />
+        
+        <!-- Common -->
+        <attr name="android:enabled" />
+    </declare-styleable>
 </resources>

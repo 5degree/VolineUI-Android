@@ -79,6 +79,12 @@
             android:layout_height="wrap_content"
             android:text="ImageView Examples" />
 
+        <Button
+            android:id="@+id/btnOpenButtonExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Button Examples" />
+
     </LinearLayout>
 
 </ScrollView>
