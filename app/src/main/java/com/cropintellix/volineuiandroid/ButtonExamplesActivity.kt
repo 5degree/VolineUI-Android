@@ -73,59 +73,59 @@ class ButtonExamplesActivity : AppCompatActivity() {
     
     private fun setupListeners() {
         // Basic style buttons
-        btnFilled.setOnButtonClickListener {
+        btnFilled.onClickListener {
             updateStatus("Filled button clicked")
         }
         
-        btnOutlined.setOnButtonClickListener {
+        btnOutlined.onClickListener {
             updateStatus("Outlined button clicked")
         }
         
-        btnText.setOnButtonClickListener {
+        btnText.onClickListener {
             updateStatus("Text button clicked")
         }
         
-        btnElevated.setOnButtonClickListener {
+        btnElevated.onClickListener {
             updateStatus("Elevated button clicked")
         }
         
-        btnTonal.setOnButtonClickListener {
+        btnTonal.onClickListener {
             updateStatus("Tonal button clicked")
         }
         
-        btnChip.setOnButtonClickListener {
+        btnChip.onClickListener {
             updateStatus("Chip button clicked")
         }
         
         // Icon buttons
-        btnLeadingIcon.setOnButtonClickListener {
+        btnLeadingIcon.onClickListener {
             updateStatus("Leading icon button clicked")
         }
         
         // Trailing icon with separate click listener
-        btnTrailingIcon.setOnButtonClickListener {
+        btnTrailingIcon.onClickListener {
             updateStatus("Send Message button clicked")
         }
-        btnTrailingIcon.setOnTrailingIconClickListener {
+        btnTrailingIcon.onTrailingIconClickListener {
             updateStatus("Trailing icon (send) clicked!")
             showToast("Trailing icon clicked separately!")
         }
         
         // Both icons button
-        btnBothIcons.setOnButtonClickListener {
+        btnBothIcons.onClickListener {
             updateStatus("Both icons button clicked")
         }
-        btnBothIcons.setOnLeadingIconClickListener {
+        btnBothIcons.onLeadingIconClickListener {
             updateStatus("Leading icon (edit) clicked!")
             showToast("Edit icon clicked!")
         }
-        btnBothIcons.setOnTrailingIconClickListener {
+        btnBothIcons.onTrailingIconClickListener {
             updateStatus("Trailing icon (more) clicked!")
             showToast("More icon clicked!")
         }
         
         // Loading button
-        btnLoading.setOnButtonClickListener {
+        btnLoading.onClickListener {
             updateStatus("Loading started...")
             btnLoading.setLoading(true)
             
@@ -137,7 +137,7 @@ class ButtonExamplesActivity : AppCompatActivity() {
         }
         
         // Success/Error button
-        btnSuccessError.setOnButtonClickListener {
+        btnSuccessError.onClickListener {
             if (successToggle) {
                 updateStatus("Showing success state...")
                 btnSuccessError.showSuccessState()
@@ -152,15 +152,15 @@ class ButtonExamplesActivity : AppCompatActivity() {
                 btnSuccessError.setText(if (successToggle) "Click for Success" else "Click for Error")
             }, 2000)
         }
-        btnSuccessError.setOnSuccessListener {
+        btnSuccessError.onSuccessListener {
             updateStatus("Success animation completed!")
         }
-        btnSuccessError.setOnErrorListener {
+        btnSuccessError.onErrorListener {
             updateStatus("Error animation completed!")
         }
         
         // Gradient button
-        btnGradient.setOnButtonClickListener {
+        btnGradient.onClickListener {
             updateStatus("Gradient button clicked")
         }
         
@@ -171,28 +171,28 @@ class ButtonExamplesActivity : AppCompatActivity() {
         setupInteractionButton()
         
         // Disabled button click listener
-        btnDisabled.setOnDisabledClickListener {
+        btnDisabled.onDisabledClickListener {
             showToast("Button is disabled!")
             updateStatus("Tried to click disabled button")
         }
     }
     
     private fun setupLoadingTypeButtons() {
-        btnLoadingSpinner.setOnButtonClickListener {
+        btnLoadingSpinner.onClickListener {
             btnLoadingSpinner.setLoading(true)
             btnLoadingSpinner.postDelayed({
                 btnLoadingSpinner.setLoading(false)
             }, 2000)
         }
         
-        btnLoadingDots.setOnButtonClickListener {
+        btnLoadingDots.onClickListener {
             btnLoadingDots.setLoading(true)
             btnLoadingDots.postDelayed({
                 btnLoadingDots.setLoading(false)
             }, 2000)
         }
         
-        btnLoadingShimmer.setOnButtonClickListener {
+        btnLoadingShimmer.onClickListener {
             btnLoadingShimmer.setLoading(true)
             btnLoadingShimmer.postDelayed({
                 btnLoadingShimmer.setLoading(false)
@@ -201,16 +201,16 @@ class ButtonExamplesActivity : AppCompatActivity() {
     }
     
     private fun setupInteractionButton() {
-        btnInteractions.setOnButtonClickListener {
+        btnInteractions.onClickListener {
             updateStatus("Single click detected")
         }
         
-        btnInteractions.setOnDoubleClickListener {
+        btnInteractions.onDoubleClickListener {
             updateStatus("Double click detected!")
             showToast("Double click!")
         }
         
-        btnInteractions.setOnButtonLongClickListener {
+        btnInteractions.onLongClickListener {
             updateStatus("Long press detected!")
             showToast("Long press!")
             true

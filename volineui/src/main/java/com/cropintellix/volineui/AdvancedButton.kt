@@ -1419,40 +1419,40 @@ class AdvancedButton @JvmOverloads constructor(
     }
     
     // Listeners
-    fun setOnButtonClickListener(listener: () -> Unit) {
+    fun onClickListener(listener: () -> Unit) {
         onClickListener = listener
     }
     
-    fun setOnButtonLongClickListener(listener: () -> Boolean) {
+    fun onLongClickListener(listener: () -> Boolean) {
         onLongClickListener = listener
         isLongClickable = true
     }
     
-    fun setOnDoubleClickListener(listener: () -> Unit) {
+    fun onDoubleClickListener(listener: () -> Unit) {
         onDoubleClickListener = listener
     }
     
-    fun setOnDisabledClickListener(listener: () -> Unit) {
+    fun onDisabledClickListener(listener: () -> Unit) {
         onDisabledClickListener = listener
     }
     
-    fun setOnLoadingCompleteListener(listener: () -> Unit) {
+    fun onLoadingCompleteListener(listener: () -> Unit) {
         onLoadingCompleteListener = listener
     }
     
-    fun setOnSuccessListener(listener: () -> Unit) {
+    fun onSuccessListener(listener: () -> Unit) {
         onSuccessListener = listener
     }
     
-    fun setOnErrorListener(listener: () -> Unit) {
+    fun onErrorListener(listener: () -> Unit) {
         onErrorListener = listener
     }
     
-    fun setOnTrailingIconClickListener(listener: () -> Unit) {
+    fun onTrailingIconClickListener(listener: () -> Unit) {
         onTrailingIconClickListener = listener
     }
     
-    fun setOnLeadingIconClickListener(listener: () -> Unit) {
+    fun onLeadingIconClickListener(listener: () -> Unit) {
         onLeadingIconClickListener = listener
     }
     
