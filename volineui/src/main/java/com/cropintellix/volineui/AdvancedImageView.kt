@@ -78,12 +78,17 @@ class AdvancedImageView @JvmOverloads constructor(
     private var imageCornerRadius: Float = 0f
     private var imageBorderWidth: Float = 0f
     private var imageBorderColor: Int = 0xFFCCCCCC.toInt()
-    private var imageBackgroundColor: Int = Color.WHITE
+    private var imageBackgroundColor: Int = Color.TRANSPARENT
     private var showDeleteIcon: Boolean = true
     private var deleteIconTint: Int = 0xFFE53935.toInt()
     private var showLoadingIndicator: Boolean = true
     private var enableFullScreenPreview: Boolean = true
     private var enableCameraCapture: Boolean = true
+
+    // Track if attributes were explicitly set in XML
+    private var borderWidthExplicitlySet = false
+    private var cornerRadiusExplicitlySet = false
+    private var showDeleteIconExplicitlySet = false
 
     // Placeholder properties
     private var placeholderIconResId: Int = 0
@@ -117,11 +122,11 @@ class AdvancedImageView @JvmOverloads constructor(
         clipChildren = false
         clipToPadding = false
 
-        // Initialize defaults
+        // Initialize defaults - these will be used when no imageSrc and not explicitly set
         imageLabelGap = dpToPx(5f)
         imageLabelTextSize = dpToPx(14f)
-        imageBorderWidth = dpToPx(1f)
-        imageCornerRadius = dpToPx(8f)
+        imageBorderWidth = dpToPx(1f)  // Default for placeholder mode
+        imageCornerRadius = dpToPx(8f)  // Default for placeholder mode
         placeholderGap = dpToPx(8f)
 
         borderPaint.color = imageBorderColor
@@ -268,14 +273,25 @@ class AdvancedImageView @JvmOverloads constructor(
             placeholderTextView.setTextColor(placeholderTextColor)
             (placeholderTextView.layoutParams as? LinearLayout.LayoutParams)?.topMargin = placeholderGap.toInt()
 
-            // Visual styling
-            imageCornerRadius = ta.getDimension(R.styleable.AdvancedImageView_imageCornerRadius, imageCornerRadius)
-            imageBorderWidth = ta.getDimension(R.styleable.AdvancedImageView_imageBorderWidth, imageBorderWidth)
+            // Check if visual styling attributes were explicitly set
+            borderWidthExplicitlySet = ta.hasValue(R.styleable.AdvancedImageView_imageBorderWidth)
+            cornerRadiusExplicitlySet = ta.hasValue(R.styleable.AdvancedImageView_imageCornerRadius)
+            showDeleteIconExplicitlySet = ta.hasValue(R.styleable.AdvancedImageView_showDeleteIcon)
+
+            // Visual styling - read values if explicitly set
+            if (cornerRadiusExplicitlySet) {
+                imageCornerRadius = ta.getDimension(R.styleable.AdvancedImageView_imageCornerRadius, imageCornerRadius)
+            }
+            if (borderWidthExplicitlySet) {
+                imageBorderWidth = ta.getDimension(R.styleable.AdvancedImageView_imageBorderWidth, imageBorderWidth)
+            }
             imageBorderColor = ta.getColor(R.styleable.AdvancedImageView_imageBorderColor, imageBorderColor)
             imageBackgroundColor = ta.getColor(R.styleable.AdvancedImageView_imageBackgroundColor, imageBackgroundColor)
 
             // Features
-            showDeleteIcon = ta.getBoolean(R.styleable.AdvancedImageView_showDeleteIcon, true)
+            if (showDeleteIconExplicitlySet) {
+                showDeleteIcon = ta.getBoolean(R.styleable.AdvancedImageView_showDeleteIcon, showDeleteIcon)
+            }
             deleteIconTint = ta.getColor(R.styleable.AdvancedImageView_deleteIconTint, deleteIconTint)
             showLoadingIndicator = ta.getBoolean(R.styleable.AdvancedImageView_showLoadingIndicator, true)
             enableFullScreenPreview = ta.getBoolean(R.styleable.AdvancedImageView_enableFullScreenPreview, true)
@@ -284,7 +300,36 @@ class AdvancedImageView @JvmOverloads constructor(
             // Load imageSrc from XML
             val imageSrcResId = ta.getResourceId(R.styleable.AdvancedImageView_imageSrc, 0)
             if (imageSrcResId != 0) {
-                post { loadFromDrawable(imageSrcResId) }
+                // When imageSrc is set, use display-only defaults unless explicitly overridden
+                if (!borderWidthExplicitlySet) imageBorderWidth = 0f
+                if (!cornerRadiusExplicitlySet) imageCornerRadius = 0f
+                if (!showDeleteIconExplicitlySet) showDeleteIcon = false
+
+                // Apply the scaleType to imageView directly
+                imageView.scaleType = getAndroidScaleType()
+
+                if (isInEditMode) {
+                    // In design preview, load directly without Glide
+                    imageView.setImageResource(imageSrcResId)
+                    imageView.visibility = VISIBLE
+                    placeholderContainer.visibility = GONE
+                    deleteButton.visibility = GONE
+                    loadingIndicator.visibility = GONE
+                    loadingGifView.visibility = GONE
+                    currentState = ImageState.LOADED
+
+                    // Apply visual styling for preview
+                    updateContainerBackground()
+                    updateDeleteButtonStyle()
+
+                    // Force a layout pass
+                    post {
+                        requestLayout()
+                        invalidate()
+                    }
+                } else {
+                    post { loadFromDrawable(imageSrcResId) }
+                }
             }
 
         } finally {
@@ -311,6 +356,18 @@ class AdvancedImageView @JvmOverloads constructor(
             cornerRadius = imageCornerRadius
         }
         imageContainer.background = bg
+    }
+
+    /**
+     * Maps our ImageScaleType enum to Android's ImageView.ScaleType
+     */
+    private fun getAndroidScaleType(): ImageView.ScaleType {
+        return when (imageScaleType) {
+            ImageScaleType.FIT -> ImageView.ScaleType.FIT_CENTER
+            ImageScaleType.FILL, ImageScaleType.CROP -> ImageView.ScaleType.CENTER_CROP
+            ImageScaleType.CENTER -> ImageView.ScaleType.CENTER_INSIDE
+            ImageScaleType.STRETCH -> ImageView.ScaleType.FIT_XY
+        }
     }
 
     // Public methods
@@ -380,6 +437,9 @@ class AdvancedImageView @JvmOverloads constructor(
 
     private fun loadImageWithGlide(source: Any) {
         updateState(ImageState.LOADING)
+
+        // Apply scaleType directly to imageView
+        imageView.scaleType = getAndroidScaleType()
 
         var request = Glide.with(context).load(source)
 
@@ -624,6 +684,8 @@ class AdvancedImageView @JvmOverloads constructor(
             )
             canvas.drawRoundRect(borderRect, imageCornerRadius, imageCornerRadius, borderPaint)
         }
+
+        drawChild(canvas, imageContainer, drawingTime)
     }
 
     private fun dpToPx(dp: Float): Float = TypedValue.applyDimension(
