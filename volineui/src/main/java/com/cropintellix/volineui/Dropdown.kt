@@ -34,7 +34,6 @@ import com.cropintellix.volineui.dropdown.DefaultDropdownFilter
 import com.cropintellix.volineui.dropdown.DropdownFilter
 import com.cropintellix.volineui.dropdown.DropdownOption
 import com.cropintellix.volineui.dropdown.DropdownState
-import com.cropintellix.volineui.dropdown.EmptyOptionsException
 import com.cropintellix.volineui.dropdown.InvalidSelectionException
 import com.cropintellix.volineui.dropdown.MaxSelectionExceededException
 
@@ -413,8 +412,13 @@ class Dropdown @JvmOverloads constructor(
      * Set dropdown options
      */
     fun setOptionsData(optionsList: List<DropdownOption>) {
-        if (optionsList.isEmpty()) {
-            throw EmptyOptionsException()
+        if (options.isEmpty()) {
+            android.widget.Toast.makeText(
+                context,
+                "No options available",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
         }
         
         this.options = optionsList
@@ -639,7 +643,12 @@ class Dropdown @JvmOverloads constructor(
 
     private fun openDropdown() {
         if (options.isEmpty()) {
-            throw EmptyOptionsException()
+            android.widget.Toast.makeText(
+                context,
+                "No options available",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
         }
         
         isDropdownOpen = true

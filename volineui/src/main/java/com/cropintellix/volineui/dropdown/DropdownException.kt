@@ -8,13 +8,6 @@ package com.cropintellix.volineui.dropdown
 open class DropdownException(message: String) : Exception(message)
 
 /**
- * Exception thrown when attempting to use a dropdown with no options.
- */
-class EmptyOptionsException : DropdownException(
-    "Dropdown must have at least one option. Please provide options before displaying the dropdown."
-)
-
-/**
  * Exception thrown when attempting to select an invalid option.
  * 
  * @param optionId The ID of the option that was attempted to be selected

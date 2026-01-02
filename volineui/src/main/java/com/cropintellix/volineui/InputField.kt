@@ -13,7 +13,6 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.InputType
 import android.text.TextWatcher
-import android.text.method.PasswordTransformationMethod
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
@@ -118,6 +117,9 @@ class InputField @JvmOverloads constructor(
     private var clearIconRes: Int = 0
     private var passwordToggleIconRes: Int = 0
     private var passwordToggleVisibleIconRes: Int = 0
+    
+    // Value change listener
+    private var valueChangeListener: ((String) -> Unit)? = null
 
     init {
         setWillNotDraw(false)
@@ -371,9 +373,21 @@ class InputField @JvmOverloads constructor(
             inputEditText.addTextChangedListener(inputMaskWatcher)
         }
 
-        // Setup password toggle
-        if (isPasswordField && !isPasswordToggleSetup()) {
-            setupPasswordToggle()
+        // Setup password toggle and apply immediate password masking
+        if (isPasswordField) {
+            // Apply immediate password transformation (no brief character reveal)
+            inputEditText.transformationMethod = ImmediatePasswordTransformationMethod()
+            
+            // Disable the keyboard's brief character preview by ensuring the inputType
+            // doesn't have visible password variation and adding no-suggestions flag
+            val currentInputType = inputEditText.inputType
+            // Remove any visible password flag and add no-suggestions to prevent character preview
+            inputEditText.inputType = (currentInputType and InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD.inv()) or 
+                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            
+            if (!isPasswordToggleSetup()) {
+                setupPasswordToggle()
+            }
         }
 
         // Setup clear icon
@@ -426,6 +440,9 @@ class InputField @JvmOverloads constructor(
                 if (enableValidation && currentState != FieldState.ERROR) {
                     validate()
                 }
+                
+                // Invoke value change listener
+                valueChangeListener?.invoke(s?.toString() ?: "")
             }
         })
     }
@@ -463,7 +480,7 @@ class InputField @JvmOverloads constructor(
             inputEditText.transformationMethod = null
             passwordToggleView?.setImageDrawable(createPasswordVisibilityDrawable(true))
         } else {
-            inputEditText.transformationMethod = PasswordTransformationMethod.getInstance()
+            inputEditText.transformationMethod = ImmediatePasswordTransformationMethod()
             passwordToggleView?.setImageDrawable(createPasswordVisibilityDrawable(false))
         }
         // Move cursor to end
@@ -506,6 +523,39 @@ class InputField @JvmOverloads constructor(
         }
 
         return isValid
+    }
+
+    /**
+     * Set a listener to be notified on each keystroke/value change.
+     *
+     * Example usage:
+     * ```
+     * inpMobileNumber.onValueChange { value ->
+     *     viewmodel.setMobileNumber(value)
+     * }
+     * ```
+     *
+     * @param listener Callback that receives the current input value as a String
+     */
+    fun onValueChange(listener: (String) -> Unit) {
+        this.valueChangeListener = listener
+    }
+
+    /**
+     * Set maximum length of characters allowed in the input field.
+     *
+     * @param length Maximum number of characters. Use -1 to remove the limit.
+     */
+    fun setMaxLength(length: Int) {
+        this.maxLength = length
+        if (length > 0) {
+            inputEditText.filters = arrayOf(InputFilter.LengthFilter(length))
+        } else {
+            inputEditText.filters = arrayOf()
+        }
+        if (showCharacterCounter) {
+            updateCharacterCounter()
+        }
     }
 
     /**
@@ -969,5 +1019,44 @@ class InputField @JvmOverloads constructor(
         
         // Final fallback to blue
         return 0xFF2196F3.toInt()
+    }
+    
+    /**
+     * Custom PasswordTransformationMethod that immediately masks characters
+     * without showing them briefly like the default Android implementation.
+     * 
+     * This works by wrapping the source CharSequence and always returning
+     * the mask character for all positions, preventing any character reveal.
+     */
+    private class ImmediatePasswordTransformationMethod : android.text.method.PasswordTransformationMethod() {
+        
+        override fun getTransformation(source: CharSequence?, view: View?): CharSequence {
+            return ImmediatePasswordCharSequence(source ?: "")
+        }
+        
+        /**
+         * CharSequence that immediately masks all characters without any delay.
+         */
+        private class ImmediatePasswordCharSequence(private val source: CharSequence) : CharSequence {
+            companion object {
+                private const val DOT = '\u2022' // Bullet character •
+            }
+            
+            override val length: Int get() = source.length
+            
+            override fun get(index: Int): Char {
+                // Always return dot, never the actual character
+                return DOT
+            }
+            
+            override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+                return ImmediatePasswordCharSequence(source.subSequence(startIndex, endIndex))
+            }
+            
+            // Required for proper text rendering - some Android components use toString()
+            override fun toString(): String {
+                return CharArray(source.length) { DOT }.concatToString()
+            }
+        }
     }
 }
