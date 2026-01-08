@@ -12,8 +12,14 @@ import android.os.Looper
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import com.cropintellix.volineui.locationmanager.LocationException
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.SettingsClient
 import com.cropintellix.volineui.locationmanager.LocationResult
 import com.cropintellix.volineui.locationmanager.LocationStatus
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -115,6 +121,17 @@ class LocationManager private constructor(
         }
 
     private var currentActivityRef: WeakReference<ComponentActivity>? = null
+    
+    // Settings client for location settings requests
+    private val settingsClient: SettingsClient = LocationServices.getSettingsClient(application)
+    
+    // Activity result launcher for location settings - registered per activity
+    private var locationSettingsLauncher: ActivityResultLauncher<IntentSenderRequest>? = null
+    
+    // Pending callback to execute after location is enabled
+    private var pendingLocationCallback: ((LocationResult?) -> Unit)? = null
+    private var pendingLocationTimeout: Long = 30_000
+    private var pendingIsCached: Boolean = false
 
     init {
         // Register activity lifecycle callbacks to automatically track current activity
@@ -123,6 +140,7 @@ class LocationManager private constructor(
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
+                    registerLocationSettingsLauncher(activity)
                 }
             }
 
@@ -199,7 +217,16 @@ class LocationManager private constructor(
      * Internal method to get cached location (assumes permission is granted)
      */
     @Suppress("MissingPermission")
-    private fun getCachedLocationInternal(callback: (LocationResult?) -> Unit) {
+    private fun getCachedLocationInternal(callback: (LocationResult?) -> Unit, promptForLocation: Boolean = true) {
+        // Check if location services are enabled
+        if (!isLocationEnabled && promptForLocation) {
+            promptEnableLocation(
+                callback = callback,
+                isCached = true
+            )
+            return
+        }
+        
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
                 val result = location?.toLocationResult(isFromCache = true)
@@ -257,8 +284,12 @@ class LocationManager private constructor(
     ) {
         // Check if location services are enabled
         if (!isLocationEnabled) {
-            // Fallback to cached location (internal version to avoid recursive permission check)
-            getCachedLocationInternal(callback)
+            // Prompt user to enable location services
+            promptEnableLocation(
+                timeout = timeout,
+                callback = callback,
+                isCached = false
+            )
             return
         }
 
@@ -384,6 +415,174 @@ class LocationManager private constructor(
      */
     val activeSubscriptionIds: List<String>
         get() = activeSubscriptions.keys.toList()
+
+    /**
+     * Register the location settings launcher for the current activity
+     */
+    private fun registerLocationSettingsLauncher(activity: ComponentActivity) {
+        try {
+            locationSettingsLauncher = activity.registerForActivityResult(
+                ActivityResultContracts.StartIntentSenderForResult()
+            ) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    // Location was enabled, execute pending callback
+                    executePendingLocationRequest()
+                } else {
+                    // User declined to enable location
+                    pendingLocationCallback?.invoke(null)
+                    clearPendingRequest()
+                }
+            }
+        } catch (e: Exception) {
+            // Activity might already be started, ignore registration errors
+        }
+    }
+    
+    /**
+     * Prompt user to enable location services using Google Play Services dialog
+     */
+    private fun promptEnableLocation(
+        timeout: Long = 30_000,
+        callback: (LocationResult?) -> Unit,
+        isCached: Boolean
+    ) {
+        val activity = currentActivityRef?.get()
+        if (activity == null) {
+            callback(null)
+            return
+        }
+        
+        // Store pending request info
+        pendingLocationCallback = callback
+        pendingLocationTimeout = timeout
+        pendingIsCached = isCached
+        
+        // Build location request for settings check
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10_000)
+            .setMinUpdateIntervalMillis(5_000)
+            .build()
+        
+        val settingsRequest = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+            .setAlwaysShow(true) // Shows the dialog even if settings are already adequate
+            .build()
+        
+        settingsClient.checkLocationSettings(settingsRequest)
+            .addOnSuccessListener {
+                // Location settings are already satisfied, proceed with location request
+                executePendingLocationRequest()
+            }
+            .addOnFailureListener { exception ->
+                if (exception is ResolvableApiException) {
+                    try {
+                        // Show the system dialog to enable location
+                        val launcher = locationSettingsLauncher
+                        if (launcher != null) {
+                            val intentSenderRequest = IntentSenderRequest.Builder(
+                                exception.resolution.intentSender
+                            ).build()
+                            launcher.launch(intentSenderRequest)
+                        } else {
+                            // Fallback: show manual dialog if launcher not available
+                            showLocationServicesDialog(callback)
+                        }
+                    } catch (e: Exception) {
+                        // Fallback to manual dialog
+                        showLocationServicesDialog(callback)
+                    }
+                } else {
+                    // Location settings are inadequate and cannot be resolved
+                    showLocationServicesDialog(callback)
+                }
+            }
+    }
+    
+    /**
+     * Execute the pending location request after location is enabled
+     */
+    @Suppress("MissingPermission")
+    private fun executePendingLocationRequest() {
+        val callback = pendingLocationCallback ?: return
+        val isCached = pendingIsCached
+        val timeout = pendingLocationTimeout
+        
+        clearPendingRequest()
+        
+        if (isCached) {
+            getCachedLocationInternal(callback, promptForLocation = false)
+        } else {
+            // Re-check if location is now enabled
+            if (isLocationEnabled) {
+                fetchFreshLocation(timeout, callback)
+            } else {
+                callback(null)
+            }
+        }
+    }
+    
+    /**
+     * Clear pending location request
+     */
+    private fun clearPendingRequest() {
+        pendingLocationCallback = null
+        pendingLocationTimeout = 30_000
+        pendingIsCached = false
+    }
+    
+    /**
+     * Fetch fresh location (called after location is confirmed enabled)
+     */
+    @Suppress("MissingPermission")
+    private fun fetchFreshLocation(timeout: Long, callback: (LocationResult?) -> Unit) {
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0)
+            .setMaxUpdateDelayMillis(timeout)
+            .setMinUpdateIntervalMillis(0)
+            .setMaxUpdates(1)
+            .build()
+
+        val locationCallback = object : LocationCallback() {
+            override fun onLocationResult(result: GmsLocationResult) {
+                val location = result.lastLocation
+                if (location != null) {
+                    callback(location.toLocationResult(isFromCache = false))
+                } else {
+                    getCachedLocationInternal(callback, promptForLocation = false)
+                }
+            }
+        }
+
+        fusedLocationClient.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            Looper.getMainLooper()
+        ).addOnFailureListener {
+            getCachedLocationInternal(callback, promptForLocation = false)
+        }
+    }
+    
+    /**
+     * Show fallback dialog for enabling location services manually
+     */
+    private fun showLocationServicesDialog(callback: (LocationResult?) -> Unit) {
+        val activity = currentActivityRef?.get()
+        if (activity == null) {
+            callback(null)
+            return
+        }
+        
+        AlertDialog.Builder(activity)
+            .setTitle("Enable Location")
+            .setMessage("Location services are required for this feature. Please enable GPS in settings.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                openLocationSettings()
+                callback(null)
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                callback(null)
+            }
+            .setCancelable(false)
+            .show()
+    }
 
     /**
      * Show dialog for permanently denied permissions
