@@ -86,6 +86,7 @@ class Dropdown @JvmOverloads constructor(
     private var label: String = ""
     private var hint: String = ""
     private var labelGap: Float = dpToPx(5f)
+    private var emptyMsg: String = "No options available"
     
     // Visual customization
    private var containerStyleValue: Int = 0 // 0=outlined, 1=filled, 2=ghost
@@ -257,6 +258,7 @@ class Dropdown @JvmOverloads constructor(
             label = typedArray.getString(R.styleable.Dropdown_label) ?: ""
             hint = typedArray.getString(R.styleable.Dropdown_android_hint) ?: "Select..."
             labelGap = typedArray.getDimension(R.styleable.Dropdown_labelGap, dpToPx(5f))
+            emptyMsg = typedArray.getString(R.styleable.Dropdown_emptyMsg) ?: "No options available"
             
             if (label.isNotEmpty()) {
                 labelTextView.text = label
@@ -645,7 +647,7 @@ class Dropdown @JvmOverloads constructor(
         if (options.isEmpty()) {
             android.widget.Toast.makeText(
                 context,
-                "No options available",
+                emptyMsg,
                 android.widget.Toast.LENGTH_SHORT
             ).show()
             return

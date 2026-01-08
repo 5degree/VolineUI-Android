@@ -133,6 +133,7 @@
         <attr name="label" />
         <attr name="android:hint" />
         <attr name="labelGap" />
+        <attr name="emptyMsg" format="string" />
         
         <!-- Visual Customization -->
         <attr name="containerStyle" format="enum">

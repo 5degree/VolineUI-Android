@@ -536,12 +536,8 @@ class AdvancedButton @JvmOverloads constructor(
                     colors = intArrayOf(lighterColor, backgroundColor, darkerColor)
                 }
                 ButtonStyle.TONAL -> {
-                    // Tonal with subtle 3D effect
-                    orientation = GradientDrawable.Orientation.TOP_BOTTOM
-                    val baseAlpha = 40
-                    val lighterTonal = ColorUtils.setAlphaComponent(backgroundColor, baseAlpha + 15)
-                    val darkerTonal = ColorUtils.setAlphaComponent(backgroundColor, baseAlpha - 10)
-                    colors = intArrayOf(lighterTonal, ColorUtils.setAlphaComponent(backgroundColor, baseAlpha), darkerTonal)
+                    // Flat tonal background without 3D effect
+                    setColor(ColorUtils.setAlphaComponent(backgroundColor, 40))
                 }
                 ButtonStyle.ICON -> {
                     setColor(Color.TRANSPARENT)
