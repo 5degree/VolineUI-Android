@@ -36,9 +36,9 @@
         <com.cropintellix.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:options="@array/countries"
             app:label="1. Countries (XML Array)"
             android:hint="Select a country"
+            app:emptyMsg="no country..........."
             android:layout_marginBottom="16dp" />
 
         <!-- 2. XML array with clear button -->

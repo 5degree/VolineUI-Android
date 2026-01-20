@@ -232,6 +232,12 @@ class AdvancedButton @JvmOverloads constructor(
     private var enablePulseAnimation: Boolean = false
     private var enableShimmer: Boolean = false
     
+    // Flags to track user-defined values (to prevent applySizePreset from overwriting)
+    private var userDefinedTextSize: Boolean = false
+    private var userDefinedVerticalPadding: Boolean = false
+    private var userDefinedHorizontalPadding: Boolean = false
+    private var userDefinedIconSize: Boolean = false
+    
     // ===== VIEWS =====
     
     private lateinit var containerLayout: LinearLayout
@@ -321,19 +327,25 @@ class AdvancedButton @JvmOverloads constructor(
                 typedArray.getInt(R.styleable.AdvancedButton_buttonCornerType, CornerType.ROUNDED.value)
             )
             
-            // Colors
+            // Colors - use style-specific defaults for outlined buttons
             val defaultBgColor = getPrimaryColor()
+            val outlinedDefaultColor = Color.parseColor("#252525")
+            
+            // Text and border defaults depend on button style
+            val defaultTextColor = if (buttonType == ButtonStyle.OUTLINED) outlinedDefaultColor else Color.WHITE
+            val defaultBorderColor = if (buttonType == ButtonStyle.OUTLINED) outlinedDefaultColor else defaultBgColor
+            
             backgroundColor = typedArray.getColor(R.styleable.AdvancedButton_buttonBackgroundColor, defaultBgColor)
             backgroundColorPressed = typedArray.getColor(R.styleable.AdvancedButton_buttonBackgroundColorPressed, darkenColor(backgroundColor, 0.15f))
             backgroundColorDisabled = typedArray.getColor(R.styleable.AdvancedButton_buttonBackgroundColorDisabled, Color.parseColor("#E0E0E0"))
-            textColor = typedArray.getColor(R.styleable.AdvancedButton_buttonTextColor, Color.WHITE)
-            textColorPressed = typedArray.getColor(R.styleable.AdvancedButton_buttonTextColorPressed, textColor)
+            textColor = typedArray.getColor(R.styleable.AdvancedButton_buttonTextColor, defaultTextColor)
+            textColorPressed = typedArray.getColor(R.styleable.AdvancedButton_buttonTextColorPressed, darkenColor(textColor, 0.15f))
             textColorDisabled = typedArray.getColor(R.styleable.AdvancedButton_buttonTextColorDisabled, Color.parseColor("#9E9E9E"))
-            borderColor = typedArray.getColor(R.styleable.AdvancedButton_buttonBorderColor, defaultBgColor)
+            borderColor = typedArray.getColor(R.styleable.AdvancedButton_buttonBorderColor, defaultBorderColor)
             borderColorPressed = typedArray.getColor(R.styleable.AdvancedButton_buttonBorderColorPressed, darkenColor(borderColor, 0.15f))
             borderColorDisabled = typedArray.getColor(R.styleable.AdvancedButton_buttonBorderColorDisabled, Color.parseColor("#BDBDBD"))
             rippleColor = typedArray.getColor(R.styleable.AdvancedButton_buttonRippleColor, Color.parseColor("#40FFFFFF"))
-            loadingColor = typedArray.getColor(R.styleable.AdvancedButton_buttonLoadingColor, Color.WHITE)
+            loadingColor = typedArray.getColor(R.styleable.AdvancedButton_buttonLoadingColor, defaultTextColor)
             successColor = typedArray.getColor(R.styleable.AdvancedButton_buttonSuccessColor, Color.parseColor("#4CAF50"))
             errorColor = typedArray.getColor(R.styleable.AdvancedButton_buttonErrorColor, Color.parseColor("#F44336"))
             
@@ -343,31 +355,75 @@ class AdvancedButton @JvmOverloads constructor(
             gradientEndColor = typedArray.getColor(R.styleable.AdvancedButton_buttonGradientEndColor, darkenColor(backgroundColor, 0.3f))
             gradientAngle = typedArray.getFloat(R.styleable.AdvancedButton_buttonGradientAngle, 0f)
             
-            // Dimensions
-            cornerRadius = typedArray.getDimension(R.styleable.AdvancedButton_buttonCornerRadius, dpToPx(8f))
-            borderWidth = typedArray.getDimension(R.styleable.AdvancedButton_buttonBorderWidth, dpToPx(1.5f))
-            elevationNormal = typedArray.getDimension(R.styleable.AdvancedButton_buttonElevation, dpToPx(2f))
-            elevationPressed = typedArray.getDimension(R.styleable.AdvancedButton_buttonElevationPressed, dpToPx(4f))
-            horizontalPadding = typedArray.getDimension(R.styleable.AdvancedButton_buttonHorizontalPadding, dpToPx(16f))
-            verticalPadding = typedArray.getDimension(R.styleable.AdvancedButton_buttonVerticalPadding, dpToPx(12f))
-            iconSpacing = typedArray.getDimension(R.styleable.AdvancedButton_buttonIconSpacing, dpToPx(8f))
-            minWidth = typedArray.getDimension(R.styleable.AdvancedButton_buttonMinWidth, dpToPx(64f))
-            minHeight = typedArray.getDimension(R.styleable.AdvancedButton_buttonMinHeight, dpToPx(44f))
+            // Dimensions - track if user defined these values
+            val defaultCornerRadius = dpToPx(8f)
+            val defaultBorderWidth = dpToPx(1.5f)
+            val defaultElevation = dpToPx(2f)
+            val defaultElevationPressed = dpToPx(4f)
+            val defaultHorizontalPadding = dpToPx(16f)
+            val defaultVerticalPadding = dpToPx(12f)
+            val defaultIconSpacing = dpToPx(8f)
+            val defaultMinWidth = dpToPx(64f)
+            val defaultMinHeight = dpToPx(44f)
+            val defaultTextSize = dpToPx(14f)
+            val defaultIconSize = dpToPx(20f)
+            
+            cornerRadius = typedArray.getDimension(R.styleable.AdvancedButton_buttonCornerRadius, defaultCornerRadius)
+            borderWidth = typedArray.getDimension(R.styleable.AdvancedButton_buttonBorderWidth, defaultBorderWidth)
+            elevationNormal = typedArray.getDimension(R.styleable.AdvancedButton_buttonElevation, defaultElevation)
+            elevationPressed = typedArray.getDimension(R.styleable.AdvancedButton_buttonElevationPressed, defaultElevationPressed)
+            
+            // Check if user explicitly set these values
+            val userHPadding = typedArray.getDimension(R.styleable.AdvancedButton_buttonHorizontalPadding, -1f)
+            val userVPadding = typedArray.getDimension(R.styleable.AdvancedButton_buttonVerticalPadding, -1f)
+            val userTextSizeVal = typedArray.getDimension(R.styleable.AdvancedButton_buttonTextSize, -1f)
+            val userIconSizeVal = typedArray.getDimension(R.styleable.AdvancedButton_buttonIconSize, -1f)
+            
+            if (userHPadding >= 0) {
+                horizontalPadding = userHPadding
+                userDefinedHorizontalPadding = true
+            } else {
+                horizontalPadding = defaultHorizontalPadding
+            }
+            
+            if (userVPadding >= 0) {
+                verticalPadding = userVPadding
+                userDefinedVerticalPadding = true
+            } else {
+                verticalPadding = defaultVerticalPadding
+            }
+            
+            iconSpacing = typedArray.getDimension(R.styleable.AdvancedButton_buttonIconSpacing, defaultIconSpacing)
+            minWidth = typedArray.getDimension(R.styleable.AdvancedButton_buttonMinWidth, defaultMinWidth)
+            minHeight = typedArray.getDimension(R.styleable.AdvancedButton_buttonMinHeight, defaultMinHeight)
             fullWidth = typedArray.getBoolean(R.styleable.AdvancedButton_buttonFullWidth, true)
             
             // Icons
             leadingIcon = typedArray.getDrawable(R.styleable.AdvancedButton_buttonLeadingIcon)
             trailingIcon = typedArray.getDrawable(R.styleable.AdvancedButton_buttonTrailingIcon)
-            iconSize = typedArray.getDimension(R.styleable.AdvancedButton_buttonIconSize, dpToPx(20f))
+            
+            // Check if user explicitly set icon size
+            if (userIconSizeVal >= 0) {
+                iconSize = userIconSizeVal
+                userDefinedIconSize = true
+            } else {
+                iconSize = defaultIconSize
+            }
+            
             iconColor = typedArray.getColor(R.styleable.AdvancedButton_buttonIconColor, textColor)
-            iconColorPressed = typedArray.getColor(R.styleable.AdvancedButton_buttonIconColorPressed, iconColor)
+            iconColorPressed = typedArray.getColor(R.styleable.AdvancedButton_buttonIconColorPressed, darkenColor(iconColor, 0.15f))
             iconColorDisabled = typedArray.getColor(R.styleable.AdvancedButton_buttonIconColorDisabled, textColorDisabled)
             showBadge = typedArray.getBoolean(R.styleable.AdvancedButton_buttonShowBadge, false)
             badgeColor = typedArray.getColor(R.styleable.AdvancedButton_buttonBadgeColor, Color.parseColor("#F44336"))
             badgeCount = typedArray.getInt(R.styleable.AdvancedButton_buttonBadgeCount, 0)
             
-            // Typography
-            textSize = typedArray.getDimension(R.styleable.AdvancedButton_buttonTextSize, dpToPx(14f))
+            // Typography - check if user explicitly set text size
+            if (userTextSizeVal >= 0) {
+                textSize = userTextSizeVal
+                userDefinedTextSize = true
+            } else {
+                textSize = defaultTextSize
+            }
             letterSpacing = typedArray.getFloat(R.styleable.AdvancedButton_buttonLetterSpacing, 0f)
             textTransform = TextTransform.fromValue(
                 typedArray.getInt(R.styleable.AdvancedButton_buttonTextTransform, TextTransform.NONE.value)
@@ -568,42 +624,65 @@ class AdvancedButton @JvmOverloads constructor(
     }
     
     private fun applySizePreset() {
+        // Get preset values based on size
+        val presetMinHeight: Float
+        val presetHPadding: Float
+        val presetVPadding: Float
+        val presetTextSize: Float
+        val presetIconSize: Float
+        
         when (buttonSizeType) {
             ButtonSize.XS -> {
-                minHeight = dpToPx(28f)
-                horizontalPadding = dpToPx(8f)
-                verticalPadding = dpToPx(4f)
-                textSize = dpToPx(12f)
-                iconSize = dpToPx(14f)
+                presetMinHeight = dpToPx(28f)
+                presetHPadding = dpToPx(8f)
+                presetVPadding = dpToPx(4f)
+                presetTextSize = dpToPx(12f)
+                presetIconSize = dpToPx(14f)
             }
             ButtonSize.S -> {
-                minHeight = dpToPx(36f)
-                horizontalPadding = dpToPx(12f)
-                verticalPadding = dpToPx(8f)
-                textSize = dpToPx(13f)
-                iconSize = dpToPx(16f)
+                presetMinHeight = dpToPx(36f)
+                presetHPadding = dpToPx(12f)
+                presetVPadding = dpToPx(8f)
+                presetTextSize = dpToPx(13f)
+                presetIconSize = dpToPx(16f)
             }
             ButtonSize.M -> {
-                minHeight = dpToPx(48f)
-                horizontalPadding = dpToPx(20f)
-                verticalPadding = dpToPx(14f)
-                textSize = dpToPx(15f)
-                iconSize = dpToPx(20f)
+                presetMinHeight = dpToPx(48f)
+                presetHPadding = dpToPx(20f)
+                presetVPadding = dpToPx(14f)
+                presetTextSize = dpToPx(15f)
+                presetIconSize = dpToPx(20f)
             }
             ButtonSize.L -> {
-                minHeight = dpToPx(52f)
-                horizontalPadding = dpToPx(20f)
-                verticalPadding = dpToPx(14f)
-                textSize = dpToPx(16f)
-                iconSize = dpToPx(24f)
+                presetMinHeight = dpToPx(52f)
+                presetHPadding = dpToPx(20f)
+                presetVPadding = dpToPx(14f)
+                presetTextSize = dpToPx(16f)
+                presetIconSize = dpToPx(24f)
             }
             ButtonSize.XL -> {
-                minHeight = dpToPx(60f)
-                horizontalPadding = dpToPx(24f)
-                verticalPadding = dpToPx(16f)
-                textSize = dpToPx(18f)
-                iconSize = dpToPx(28f)
+                presetMinHeight = dpToPx(60f)
+                presetHPadding = dpToPx(24f)
+                presetVPadding = dpToPx(16f)
+                presetTextSize = dpToPx(18f)
+                presetIconSize = dpToPx(28f)
             }
+        }
+        
+        // Apply preset values ONLY if user didn't define them
+        minHeight = presetMinHeight
+        
+        if (!userDefinedHorizontalPadding) {
+            horizontalPadding = presetHPadding
+        }
+        if (!userDefinedVerticalPadding) {
+            verticalPadding = presetVPadding
+        }
+        if (!userDefinedTextSize) {
+            textSize = presetTextSize
+        }
+        if (!userDefinedIconSize) {
+            iconSize = presetIconSize
         }
         
         // Update text size
@@ -636,8 +715,8 @@ class AdvancedButton @JvmOverloads constructor(
             }
             ButtonStyle.OUTLINED -> {
                 elevation = 0f
-                textView.setTextColor(borderColor)
-                iconColor = borderColor
+                // Don't force colors - respect user-defined textColor and iconColor
+                textView.setTextColor(textColor)
             }
             ButtonStyle.TEXT -> {
                 elevation = 0f
@@ -646,6 +725,7 @@ class AdvancedButton @JvmOverloads constructor(
             }
             ButtonStyle.ELEVATED -> {
                 elevation = elevationNormal
+                textView.setTextColor(textColor)
             }
             ButtonStyle.TONAL -> {
                 elevation = 0f
@@ -656,6 +736,8 @@ class AdvancedButton @JvmOverloads constructor(
                 minimumWidth = minHeight.toInt()
                 minimumHeight = minHeight.toInt()
                 textView.visibility = GONE
+                // For ICON style, ensure icon is visible
+                leadingIconView?.visibility = VISIBLE
             }
             ButtonStyle.FAB -> {
                 elevation = dpToPx(6f)
@@ -738,9 +820,9 @@ class AdvancedButton @JvmOverloads constructor(
                 trailingIconView?.setColorFilter(iconColor)
             }
             ButtonStyle.OUTLINED -> {
-                textView.setTextColor(borderColor)
-                leadingIconView?.setColorFilter(borderColor)
-                trailingIconView?.setColorFilter(borderColor)
+                textView.setTextColor(textColor)
+                leadingIconView?.setColorFilter(iconColor)
+                trailingIconView?.setColorFilter(iconColor)
             }
             ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> {
                 textView.setTextColor(backgroundColor)
@@ -763,9 +845,9 @@ class AdvancedButton @JvmOverloads constructor(
                 trailingIconView?.setColorFilter(iconColorPressed)
             }
             ButtonStyle.OUTLINED -> {
-                textView.setTextColor(borderColorPressed)
-                leadingIconView?.setColorFilter(borderColorPressed)
-                trailingIconView?.setColorFilter(borderColorPressed)
+                textView.setTextColor(textColorPressed)
+                leadingIconView?.setColorFilter(iconColorPressed)
+                trailingIconView?.setColorFilter(iconColorPressed)
             }
             ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> {
                 textView.setTextColor(backgroundColorPressed)
@@ -804,41 +886,84 @@ class AdvancedButton @JvmOverloads constructor(
     private fun showLoading() {
         isClickable = false
         
+        // Apply flat background during loading (no 3D effect)
+        applyFlatBackground()
+        
         when (loadingType) {
             LoadingType.SPINNER -> {
                 textView.visibility = GONE
-                showProgressBar(true)
+                showProgressBar(true, isIndeterminate = true)
+                // Show loading text alongside spinner if provided
+                loadingText?.let {
+                    textView.visibility = VISIBLE
+                    textView.text = it
+                }
             }
             LoadingType.DOTS -> {
+                showProgressBar(false, isIndeterminate = false)
                 startDotsAnimation()
             }
             LoadingType.SHIMMER -> {
+                showProgressBar(false, isIndeterminate = false)
                 startShimmerAnimation()
             }
             LoadingType.PROGRESS -> {
+                // Show determinate progress bar
+                showProgressBar(true, isIndeterminate = false)
                 textView.visibility = VISIBLE
                 updateProgressText()
             }
         }
-        
-        loadingText?.let {
-            textView.visibility = VISIBLE
-            textView.text = it
-        }
     }
     
-    private fun showProgressBar(show: Boolean) {
+    private fun applyFlatBackground() {
+        val flatBg = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = getActualCornerRadius()
+            
+            when (buttonType) {
+                ButtonStyle.OUTLINED, ButtonStyle.TEXT -> {
+                    setColor(Color.TRANSPARENT)
+                    if (buttonType == ButtonStyle.OUTLINED) {
+                        setStroke(borderWidth.toInt(), borderColor)
+                    }
+                }
+                else -> {
+                    setColor(backgroundColor)
+                }
+            }
+        }
+        background = flatBg
+    }
+    
+    private fun showProgressBar(show: Boolean, isIndeterminate: Boolean = true) {
         if (show) {
             if (progressBar == null) {
-                progressBar = ProgressBar(context).apply {
-                    isIndeterminate = true
-                    indeterminateTintList = ColorStateList.valueOf(loadingColor)
-                    layoutParams = LayoutParams(iconSize.toInt(), iconSize.toInt()).apply {
+                progressBar = ProgressBar(context, null, 
+                    if (isIndeterminate) android.R.attr.progressBarStyle else android.R.attr.progressBarStyleHorizontal
+                ).apply {
+                    this.isIndeterminate = isIndeterminate
+                    if (isIndeterminate) {
+                        indeterminateTintList = ColorStateList.valueOf(loadingColor)
+                    } else {
+                        progressTintList = ColorStateList.valueOf(loadingColor)
+                        max = 100
+                        progress = this@AdvancedButton.progress
+                    }
+                    layoutParams = LayoutParams(
+                        if (isIndeterminate) iconSize.toInt() else LayoutParams.MATCH_PARENT,
+                        iconSize.toInt()
+                    ).apply {
                         gravity = Gravity.CENTER
                     }
                 }
                 containerLayout.removeAllViews()
                 containerLayout.addView(progressBar)
+            } else {
+                progressBar?.isIndeterminate = isIndeterminate
+                if (!isIndeterminate) {
+                    progressBar?.progress = progress
+                }
             }
             progressBar?.visibility = VISIBLE
         } else {
@@ -1093,6 +1218,10 @@ class AdvancedButton @JvmOverloads constructor(
                     if (enableScaleAnimation && scaleOnPress) {
                         animateScale(scaleAmount)
                     }
+                    // Start elevation animation for elevated buttons
+                    if (enableElevationAnimation && buttonType == ButtonStyle.ELEVATED) {
+                        animateElevation(elevationPressed)
+                    }
                     performHapticFeedback()
                     
                     // Start long press timer
@@ -1117,6 +1246,10 @@ class AdvancedButton @JvmOverloads constructor(
                 // Animate scale back
                 if (enableScaleAnimation && scaleOnPress) {
                     animateScale(1f)
+                }
+                // Animate elevation back for elevated buttons
+                if (enableElevationAnimation && buttonType == ButtonStyle.ELEVATED) {
+                    animateElevation(elevationNormal)
                 }
                 
                 // Check if touch is within bounds

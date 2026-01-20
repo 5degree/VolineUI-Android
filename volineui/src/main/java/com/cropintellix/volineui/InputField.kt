@@ -73,6 +73,10 @@ class InputField @JvmOverloads constructor(
     private var focusedBorderWidth: Float = dpToPx(2f)
     private var bgColor: Int = 0xFFFFFFFF.toInt()
     
+    // Track if border properties were explicitly set
+    private var borderColorExplicitlySet: Boolean = false
+    private var borderWidthExplicitlySet: Boolean = false
+    
     // State colors
     private var errorColor: Int = 0xFFE53935.toInt()
     private var successColor: Int = 0xFF43A047.toInt()
@@ -229,10 +233,12 @@ class InputField @JvmOverloads constructor(
                 R.styleable.InputField_borderColor,
                 0xFFCCCCCC.toInt()
             )
+            borderColorExplicitlySet = typedArray.hasValue(R.styleable.InputField_borderColor)
             borderWidth = typedArray.getDimension(
                 R.styleable.InputField_borderWidth,
                 dpToPx(1f)
             )
+            borderWidthExplicitlySet = typedArray.hasValue(R.styleable.InputField_borderWidth)
             focusedBorderColor = typedArray.getColor(
                 R.styleable.InputField_focusedBorderColor,
                 0xFF2196F3.toInt()
@@ -912,6 +918,13 @@ class InputField @JvmOverloads constructor(
             // Draw border on top with proper stroke width
             borderPaint.color = currentBorderColor
             borderPaint.strokeWidth = currentBorderWidth
+            canvas.drawRoundRect(borderRect, cornerRadius, cornerRadius, borderPaint)
+        } else {
+            // Draw disabled border - use explicit values if set, otherwise light gray 1dp
+            val disabledBorderColor = if (borderColorExplicitlySet) borderColor else 0xFFD3D3D3.toInt() // Light gray
+            val disabledBorderWidth = if (borderWidthExplicitlySet) borderWidth else dpToPx(1f)
+            borderPaint.color = disabledBorderColor
+            borderPaint.strokeWidth = disabledBorderWidth
             canvas.drawRoundRect(borderRect, cornerRadius, cornerRadius, borderPaint)
         }
         // Draw children after border

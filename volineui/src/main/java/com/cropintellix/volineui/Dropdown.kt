@@ -414,15 +414,6 @@ class Dropdown @JvmOverloads constructor(
      * Set dropdown options
      */
     fun setOptionsData(optionsList: List<DropdownOption>) {
-        if (options.isEmpty()) {
-            android.widget.Toast.makeText(
-                context,
-                "No options available",
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
-            return
-        }
-        
         this.options = optionsList
         this.filteredOptions = optionsList
         updateTriggerText()
@@ -542,12 +533,17 @@ class Dropdown @JvmOverloads constructor(
     /**
      * Set single selection change listener.
      *
-     * Provides: Pair<Int, String> of selected option
+     * Provides: Pair<Int, String> of selected option. Returns Pair(-1, "") when selection is cleared.
      */
     fun onSelection(listener: (Pair<Int, String>) -> Unit) {
         this.singleSelectionChangeListener = { selectedOption ->
-            val index = options.indexOf(selectedOption)
-            listener(Pair(index, selectedOption!!.text))
+            if (selectedOption != null) {
+                val index = options.indexOf(selectedOption)
+                listener(Pair(index, selectedOption.text))
+            } else {
+                // Selection was cleared
+                listener(Pair(-1, ""))
+            }
         }
     }
 
@@ -855,7 +851,10 @@ class Dropdown @JvmOverloads constructor(
             
             if (option.isEnabled) {
                 setOnClickListener {
-                    handleOptionClick(if(depth == 0) option else options.find { it.children?.contains(option) == true }!!)
+                    val targetOption = if (depth == 0) option else {
+                        options.find { it.children?.contains(option) == true } ?: option
+                    }
+                    handleOptionClick(targetOption)
                 }
             }
             
