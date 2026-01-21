@@ -50,6 +50,12 @@
             android:text="Radio Examples" />
 
         <Button
+            android:id="@+id/btnOpenComposeRadioExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Compose Radio Examples" />
+
+        <Button
             android:id="@+id/btnOpenDropdownExamples"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

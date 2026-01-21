@@ -34,6 +34,9 @@ class MainActivity : AppCompatActivity() {
         b.btnOpenRadioExamples.setOnClickListener {
             startActivity(Intent(this, RadioExamplesActivity::class.java))
         }
+        b.btnOpenComposeRadioExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeRadioExamplesActivity::class.java))
+        }
         b.btnOpenDropdownExamples.setOnClickListener {
             startActivity(Intent(this, DropdownExamplesActivity::class.java))
         }

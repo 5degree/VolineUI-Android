@@ -34,6 +34,9 @@
             android:name=".RadioExamplesActivity"
             android:exported="false" />
         <activity
+            android:name=".ComposeRadioExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".InputFieldExamplesActivity"
             android:exported="false" />
         <activity
