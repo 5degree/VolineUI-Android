@@ -103,6 +103,7 @@ class AdvancedImageView @JvmOverloads constructor(
     private var currentImageBitmap: Bitmap? = null
     private var currentImageUri: Uri? = null
     private var currentImageUrl: String? = null
+    private var editModeDrawable: Drawable? = null  // For design preview
 
     // Listeners
     private var onDeleteClickListener: (() -> Unit)? = null
@@ -230,7 +231,10 @@ class AdvancedImageView @JvmOverloads constructor(
 
         updateDeleteButtonStyle()
         updateContainerBackground()
-        updateState(ImageState.EMPTY)
+        // Don't reset to EMPTY if already LOADED (e.g., from imageSrc in parseAttributes)
+        if (currentState != ImageState.LOADED) {
+            updateState(ImageState.EMPTY)
+        }
     }
 
     private fun parseAttributes(attrs: AttributeSet, defStyleAttr: Int) {
@@ -309,7 +313,12 @@ class AdvancedImageView @JvmOverloads constructor(
                 imageView.scaleType = getAndroidScaleType()
 
                 if (isInEditMode) {
-                    // In design preview, load directly without Glide
+                    // In design preview, store drawable and set up visibility
+                    try {
+                        editModeDrawable = context.getDrawable(imageSrcResId)
+                    } catch (e: Exception) {
+                        // Resource not found
+                    }
                     imageView.setImageResource(imageSrcResId)
                     imageView.visibility = VISIBLE
                     placeholderContainer.visibility = GONE
@@ -317,16 +326,6 @@ class AdvancedImageView @JvmOverloads constructor(
                     loadingIndicator.visibility = GONE
                     loadingGifView.visibility = GONE
                     currentState = ImageState.LOADED
-
-                    // Apply visual styling for preview
-                    updateContainerBackground()
-                    updateDeleteButtonStyle()
-
-                    // Force a layout pass
-                    post {
-                        requestLayout()
-                        invalidate()
-                    }
                 } else {
                     post { loadFromDrawable(imageSrcResId) }
                 }
@@ -647,6 +646,25 @@ class AdvancedImageView @JvmOverloads constructor(
     }
 
     override fun dispatchDraw(canvas: Canvas) {
+        if (isInEditMode) {
+            // First, let the parent draw all children normally
+            super.dispatchDraw(canvas)
+            
+            // Then, if we have an imageSrc drawable, draw it on top of the imageContainer area
+            editModeDrawable?.let { drawable ->
+                val labelHeight = if (labelTextView.isVisible) 
+                    labelTextView.measuredHeight + imageLabelGap else 0f
+                drawable.setBounds(
+                    paddingStart,
+                    (paddingTop + labelHeight).toInt(),
+                    width - paddingEnd,
+                    height - paddingBottom
+                )
+                drawable.draw(canvas)
+            }
+            return
+        }
+
         // Draw label first (not clipped)
         if (labelTextView.isVisible) {
             drawChild(canvas, labelTextView, drawingTime)
@@ -684,8 +702,6 @@ class AdvancedImageView @JvmOverloads constructor(
             )
             canvas.drawRoundRect(borderRect, imageCornerRadius, imageCornerRadius, borderPaint)
         }
-
-        drawChild(canvas, imageContainer, drawingTime)
     }
 
     private fun dpToPx(dp: Float): Float = TypedValue.applyDimension(
