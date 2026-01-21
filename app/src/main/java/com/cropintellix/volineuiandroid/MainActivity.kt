@@ -28,6 +28,9 @@ class MainActivity : AppCompatActivity() {
         b.btnOpenInputFieldExamples.setOnClickListener {
             startActivity(Intent(this, InputFieldExamplesActivity::class.java))
         }
+        b.btnOpenComposeInputFieldExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeInputFieldExamplesActivity::class.java))
+        }
         b.btnOpenRadioExamples.setOnClickListener {
             startActivity(Intent(this, RadioExamplesActivity::class.java))
         }

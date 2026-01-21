@@ -38,6 +38,12 @@
             android:text="Input Field Examples" />
 
         <Button
+            android:id="@+id/btnOpenComposeInputFieldExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Compose InputField Examples" />
+
+        <Button
             android:id="@+id/btnOpenRadioExamples"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
