@@ -40,6 +40,9 @@ class MainActivity : AppCompatActivity() {
         b.btnOpenDropdownExamples.setOnClickListener {
             startActivity(Intent(this, DropdownExamplesActivity::class.java))
         }
+        b.btnOpenComposeDropdownExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeDropdownExamplesActivity::class.java))
+        }
         b.btnOpenSignaturePadExamples.setOnClickListener {
             startActivity(Intent(this, SignaturePadExamplesActivity::class.java))
         }

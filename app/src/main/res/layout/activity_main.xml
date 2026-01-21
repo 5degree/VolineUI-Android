@@ -62,6 +62,12 @@
             android:text="Dropdown Examples" />
 
         <Button
+            android:id="@+id/btnOpenComposeDropdownExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Compose Dropdown Examples" />
+
+        <Button
             android:id="@+id/btnOpenSignaturePadExamples"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

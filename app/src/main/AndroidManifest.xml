@@ -43,6 +43,9 @@
             android:name=".DropdownExamplesActivity"
             android:exported="false" />
         <activity
+            android:name=".ComposeDropdownExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".SignaturePadExamplesActivity"
             android:exported="false"
             android:screenOrientation="landscape" />
