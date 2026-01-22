@@ -28,6 +28,9 @@
             android:name=".ButtonExamplesActivity"
             android:exported="false" />
         <activity
+            android:name=".ComposeButtonExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".ComposeInputFieldExamplesActivity"
             android:exported="false" />
         <activity

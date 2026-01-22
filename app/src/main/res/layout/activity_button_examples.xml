@@ -49,9 +49,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             app:buttonText="Outlined Button"
-            app:buttonType="outlined"
-            app:buttonBorderColor="#6200EE"
-            app:buttonFullWidth="true" />
+            app:buttonType="outlined" />
 
         <!-- Text Button -->
         <com.cropintellix.volineui.AdvancedButton
@@ -73,8 +71,7 @@
             app:buttonType="elevated"
             app:buttonBackgroundColor="#03DAC5"
             app:buttonTextColor="#000000"
-            app:buttonElevation="4dp"
-            app:buttonFullWidth="true" />
+            app:buttonElevation="4dp" />
 
         <!-- Tonal Button -->
         <com.cropintellix.volineui.AdvancedButton
@@ -84,8 +81,7 @@
             android:layout_marginBottom="8dp"
             app:buttonText="Tonal Button"
             app:buttonType="tonal"
-            app:buttonBackgroundColor="#6200EE"
-            app:buttonFullWidth="true" />
+            app:buttonBackgroundColor="#6200EE" />
 
         <!-- Chip Button -->
         <com.cropintellix.volineui.AdvancedButton
@@ -123,6 +119,7 @@
                 android:layout_marginEnd="8dp"
                 app:buttonText="XS"
                 app:buttonSizeType="xs"
+                app:buttonFullWidth="false"
                 app:buttonBackgroundColor="#FF5722" />
 
             <com.cropintellix.volineui.AdvancedButton
@@ -132,6 +129,7 @@
                 android:layout_marginEnd="8dp"
                 app:buttonText="Small"
                 app:buttonSizeType="s"
+                app:buttonFullWidth="false"
                 app:buttonBackgroundColor="#FF9800" />
 
             <com.cropintellix.volineui.AdvancedButton
@@ -141,6 +139,7 @@
                 android:layout_marginEnd="8dp"
                 app:buttonText="Medium"
                 app:buttonSizeType="m"
+                app:buttonFullWidth="false"
                 app:buttonBackgroundColor="#4CAF50" />
 
             <com.cropintellix.volineui.AdvancedButton
@@ -149,6 +148,7 @@
                 android:layout_height="wrap_content"
                 app:buttonText="Large"
                 app:buttonSizeType="l"
+                app:buttonFullWidth="false"
                 app:buttonBackgroundColor="#2196F3" />
 
         </LinearLayout>
@@ -172,8 +172,7 @@
             android:layout_marginBottom="8dp"
             app:buttonText="Add Item"
             app:buttonLeadingIcon="@android:drawable/ic_input_add"
-            app:buttonBackgroundColor="#4CAF50"
-            app:buttonFullWidth="true" />
+            app:buttonBackgroundColor="#4CAF50" />
 
         <!-- Trailing Icon (Clickable) -->
         <com.cropintellix.volineui.AdvancedButton
@@ -183,8 +182,7 @@
             android:layout_marginBottom="8dp"
             app:buttonText="Send Message"
             app:buttonTrailingIcon="@android:drawable/ic_menu_send"
-            app:buttonBackgroundColor="#2196F3"
-            app:buttonFullWidth="true" />
+            app:buttonBackgroundColor="#2196F3" />
 
         <!-- Both Icons -->
         <com.cropintellix.volineui.AdvancedButton
@@ -195,8 +193,7 @@
             app:buttonText="With Both Icons"
             app:buttonLeadingIcon="@android:drawable/ic_menu_edit"
             app:buttonTrailingIcon="@android:drawable/ic_menu_more"
-            app:buttonBackgroundColor="#9C27B0"
-            app:buttonFullWidth="true" />
+            app:buttonBackgroundColor="#9C27B0" />
 
         <!-- Section: Corner Types -->
         <TextView
@@ -265,8 +262,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:enabled="false"
-            app:buttonText="Disabled Button"
-            app:buttonFullWidth="true" />
+            app:buttonText="Disabled Button" />
 
         <!-- Loading Button -->
         <com.cropintellix.volineui.AdvancedButton
@@ -275,8 +271,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             app:buttonText="Click to Load"
-            app:buttonBackgroundColor="#FF5722"
-            app:buttonFullWidth="true" />
+            app:buttonBackgroundColor="#FF5722" />
 
         <!-- Success/Error Button -->
         <com.cropintellix.volineui.AdvancedButton
@@ -285,8 +280,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             app:buttonText="Click for Success"
-            app:buttonBackgroundColor="#607D8B"
-            app:buttonFullWidth="true" />
+            app:buttonBackgroundColor="#607D8B" />
 
         <!-- Section: Gradient -->
         <TextView
@@ -308,8 +302,7 @@
             app:buttonUseGradient="true"
             app:buttonGradientStartColor="#FF6B6B"
             app:buttonGradientEndColor="#556270"
-            app:buttonCornerType="pill"
-            app:buttonFullWidth="true" />
+            app:buttonCornerType="pill" />
 
         <!-- Section: Loading Types -->
         <TextView
@@ -377,8 +370,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             app:buttonText="Try Single/Double/Long Click"
-            app:buttonBackgroundColor="#795548"
-            app:buttonFullWidth="true" />
+            app:buttonBackgroundColor="#795548" />
 
         <!-- Status Display -->
         <TextView

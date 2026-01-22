@@ -61,5 +61,8 @@ class MainActivity : AppCompatActivity() {
         b.btnOpenButtonExamples.setOnClickListener {
             startActivity(Intent(this, ButtonExamplesActivity::class.java))
         }
+        b.btnOpenComposeButtonExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeButtonExamplesActivity::class.java))
+        }
     }
 }
