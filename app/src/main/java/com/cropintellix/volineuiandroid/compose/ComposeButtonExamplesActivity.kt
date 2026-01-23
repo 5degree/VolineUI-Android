@@ -179,7 +179,7 @@ private fun ButtonStylesExample() {
         AdvancedButton(
             text = "Tonal Button - Teal",
             onClick = {},
-            colors = ButtonDefaults.colors(backgroundColor = Color(0xFF009688), textColor = Color.Black),
+            colors = ButtonDefaults.tonalColors(Color(0xff009688)),
             style = ButtonStyle.TONAL
         )
         

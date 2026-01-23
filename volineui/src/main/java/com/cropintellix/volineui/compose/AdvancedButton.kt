@@ -143,28 +143,30 @@ fun AdvancedButton(
 ) {
     val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
-    
+
     // Size preset with customizable overrides
     val sizePreset = ButtonDefaults.getSizePreset(size)
-    val actualHorizontalPadding = customHorizontalPadding.takeIf { it != 12.dp } ?: sizePreset.horizontalPadding
-    val actualVerticalPadding = customVerticalPadding.takeIf { it != 16.dp } ?: sizePreset.verticalPadding
+    val actualHorizontalPadding =
+        customHorizontalPadding.takeIf { it != 12.dp } ?: sizePreset.horizontalPadding
+    val actualVerticalPadding =
+        customVerticalPadding.takeIf { it != 16.dp } ?: sizePreset.verticalPadding
     val actualMinHeight = customMinHeight.takeIf { it != 32.dp } ?: sizePreset.minHeight
-    
+
     // Interaction state
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    
+
     // Click handling
     var lastClickTime by remember { mutableLongStateOf(0L) }
     var clickCount by remember { mutableIntStateOf(0) }
-    
+
     // Animation states
     val scale by animateFloatAsState(
         targetValue = if (isPressed && enableScaleAnimation && enabled && !isLoading) scaleAmount else 1f,
         animationSpec = tween(durationMillis = ButtonDefaults.AnimationDuration / 2),
         label = "scale"
     )
-    
+
     // Success/Error animation
     var animatedBackgroundColor by remember { mutableStateOf(colors.backgroundColor) }
     LaunchedEffect(isSuccess, isError) {
@@ -174,6 +176,7 @@ fun AdvancedButton(
                 delay(1500)
                 animatedBackgroundColor = colors.backgroundColor
             }
+
             isError -> {
                 animatedBackgroundColor = colors.errorColor
                 delay(1500)
@@ -181,7 +184,7 @@ fun AdvancedButton(
             }
         }
     }
-    
+
     // Determine current state
     val currentState = when {
         isLoading -> ButtonState.LOADING
@@ -191,7 +194,7 @@ fun AdvancedButton(
         isPressed -> ButtonState.PRESSED
         else -> ButtonState.NORMAL
     }
-    
+
     // Get colors for current state
     val backgroundColor = when {
         isSuccess || isError -> animatedBackgroundColor
@@ -200,24 +203,24 @@ fun AdvancedButton(
     val textColor = colors.textColor(currentState)
     val borderColor = colors.borderColor(currentState)
     val iconColor = colors.iconColor(currentState)
-    
+
     // Corner radius
     val cornerRadius = customCornerRadius ?: when (cornerType) {
         CornerType.SHARP -> 0.dp
         CornerType.ROUNDED -> ButtonDefaults.CornerRadius
         CornerType.PILL -> sizePreset.minHeight / 2
     }
-    
+
     // Border width
     val borderWidth = customBorderWidth ?: ButtonDefaults.BorderWidth
-    
+
     // Elevation
     val elevation = customElevation ?: when (style) {
         ButtonStyle.ELEVATED -> if (isPressed) ButtonDefaults.ElevationPressed else ButtonDefaults.ElevationNormal
         ButtonStyle.FAB, ButtonStyle.EXTENDED_FAB -> 6.dp
         else -> 0.dp
     }
-    
+
     // Background brush or color - apply 3D effect for depth
     val backgroundBrush = when {
         // Custom gradient
@@ -230,15 +233,18 @@ fun AdvancedButton(
             // Match View's GradientDrawable.Orientation behavior
             // Uses discrete orientations based on angle ranges
             when {
-                gradientAngle >= 315 || gradientAngle < 45 -> Brush.horizontalGradient(
+                gradientAngle !in 45.0..<315.0 -> Brush.horizontalGradient(
                     colors = listOf(gradientColors.first, gradientColors.second)
                 )
-                gradientAngle >= 45 && gradientAngle < 135 -> Brush.verticalGradient(
+
+                gradientAngle in 45.0..<135.0 -> Brush.verticalGradient(
                     colors = listOf(gradientColors.second, gradientColors.first) // Bottom to Top
                 )
-                gradientAngle >= 135 && gradientAngle < 225 -> Brush.horizontalGradient(
+
+                gradientAngle in 135.0..<225.0 -> Brush.horizontalGradient(
                     colors = listOf(gradientColors.second, gradientColors.first) // Right to Left
                 )
+
                 else -> Brush.verticalGradient(
                     colors = listOf(gradientColors.first, gradientColors.second) // Top to Bottom
                 )
@@ -257,9 +263,10 @@ fun AdvancedButton(
                 colors = listOf(lighterColor, backgroundColor, darkerColor)
             )
         }
+
         else -> null
     }
-    
+
     // Adjust styling based on button style
     val actualBackgroundColor = when (style) {
         ButtonStyle.OUTLINED, ButtonStyle.TEXT, ButtonStyle.ICON -> Color.Transparent
@@ -267,34 +274,39 @@ fun AdvancedButton(
         ButtonStyle.CHIP -> backgroundColor.copy(alpha = 0.098f)  // Matches View: 25/255
         else -> backgroundColor
     }
-    
+
     // For OUTLINED style: use black as default if textColor is white (the default from colors())
-    // This allows outlinedColors() custom values to work, while auto-fixing when colors() is used
-    // For TEXT/TONAL/CHIP: use the theme primary color (colors.backgroundColor) for text
+    // For TEXT/TONAL/CHIP: use the textColor from colors (user can set via textColors())
+    // If user used default colors(), textColor will be white - use theme primary instead
     val actualTextColor = when (style) {
         ButtonStyle.OUTLINED -> if (textColor == Color.White) Color.Black else textColor
-        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> colors.backgroundColor  // Use theme primary, not transparent
+        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> 
+            if (textColor == Color.White) colors.backgroundColor else textColor
         else -> textColor
     }
-    
+
     val actualIconColor = when (style) {
         ButtonStyle.OUTLINED -> if (iconColor == Color.White) Color.Black else iconColor
-        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> colors.backgroundColor  // Use theme primary, not transparent
+        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> 
+            if (iconColor == Color.White) colors.backgroundColor else iconColor
         else -> iconColor
     }
-    
-    // For OUTLINED style: use black as default if borderColor matches primary (the default from colors())
+
+    // For OUTLINED style: use black as default if borderColor uses default primary/pressed colors
+    // This checks the NORMAL state borderColor to detect if default was used, then applies black consistently
+    val normalStateBorderColor = colors.borderColor(ButtonState.NORMAL)
     val actualBorderColor = when (style) {
-        ButtonStyle.OUTLINED -> if (borderColor == colors.backgroundColor) Color.Black else borderColor
+        ButtonStyle.OUTLINED -> if (normalStateBorderColor == colors.backgroundColor || 
+                                    normalStateBorderColor == Color.Black) Color.Black else borderColor
         else -> borderColor
     }
-    
+
     val border = when (style) {
         ButtonStyle.OUTLINED -> BorderStroke(borderWidth, actualBorderColor)
         ButtonStyle.CHIP -> BorderStroke(1.dp, borderColor)
         else -> null
     }
-    
+
     // Text transformation
     val transformedText = when (textTransform) {
         TextTransform.UPPERCASE -> text.toUpperCase(Locale.current)
@@ -302,12 +314,12 @@ fun AdvancedButton(
         TextTransform.CAPITALIZE -> text.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
         TextTransform.NONE -> text
     }
-    
+
     // Loading content
     val showLoadingIndicator = isLoading && loadingType == LoadingType.SPINNER
     val showDotsAnimation = isLoading && loadingType == LoadingType.DOTS
     val showProgressBar = isLoading && loadingType == LoadingType.PROGRESS
-    
+
     // Dots animation
     var dotsPhase by remember { mutableIntStateOf(0) }
     LaunchedEffect(showDotsAnimation) {
@@ -318,7 +330,7 @@ fun AdvancedButton(
             }
         }
     }
-    
+
     // Success/Error icons
     val displayText = when {
         isSuccess -> "✓"
@@ -327,11 +339,12 @@ fun AdvancedButton(
             val dots = ".".repeat(dotsPhase)
             (loadingText ?: transformedText) + dots
         }
+
         showProgressText && showProgressBar -> "$progress%"
         isLoading && loadingText != null -> loadingText
         else -> transformedText
     }
-    
+
     // Haptic feedback helper
     fun performHaptic() {
         if (!enableHapticFeedback) return
@@ -343,7 +356,7 @@ fun AdvancedButton(
         }
         view.performHapticFeedback(hapticConstant)
     }
-    
+
     // Click handling with debounce and double-click
     fun handleClick() {
         if (!enabled) {
@@ -351,10 +364,10 @@ fun AdvancedButton(
             return
         }
         if (isLoading) return
-        
+
         val currentTime = System.currentTimeMillis()
         val timeSinceLastClick = currentTime - lastClickTime
-        
+
         if (onDoubleClick != null && timeSinceLastClick < ButtonDefaults.DoubleClickTime) {
             clickCount++
             if (clickCount == 1) {
@@ -374,7 +387,7 @@ fun AdvancedButton(
         }
         lastClickTime = currentTime
     }
-    
+
     // Modifier based on style and fullWidth
     val widthModifier = when {
         style == ButtonStyle.CHIP -> Modifier.wrapContentWidth() // Chips always wrap content
@@ -383,7 +396,7 @@ fun AdvancedButton(
         fullWidth -> Modifier.fillMaxWidth()
         else -> Modifier.widthIn(min = ButtonDefaults.MinWidth)
     }
-    
+
     Surface(
         modifier = modifier
             .then(widthModifier)
@@ -402,20 +415,29 @@ fun AdvancedButton(
                         Modifier.background(backgroundBrush)
                     } else Modifier
                 )
-                .combinedClickable(
-                    interactionSource = interactionSource,
-                    indication = ripple(color = colors.rippleColor),
-                    enabled = enabled && !isLoading,
-                    onClick = { handleClick() },
-                    onLongClick = if (onLongClick != null) {
-                        {
-                            if (enabled && !isLoading) {
-                                performHaptic()
-                                onLongClick.invoke()
+                // Use dark ripple for outlined/text buttons when default white ripple is detected
+                .let { mod ->
+                    val actualRippleColor = when {
+                        style in listOf(ButtonStyle.OUTLINED, ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP)
+                            && colors.rippleColor == Color(0x40FFFFFF) -> Color(0x40000000)
+                        else -> colors.rippleColor
+                    }
+                    mod.combinedClickable(
+                        interactionSource = interactionSource,
+                        indication = ripple(color = actualRippleColor),
+                        // Enable clicks if: (1) button is enabled and not loading, or (2) onDisabledClick is provided
+                        enabled = (enabled && !isLoading) || onDisabledClick != null,
+                        onClick = { handleClick() },
+                        onLongClick = if (onLongClick != null) {
+                            {
+                                if (enabled && !isLoading) {
+                                    performHaptic()
+                                    onLongClick.invoke()
+                                }
                             }
-                        }
-                    } else null
-                )
+                        } else null
+                    )
+                }
                 .padding(
                     horizontal = actualHorizontalPadding,
                     vertical = actualVerticalPadding
@@ -431,6 +453,7 @@ fun AdvancedButton(
                         strokeWidth = 2.dp
                     )
                 }
+
                 showProgressBar -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -458,6 +481,7 @@ fun AdvancedButton(
                         }
                     }
                 }
+
                 style == ButtonStyle.ICON || style == ButtonStyle.FAB -> {
                     // Icon only button
                     leadingIcon?.let {
@@ -469,6 +493,7 @@ fun AdvancedButton(
                         )
                     }
                 }
+
                 else -> {
                     // Button with text and optional icons
                     Row(
@@ -484,7 +509,7 @@ fun AdvancedButton(
                             )
                             Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
                         }
-                        
+
                         Text(
                             text = displayText,
                             style = TextStyle(
@@ -496,7 +521,7 @@ fun AdvancedButton(
                             ),
                             maxLines = maxLines
                         )
-                        
+
                         trailingIcon?.let {
                             Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
                             IconContent(
@@ -522,7 +547,7 @@ private fun IconContent(
     icon: Any,
     size: Dp,
     tint: Color,
-    onClick: (() -> Unit)?
+    onClick: (() -> Unit)?,
 ) {
     val modifier = Modifier
         .size(size)
@@ -535,7 +560,7 @@ private fun IconContent(
                 )
             } else Modifier
         )
-    
+
     when (icon) {
         is ImageVector -> {
             Icon(
@@ -545,6 +570,7 @@ private fun IconContent(
                 tint = tint
             )
         }
+
         is Painter -> {
             Icon(
                 painter = icon,

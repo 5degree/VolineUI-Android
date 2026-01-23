@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.sp
  * Default values and colors for AdvancedButton composable.
  */
 object ButtonDefaults {
-    
+
     // ===== DEFAULT DIMENSIONS =====
     val CornerRadius: Dp = 8.dp
     val BorderWidth: Dp = 1.5.dp
@@ -23,17 +23,17 @@ object ButtonDefaults {
     val ElevationPressed: Dp = 4.dp
     val IconSpacing: Dp = 8.dp
     val MinWidth: Dp = 64.dp
-    
+
     // ===== SIZE PRESETS =====
-    
+
     data class SizePreset(
         val minHeight: Dp,
         val horizontalPadding: Dp,
         val verticalPadding: Dp,
         val textSize: TextUnit,
-        val iconSize: Dp
+        val iconSize: Dp,
     )
-    
+
     val SizeXS = SizePreset(
         minHeight = 28.dp,
         horizontalPadding = 8.dp,
@@ -41,7 +41,7 @@ object ButtonDefaults {
         textSize = 12.sp,
         iconSize = 14.dp
     )
-    
+
     val SizeS = SizePreset(
         minHeight = 36.dp,
         horizontalPadding = 12.dp,
@@ -49,7 +49,7 @@ object ButtonDefaults {
         textSize = 13.sp,
         iconSize = 16.dp
     )
-    
+
     val SizeM = SizePreset(
         minHeight = 48.dp,
         horizontalPadding = 20.dp,
@@ -57,7 +57,7 @@ object ButtonDefaults {
         textSize = 15.sp,
         iconSize = 20.dp
     )
-    
+
     val SizeL = SizePreset(
         minHeight = 52.dp,
         horizontalPadding = 20.dp,
@@ -65,7 +65,7 @@ object ButtonDefaults {
         textSize = 16.sp,
         iconSize = 24.dp
     )
-    
+
     val SizeXL = SizePreset(
         minHeight = 60.dp,
         horizontalPadding = 24.dp,
@@ -73,7 +73,7 @@ object ButtonDefaults {
         textSize = 18.sp,
         iconSize = 28.dp
     )
-    
+
     fun getSizePreset(size: ButtonSize): SizePreset = when (size) {
         ButtonSize.XS -> SizeXS
         ButtonSize.S -> SizeS
@@ -81,13 +81,13 @@ object ButtonDefaults {
         ButtonSize.L -> SizeL
         ButtonSize.XL -> SizeXL
     }
-    
+
     // ===== ANIMATION =====
     const val AnimationDuration: Int = 200
     const val DebounceTime: Long = 300L
     const val DoubleClickTime: Long = 300L
     const val ScaleAmount: Float = 0.96f
-    
+
     // ===== DEFAULT COLORS =====
     private val DefaultBackgroundColor = Color(0xFF6200EE)
     private val DefaultTextColor = Color.White
@@ -99,7 +99,7 @@ object ButtonDefaults {
     private val ErrorColor = Color(0xFFF44336)
     private val RippleColor = Color(0x40FFFFFF)
     private val LoadingColor = Color.White
-    
+
     /**
      * Creates a [ButtonColors] instance with the default colors.
      * Uses the primary color from MaterialTheme if available.
@@ -140,7 +140,7 @@ object ButtonDefaults {
         successColor = successColor,
         errorColor = errorColor,
     )
-    
+
     /**
      * Creates colors for outlined button style.
      * By default uses black color for text and border.
@@ -162,13 +162,13 @@ object ButtonDefaults {
         rippleColor = Color(0x40000000),
         loadingColor = textColor,
     )
-    
+
     /**
      * Creates colors for text button style.
      */
     @Composable
     fun textColors(
-        textColor: Color = MaterialTheme.colorScheme.primary,
+        textColor: Color = Color.Black,
     ): ButtonColors = colors(
         backgroundColor = Color.Transparent,
         backgroundColorPressed = Color.Transparent,
@@ -180,7 +180,7 @@ object ButtonDefaults {
         rippleColor = Color(0x40000000),
         loadingColor = textColor,
     )
-    
+
     /**
      * Creates colors for tonal button style.
      */
@@ -198,7 +198,7 @@ object ButtonDefaults {
         rippleColor = primaryColor.copy(alpha = 0.25f),
         loadingColor = primaryColor,
     )
-    
+
     /**
      * Creates colors for chip button style.
      */
@@ -251,7 +251,7 @@ data class ButtonColors(
         ButtonState.SUCCESS -> successColor
         ButtonState.ERROR -> errorColor
     }
-    
+
     /**
      * Get text color based on current state.
      */
@@ -263,7 +263,7 @@ data class ButtonColors(
         ButtonState.SUCCESS -> Color.White
         ButtonState.ERROR -> Color.White
     }
-    
+
     /**
      * Get border color based on current state.
      */
@@ -275,7 +275,7 @@ data class ButtonColors(
         ButtonState.SUCCESS -> successColor
         ButtonState.ERROR -> errorColor
     }
-    
+
     /**
      * Get icon color based on current state.
      */
