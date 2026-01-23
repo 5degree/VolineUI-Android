@@ -8,6 +8,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.cropintellix.volineuiandroid.compose.ComposeButtonExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeDropdownExamplesActivity
+import com.cropintellix.volineuiandroid.compose.ComposeImageViewExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeInputFieldExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeRadioExamplesActivity
 import com.cropintellix.volineuiandroid.databinding.ActivityMainBinding
@@ -61,6 +62,9 @@ class MainActivity : AppCompatActivity() {
         }
         b.btnOpenImageViewExamples.setOnClickListener {
             startActivity(Intent(this, ImageViewExamplesActivity::class.java))
+        }
+        b.btnOpenComposeImageViewExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeImageViewExamplesActivity::class.java))
         }
         b.btnOpenButtonExamples.setOnClickListener {
             startActivity(Intent(this, ButtonExamplesActivity::class.java))

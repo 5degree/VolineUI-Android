@@ -65,6 +65,9 @@
             android:name=".ImageViewExamplesActivity"
             android:exported="false" />
         <activity
+            android:name=".compose.ComposeImageViewExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

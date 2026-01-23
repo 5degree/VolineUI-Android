@@ -32,26 +32,22 @@ import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.cropintellix.volineui.imageview.FullScreenImageViewer
+import com.cropintellix.volineui.imageview.ImageScaleType
+import com.cropintellix.volineui.imageview.ImageState
 import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
 import java.io.File
 
 /**
  * AdvancedImageView - A comprehensive image display component
+ * 
+ * This View-based component shares ImageScaleType and ImageState enums with the
+ * Compose AdvancedImageView for consistency across both implementations.
  */
 class AdvancedImageView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-
-    enum class ImageScaleType(val value: Int) {
-        FIT(0), FILL(1), CROP(2), CENTER(3), STRETCH(4);
-        companion object {
-            fun fromValue(value: Int) = entries.find { it.value == value } ?: CROP
-        }
-    }
-
-    enum class ImageState { EMPTY, LOADING, LOADED, ERROR }
 
     // Views
     private val labelTextView: TextView
