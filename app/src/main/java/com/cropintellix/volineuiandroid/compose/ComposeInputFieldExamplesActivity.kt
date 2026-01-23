@@ -1,4 +1,4 @@
-package com.cropintellix.volineuiandroid
+package com.cropintellix.volineuiandroid.compose
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,19 +37,19 @@ import com.cropintellix.volineui.compose.InputField
 import com.cropintellix.volineui.inputfield.InputFieldDefaults
 import com.cropintellix.volineui.inputfield.InputMaskTransformation
 import com.cropintellix.volineui.inputfield.ValidationType
+import com.cropintellix.volineuiandroid.ui.theme.AppTheme
 
 /**
  * Example activity demonstrating the Compose InputField component.
  * Shows various configurations and features of the InputField.
  */
 class ComposeInputFieldExamplesActivity : ComponentActivity() {
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
         setContent {
-            MaterialTheme {
+            AppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     InputFieldExamplesScreen(
                         modifier = Modifier.padding(innerPadding)
@@ -78,73 +77,73 @@ private fun InputFieldExamplesScreen(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             color = Color.Black
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         // Basic InputField
         SectionTitle("Basic InputField")
         BasicInputFieldExample()
-        
+
         HorizontalDivider()
-        
+
         // Password Field
         SectionTitle("Password Field")
         PasswordFieldExample()
-        
+
         HorizontalDivider()
-        
+
         // With Validation
         SectionTitle("Email Validation")
         EmailValidationExample()
-        
+
         HorizontalDivider()
-        
+
         // Error State
         SectionTitle("Error State")
         ErrorStateExample()
-        
+
         HorizontalDivider()
-        
+
         // Success State
         SectionTitle("Success State")
         SuccessStateExample()
-        
+
         HorizontalDivider()
-        
+
         // With Icons
         SectionTitle("With Icons")
         IconsExample()
-        
+
         HorizontalDivider()
-        
+
         // Character Counter
         SectionTitle("Character Counter")
         CharacterCounterExample()
-        
+
         HorizontalDivider()
-        
+
         // Phone Mask
         SectionTitle("Phone Number Mask")
         PhoneMaskExample()
-        
+
         HorizontalDivider()
-        
+
         // Disabled State
         SectionTitle("Disabled State")
         DisabledExample()
-        
+
         HorizontalDivider()
-        
+
         // Loading State
         SectionTitle("Loading State")
         LoadingExample()
-        
+
         HorizontalDivider()
-        
+
         // Custom Colors
         SectionTitle("Custom Colors")
         CustomColorsExample()
-        
+
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
@@ -162,7 +161,7 @@ private fun SectionTitle(title: String) {
 @Composable
 private fun BasicInputFieldExample() {
     var text by remember { mutableStateOf("") }
-    
+
     InputField(
         value = text,
         onValueChange = { text = it },
@@ -175,7 +174,7 @@ private fun BasicInputFieldExample() {
 @Composable
 private fun PasswordFieldExample() {
     var password by remember { mutableStateOf("") }
-    
+
     InputField(
         value = password,
         onValueChange = { password = it },
@@ -189,7 +188,7 @@ private fun PasswordFieldExample() {
 private fun EmailValidationExample() {
     var email by remember { mutableStateOf("") }
     var isValid by remember { mutableStateOf(true) }
-    
+
     InputField(
         value = email,
         onValueChange = { email = it },
@@ -210,12 +209,12 @@ private fun EmailValidationExample() {
 private fun ErrorStateExample() {
     var text by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
-    
+
     Column {
         InputField(
             value = text,
-            onValueChange = { 
-                text = it 
+            onValueChange = {
+                text = it
                 if (showError) showError = false
             },
             label = "Required Field",
@@ -223,9 +222,9 @@ private fun ErrorStateExample() {
             isError = showError,
             errorMessage = if (showError) "This field cannot be empty" else null
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Button(
             onClick = { showError = text.isEmpty() },
             modifier = Modifier.fillMaxWidth()
@@ -238,7 +237,7 @@ private fun ErrorStateExample() {
 @Composable
 private fun SuccessStateExample() {
     var text by remember { mutableStateOf("Valid input") }
-    
+
     InputField(
         value = text,
         onValueChange = { text = it },
@@ -251,7 +250,7 @@ private fun SuccessStateExample() {
 @Composable
 private fun IconsExample() {
     var searchText by remember { mutableStateOf("") }
-    
+
     InputField(
         value = searchText,
         onValueChange = { searchText = it },
@@ -264,7 +263,7 @@ private fun IconsExample() {
 @Composable
 private fun CharacterCounterExample() {
     var bio by remember { mutableStateOf("") }
-    
+
     InputField(
         value = bio,
         onValueChange = { bio = it },
@@ -280,7 +279,7 @@ private fun CharacterCounterExample() {
 @Composable
 private fun PhoneMaskExample() {
     var phone by remember { mutableStateOf("") }
-    
+
     InputField(
         value = phone,
         onValueChange = { phone = it },
@@ -308,7 +307,7 @@ private fun DisabledExample() {
 private fun LoadingExample() {
     var text by remember { mutableStateOf("Verifying...") }
     var isLoading by remember { mutableStateOf(true) }
-    
+
     Column {
         InputField(
             value = text,
@@ -317,9 +316,9 @@ private fun LoadingExample() {
             hint = "Enter value",
             isLoading = isLoading
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = { isLoading = true },
@@ -340,7 +339,7 @@ private fun LoadingExample() {
 @Composable
 private fun CustomColorsExample() {
     var text by remember { mutableStateOf("") }
-    
+
     InputField(
         value = text,
         onValueChange = { text = it },

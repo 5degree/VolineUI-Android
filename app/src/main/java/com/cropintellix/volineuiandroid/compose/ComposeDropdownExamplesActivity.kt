@@ -1,4 +1,4 @@
-package com.cropintellix.volineuiandroid
+package com.cropintellix.volineuiandroid.compose
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.sp
 import com.cropintellix.volineui.compose.Dropdown
 import com.cropintellix.volineui.compose.DropdownContainerStyle
 import com.cropintellix.volineui.compose.DropdownSelectionMode
-import com.cropintellix.volineui.dropdown.DropdownDefaults
 import com.cropintellix.volineui.dropdown.DropdownOption
+import com.cropintellix.volineuiandroid.ui.theme.AppTheme
 
 /**
  * Example activity demonstrating the Compose Dropdown component.
@@ -47,7 +47,7 @@ class ComposeDropdownExamplesActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            MaterialTheme {
+            AppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     DropdownExamplesScreen(
                         modifier = Modifier.padding(innerPadding)

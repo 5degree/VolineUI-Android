@@ -143,15 +143,16 @@ object ButtonDefaults {
     
     /**
      * Creates colors for outlined button style.
+     * By default uses black color for text and border.
      */
     @Composable
     fun outlinedColors(
         backgroundColor: Color = Color.Transparent,
-        textColor: Color = MaterialTheme.colorScheme.primary,
-        borderColor: Color = MaterialTheme.colorScheme.primary,
+        textColor: Color = Color.Black,
+        borderColor: Color = Color.Black,
     ): ButtonColors = colors(
         backgroundColor = backgroundColor,
-        backgroundColorPressed = Color.Transparent,
+        backgroundColorPressed = borderColor.copy(alpha = 0.15f),
         textColor = textColor,
         textColorPressed = darkenColor(textColor, 0.15f),
         borderColor = borderColor,

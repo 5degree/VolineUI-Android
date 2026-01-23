@@ -268,18 +268,29 @@ fun AdvancedButton(
         else -> backgroundColor
     }
     
+    // For OUTLINED style: use black as default if textColor is white (the default from colors())
+    // This allows outlinedColors() custom values to work, while auto-fixing when colors() is used
+    // For TEXT/TONAL/CHIP: use the theme primary color (colors.backgroundColor) for text
     val actualTextColor = when (style) {
-        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> backgroundColor
+        ButtonStyle.OUTLINED -> if (textColor == Color.White) Color.Black else textColor
+        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> colors.backgroundColor  // Use theme primary, not transparent
         else -> textColor
     }
     
     val actualIconColor = when (style) {
-        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> backgroundColor
+        ButtonStyle.OUTLINED -> if (iconColor == Color.White) Color.Black else iconColor
+        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> colors.backgroundColor  // Use theme primary, not transparent
         else -> iconColor
     }
     
+    // For OUTLINED style: use black as default if borderColor matches primary (the default from colors())
+    val actualBorderColor = when (style) {
+        ButtonStyle.OUTLINED -> if (borderColor == colors.backgroundColor) Color.Black else borderColor
+        else -> borderColor
+    }
+    
     val border = when (style) {
-        ButtonStyle.OUTLINED -> BorderStroke(borderWidth, borderColor)
+        ButtonStyle.OUTLINED -> BorderStroke(borderWidth, actualBorderColor)
         ButtonStyle.CHIP -> BorderStroke(1.dp, borderColor)
         else -> null
     }
@@ -505,6 +516,7 @@ fun AdvancedButton(
 /**
  * Helper composable for rendering icons from various sources
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun IconContent(
     icon: Any,

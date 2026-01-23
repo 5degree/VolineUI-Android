@@ -1,4 +1,4 @@
-package com.cropintellix.volineuiandroid
+package com.cropintellix.volineuiandroid.compose
 
 import android.os.Bundle
 import android.widget.Toast
@@ -20,11 +20,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cropintellix.volineui.button.*
-import com.cropintellix.volineui.button.ButtonColors
 import com.cropintellix.volineui.button.ButtonDefaults
 import com.cropintellix.volineui.compose.AdvancedButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.cropintellix.volineuiandroid.ui.theme.AppTheme
 
 /**
  * Example activity demonstrating the Compose AdvancedButton component.
@@ -37,7 +37,7 @@ class ComposeButtonExamplesActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            MaterialTheme {
+            AppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     ButtonExamplesScreen(
                         modifier = Modifier.padding(innerPadding)
@@ -138,7 +138,7 @@ private fun SectionTitle(title: String) {
 private fun ButtonStylesExample() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         AdvancedButton(
-            text = "Filled Button - Purple",
+            text = "Filled Button",
             onClick = {},
         )
         
@@ -150,9 +150,16 @@ private fun ButtonStylesExample() {
         )
         
         AdvancedButton(
-            text = "Outlined Button - Red",
+            text = "Outlined Button",
             onClick = {},
             style = ButtonStyle.OUTLINED
+        )
+
+        AdvancedButton(
+            text = "Outlined Button Custom Color",
+            onClick = {},
+            style = ButtonStyle.OUTLINED,
+            colors = ButtonDefaults.outlinedColors(borderColor = Color.Green, textColor = Color.Magenta)
         )
         
         AdvancedButton(

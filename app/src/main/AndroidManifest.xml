@@ -28,16 +28,16 @@
             android:name=".ButtonExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".ComposeButtonExamplesActivity"
+            android:name=".compose.ComposeButtonExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".ComposeInputFieldExamplesActivity"
+            android:name=".compose.ComposeInputFieldExamplesActivity"
             android:exported="false" />
         <activity
             android:name=".RadioExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".ComposeRadioExamplesActivity"
+            android:name=".compose.ComposeRadioExamplesActivity"
             android:exported="false" />
         <activity
             android:name=".InputFieldExamplesActivity"
@@ -46,7 +46,7 @@
             android:name=".DropdownExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".ComposeDropdownExamplesActivity"
+            android:name=".compose.ComposeDropdownExamplesActivity"
             android:exported="false" />
         <activity
             android:name=".SignaturePadExamplesActivity"

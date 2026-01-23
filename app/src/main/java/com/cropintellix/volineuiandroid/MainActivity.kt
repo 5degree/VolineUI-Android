@@ -6,6 +6,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.cropintellix.volineuiandroid.compose.ComposeButtonExamplesActivity
+import com.cropintellix.volineuiandroid.compose.ComposeDropdownExamplesActivity
+import com.cropintellix.volineuiandroid.compose.ComposeInputFieldExamplesActivity
+import com.cropintellix.volineuiandroid.compose.ComposeRadioExamplesActivity
 import com.cropintellix.volineuiandroid.databinding.ActivityMainBinding
 import kotlin.jvm.java
 

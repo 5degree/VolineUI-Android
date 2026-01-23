@@ -1,4 +1,4 @@
-package com.cropintellix.volineuiandroid
+package com.cropintellix.volineuiandroid.compose
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cropintellix.volineui.compose.Radio
 import com.cropintellix.volineui.radio.RadioDefaults
+import com.cropintellix.volineuiandroid.ui.theme.AppTheme
 
 /**
  * Example activity demonstrating the Compose Radio component.
@@ -45,7 +46,7 @@ class ComposeRadioExamplesActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            MaterialTheme {
+            AppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     RadioExamplesScreen(
                         modifier = Modifier.padding(innerPadding)
