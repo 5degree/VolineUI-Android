@@ -129,7 +129,7 @@ fun AdvancedImageView(
 ) {
     val context = LocalContext.current
     var currentState by remember { mutableStateOf(ImageState.EMPTY) }
-    
+
     // Update state and notify
     fun updateState(newState: ImageState) {
         if (currentState != newState) {
@@ -137,14 +137,14 @@ fun AdvancedImageView(
             onStateChange?.invoke(newState)
         }
     }
-    
+
     // Handle force loading state from external control
     LaunchedEffect(isLoading) {
         if (isLoading) {
             updateState(ImageState.LOADING)
         }
     }
-    
+
     // Determine initial state based on source
     LaunchedEffect(source) {
         if (!isLoading) {
@@ -154,7 +154,7 @@ fun AdvancedImageView(
             }
         }
     }
-    
+
     val shape = RoundedCornerShape(cornerRadius)
     val contentScale = when (scaleType) {
         ImageScaleType.FIT -> ContentScale.Fit
@@ -162,26 +162,24 @@ fun AdvancedImageView(
         ImageScaleType.CENTER -> ContentScale.Inside
         ImageScaleType.STRETCH -> ContentScale.FillBounds
     }
-    
+
     // Animation for fade in
     val imageAlpha by animateFloatAsState(
         targetValue = if (currentState == ImageState.LOADED) 1f else 0f,
         animationSpec = tween(durationMillis = ImageViewDefaults.FadeAnimationDuration),
         label = "imageAlpha"
     )
-    
+
     // Apply default sizing if no explicit size given
     val effectiveModifier = if (aspectRatio <= 0) {
         // When no aspect ratio, apply default height (can be overridden by user's modifier)
         Modifier
-            .fillMaxWidth()
             .height(ImageViewDefaults.DefaultHeight)
             .then(modifier)
     } else {
-        // With aspect ratio, just apply user's modifier
-        Modifier.fillMaxWidth().then(modifier)
+        modifier
     }
-    
+
     Column(modifier = effectiveModifier) {
         // Label
         if (label.isNotEmpty()) {
@@ -195,17 +193,16 @@ fun AdvancedImageView(
             )
             Spacer(modifier = Modifier.height(labelGap))
         }
-        
+
         // Image container - fills remaining space in Column
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)  // Take remaining space after label
                 .then(
                     if (aspectRatio > 0) {
                         Modifier.aspectRatio(aspectRatio, matchHeightConstraintsFirst = false)
                     } else {
-                        Modifier  // Just fill available space
+                        Modifier.weight(1f)
                     }
                 )
                 .clip(shape)
@@ -220,9 +217,9 @@ fun AdvancedImageView(
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple(),
-                    enabled = currentState == ImageState.LOADED || 
-                             currentState == ImageState.EMPTY || 
-                             currentState == ImageState.ERROR
+                    enabled = currentState == ImageState.LOADED ||
+                            currentState == ImageState.EMPTY ||
+                            currentState == ImageState.ERROR
                 ) {
                     when (currentState) {
                         ImageState.LOADED -> {
@@ -231,11 +228,13 @@ fun AdvancedImageView(
                             }
                             onImageClick?.invoke()
                         }
+
                         ImageState.EMPTY, ImageState.ERROR -> {
                             if (enableCameraCapture && onCaptureClick != null) {
                                 onCaptureClick()
                             }
                         }
+
                         else -> {}
                     }
                 },
@@ -245,18 +244,20 @@ fun AdvancedImageView(
             when {
                 source is ImageSource.Empty -> {
                     // Placeholder
-                    PlaceholderContent(
-                        text = placeholderText,
-                        iconResId = placeholderIconResId,
-                        iconSize = placeholderIconSize,
-                        textSize = placeholderTextSize,
-                        gap = placeholderGap,
-                        iconColor = colors.placeholderIconColor(currentState),
-                        textColor = colors.placeholderTextColor(currentState),
-                        isError = currentState == ImageState.ERROR
-                    )
+                    if (currentState != ImageState.LOADING) {
+                        PlaceholderContent(
+                            text = placeholderText,
+                            iconResId = placeholderIconResId,
+                            iconSize = placeholderIconSize,
+                            textSize = placeholderTextSize,
+                            gap = placeholderGap,
+                            iconColor = colors.placeholderIconColor(currentState),
+                            textColor = colors.placeholderTextColor(currentState),
+                            isError = currentState == ImageState.ERROR
+                        )
+                    }
                 }
-                
+
                 else -> {
                     // Image loading
                     ImageContent(
@@ -274,20 +275,7 @@ fun AdvancedImageView(
                             onImageLoadResult?.invoke(false)
                         }
                     )
-                    
-                    // Loading indicator
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = currentState == ImageState.LOADING && showLoadingIndicator,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(ImageViewDefaults.LoadingIndicatorSize),
-                            color = colors.loadingColor,
-                            strokeWidth = ImageViewDefaults.LoadingIndicatorStrokeWidth
-                        )
-                    }
-                    
+
                     // Error placeholder
                     androidx.compose.animation.AnimatedVisibility(
                         visible = currentState == ImageState.ERROR,
@@ -307,7 +295,20 @@ fun AdvancedImageView(
                     }
                 }
             }
-            
+
+            // Loading indicator
+            androidx.compose.animation.AnimatedVisibility(
+                visible = currentState == ImageState.LOADING && showLoadingIndicator,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(ImageViewDefaults.LoadingIndicatorSize),
+                    color = colors.loadingColor,
+                    strokeWidth = ImageViewDefaults.LoadingIndicatorStrokeWidth
+                )
+            }
+
             // Delete button
             androidx.compose.animation.AnimatedVisibility(
                 visible = currentState == ImageState.LOADED && showDeleteButton,
@@ -351,17 +352,17 @@ private fun PlaceholderContent(
     ) {
         Icon(
             painter = painterResource(
-                id = if (iconResId != 0) iconResId 
-                     else if (isError) R.drawable.ic_clear 
-                     else R.drawable.ic_add_photo
+                id = if (iconResId != 0) iconResId
+                else if (isError) R.drawable.ic_clear
+                else R.drawable.ic_add_photo
             ),
             contentDescription = if (isError) "Error" else "Add photo",
             modifier = Modifier.size(iconSize),
             tint = iconColor
         )
-        
+
         Spacer(modifier = Modifier.height(gap))
-        
+
         Text(
             text = text,
             style = TextStyle(
@@ -418,7 +419,7 @@ private fun ImageContent(
 ) {
     val context = LocalContext.current
     val shape = RoundedCornerShape(cornerRadius)
-    
+
     when (source) {
         is ImageSource.Bitmap -> {
             // Direct bitmap display
@@ -433,7 +434,7 @@ private fun ImageContent(
                 contentScale = contentScale
             )
         }
-        
+
         is ImageSource.DrawableRes -> {
             // Drawable resource
             LaunchedEffect(source) { onSuccess() }
@@ -447,7 +448,7 @@ private fun ImageContent(
                 contentScale = contentScale
             )
         }
-        
+
         is ImageSource.Base64 -> {
             // Decode Base64 and display
             val bitmap = remember(source.base64String) {
@@ -458,11 +459,11 @@ private fun ImageContent(
                     null
                 }
             }
-            
+
             LaunchedEffect(bitmap) {
                 if (bitmap != null) onSuccess() else onError()
             }
-            
+
             bitmap?.let {
                 Image(
                     bitmap = it.asImageBitmap(),
@@ -475,7 +476,7 @@ private fun ImageContent(
                 )
             }
         }
-        
+
         else -> {
             // Use Coil for URL, File, Uri, FilePath
             val model = remember(source) {
@@ -487,7 +488,7 @@ private fun ImageContent(
                     else -> null
                 }
             }
-            
+
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(model)
@@ -517,7 +518,7 @@ private fun ImageContent(
  */
 private fun showFullScreenPreview(context: android.content.Context, source: ImageSource) {
     val builder = FullScreenImageViewer.Builder(context)
-    
+
     when (source) {
         is ImageSource.File -> builder.setImageFile(source.file)
         is ImageSource.FilePath -> builder.setImageFile(File(source.path))
@@ -534,9 +535,10 @@ private fun showFullScreenPreview(context: android.content.Context, source: Imag
                 return
             }
         }
+
         ImageSource.Empty -> return
     }
-    
+
     builder.show()
 }
 
@@ -742,19 +744,19 @@ fun AdvancedImageViewFromResource(
 
 /**
  * State holder for AdvancedImageView with mutable source.
- * 
+ *
  * Usage:
  * ```kotlin
  * val imageState = rememberAdvancedImageViewState()
- * 
+ *
  * AdvancedImageView(
  *     state = imageState,
  *     ...
  * )
- * 
+ *
  * // Load image
  * imageState.loadFromUrl("https://...")
- * 
+ *
  * // Clear image
  * imageState.clear()
  * ```
@@ -762,14 +764,14 @@ fun AdvancedImageViewFromResource(
 class AdvancedImageViewState {
     var source by mutableStateOf<ImageSource>(ImageSource.Empty)
         private set
-    
+
     var currentState by mutableStateOf(ImageState.EMPTY)
         internal set
-    
+
     // Force loading state (for showing loading during processing)
     var isForceLoading by mutableStateOf(false)
         private set
-    
+
     /**
      * Show loading state (e.g., during photo processing).
      * Call this when PhotoCaptureResult.Processing is received.
@@ -778,7 +780,7 @@ class AdvancedImageViewState {
         isForceLoading = true
         currentState = ImageState.LOADING
     }
-    
+
     /**
      * Hide the forced loading state.
      * Usually called automatically when loadFromFile/loadFromUrl is called.
@@ -786,54 +788,55 @@ class AdvancedImageViewState {
     fun hideLoading() {
         isForceLoading = false
     }
-    
+
     fun loadFromUrl(url: String) {
         isForceLoading = false
         source = if (url.isNotBlank()) ImageSource.Url(url) else ImageSource.Empty
     }
-    
+
     fun loadFromFile(file: File) {
         isForceLoading = false
         source = if (file.exists()) ImageSource.File(file) else ImageSource.Empty
     }
-    
+
     fun loadFromFilePath(path: String) {
         isForceLoading = false
         source = ImageSource.FilePath(path)
     }
-    
+
     fun loadFromUri(uri: Uri) {
         isForceLoading = false
         source = ImageSource.Uri(uri)
     }
-    
+
     fun loadFromBitmap(bitmap: Bitmap) {
         isForceLoading = false
         source = ImageSource.Bitmap(bitmap)
     }
-    
+
     fun loadFromDrawableRes(resId: Int) {
         isForceLoading = false
         source = if (resId != 0) ImageSource.DrawableRes(resId) else ImageSource.Empty
     }
-    
+
     fun loadFromBase64(base64String: String) {
         isForceLoading = false
-        source = if (base64String.isNotBlank()) ImageSource.Base64(base64String) else ImageSource.Empty
+        source =
+            if (base64String.isNotBlank()) ImageSource.Base64(base64String) else ImageSource.Empty
     }
-    
+
     fun clear() {
         isForceLoading = false
         source = ImageSource.Empty
         currentState = ImageState.EMPTY
     }
-    
+
     fun hasImage(): Boolean = currentState == ImageState.LOADED
-    
+
     fun isLoading(): Boolean = currentState == ImageState.LOADING
-    
+
     fun isError(): Boolean = currentState == ImageState.ERROR
-    
+
     fun isEmpty(): Boolean = currentState == ImageState.EMPTY
 }
 
@@ -842,7 +845,7 @@ class AdvancedImageViewState {
  */
 @Composable
 fun rememberAdvancedImageViewState(
-    initialSource: ImageSource = ImageSource.Empty
+    initialSource: ImageSource = ImageSource.Empty,
 ): AdvancedImageViewState {
     return remember {
         AdvancedImageViewState().apply {

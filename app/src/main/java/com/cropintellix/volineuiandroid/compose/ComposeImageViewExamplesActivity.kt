@@ -184,14 +184,14 @@ private fun SectionTitle(title: String) {
 @Composable
 private fun BasicUsageExample() {
     val context = LocalContext.current
-    
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = "Default empty state with placeholder:",
             fontSize = 14.sp,
             color = Color(0xFF888888)
         )
-        
+
         AdvancedImageView(
             source = ImageSource.Empty,
             modifier = Modifier.fillMaxWidth(),
@@ -227,7 +227,12 @@ private fun StateManagementExample() {
                 PhotoCaptureManager.instance.capturePhoto(PhotoCaptureConfig()) { result ->
                     when (result) {
                         is PhotoCaptureResult.Success -> imageState.loadFromFile(result.file)
-                        is PhotoCaptureResult.Error -> Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                        is PhotoCaptureResult.Error -> Toast.makeText(
+                            context,
+                            result.message,
+                            Toast.LENGTH_SHORT
+                        ).show()
+
                         else -> {}
                     }
                 }
@@ -275,14 +280,17 @@ private fun CameraCaptureExample() {
             AdvancedImageView(
                 state = imageState1,
                 modifier = Modifier.weight(1f),
-                aspectRatio = 1f,
                 label = "Photo 1",
-                cornerRadius = 8.dp,
                 onCaptureClick = {
                     PhotoCaptureManager.instance.capturePhoto(PhotoCaptureConfig("Photo 1")) { result ->
                         when (result) {
                             is PhotoCaptureResult.Success -> imageState1.loadFromFile(result.file)
-                            is PhotoCaptureResult.Error -> Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                            is PhotoCaptureResult.Error -> Toast.makeText(
+                                context,
+                                result.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+
                             else -> {}
                         }
                     }
@@ -292,14 +300,17 @@ private fun CameraCaptureExample() {
             AdvancedImageView(
                 state = imageState2,
                 modifier = Modifier.weight(1f),
-                aspectRatio = 1f,
                 label = "Photo 2",
-                cornerRadius = 8.dp,
                 onCaptureClick = {
                     PhotoCaptureManager.instance.capturePhoto(PhotoCaptureConfig("Photo 2")) { result ->
                         when (result) {
                             is PhotoCaptureResult.Success -> imageState2.loadFromFile(result.file)
-                            is PhotoCaptureResult.Error -> Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                            is PhotoCaptureResult.Error -> Toast.makeText(
+                                context,
+                                result.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+
                             else -> {}
                         }
                     }
@@ -321,36 +332,37 @@ private fun FileLoadingFullFeaturesExample() {
             color = Color(0xFF888888)
         )
 
-        Text(
-            text = "Shows loading indicator while photo is being processed with watermark",
-            fontSize = 12.sp,
-            color = Color(0xFFAAAAAA)
-        )
-
         AdvancedImageView(
             file = capturedFile.first,
             label = "Document Photo",
             placeholderText = "Tap to capture document",
-            isLoading = capturedFile.second,  // Show loading during photo processing
+            isLoading = capturedFile.second,
             onDeleteClick = {
+                capturedFile = Pair(null, false)
                 Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show()
             },
             onCaptureClick = {
-                PhotoCaptureManager.instance.capturePhoto(
-                    PhotoCaptureConfig(watermarkText = "Document", printFreshLatLng = true)
-                ) { result ->
+                PhotoCaptureManager.instance.capturePhoto(PhotoCaptureConfig(watermarkText = "Document")) { result ->
                     when (result) {
                         is PhotoCaptureResult.Processing -> {
                             capturedFile = capturedFile.copy(second = true)
                         }
+
                         is PhotoCaptureResult.Success -> {
                             capturedFile = Pair(result.file, false)
-                            Toast.makeText(context, "Photo captured: ${result.file.name}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Photo captured: ${result.file.name}",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
+
                         is PhotoCaptureResult.Error -> {
                             capturedFile = capturedFile.copy(second = false)
-                            Toast.makeText(context, "Error: ${result.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Error: ${result.message}", Toast.LENGTH_SHORT)
+                                .show()
                         }
+
                         is PhotoCaptureResult.Cancelled -> {
                             capturedFile = capturedFile.copy(second = false)
                             Toast.makeText(context, "Capture cancelled", Toast.LENGTH_SHORT).show()
@@ -373,11 +385,13 @@ private fun FileLoadingFullFeaturesExample() {
                         when (result) {
                             is PhotoCaptureResult.Processing ->
                                 capturedFile = capturedFile.copy(second = true)
+
                             is PhotoCaptureResult.Success -> capturedFile = Pair(result.file, false)
                             is PhotoCaptureResult.Error -> {
                                 capturedFile = capturedFile.copy(second = false)
                                 Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
                             }
+
                             is PhotoCaptureResult.Cancelled ->
                                 capturedFile = capturedFile.copy(second = false)
                         }
@@ -394,11 +408,13 @@ private fun FileLoadingFullFeaturesExample() {
                         when (result) {
                             is PhotoCaptureResult.Processing ->
                                 capturedFile = capturedFile.copy(second = true)
+
                             is PhotoCaptureResult.Success -> capturedFile = Pair(result.file, false)
                             is PhotoCaptureResult.Error -> {
                                 capturedFile = capturedFile.copy(second = false)
                                 Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
                             }
+
                             is PhotoCaptureResult.Cancelled ->
                                 capturedFile = capturedFile.copy(second = false)
                         }
@@ -414,7 +430,8 @@ private fun FileLoadingFullFeaturesExample() {
 
 @Composable
 private fun ScaleTypesExample() {
-    val imageUrl = "https://picsum.photos/400/600"
+    val imageUrl =
+        "https://images.unsplash.com/photo-1768185595109-18aded979f9d?q=80&w=464&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -476,7 +493,8 @@ private fun ScaleTypesExample() {
 
 @Composable
 private fun CornerBorderExample() {
-    val imageUrl = "https://picsum.photos/300/300?random=corners"
+    val imageUrl =
+        "https://plus.unsplash.com/premium_photo-1664438942504-cc05d2c80f38?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
@@ -909,7 +927,8 @@ private fun FeatureTogglesExample() {
                     showDeleteButton = false,
                     enableFullScreenPreview = false,
                     onImageClick = {
-                        Toast.makeText(context, "Clicked (no fullscreen)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Clicked (no fullscreen)", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 )
             }

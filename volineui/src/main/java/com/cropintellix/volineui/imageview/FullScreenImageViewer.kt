@@ -36,13 +36,14 @@ import com.bumptech.glide.request.target.Target
 import com.cropintellix.volineui.ImageCarousel
 import java.io.File
 import kotlin.math.min
+import androidx.core.graphics.drawable.toDrawable
 
 /**
  * FullScreenImageViewer - Full-screen image viewer with zoom and pan
  */
 class FullScreenImageViewer private constructor(
     context: Context,
-    private val options: ViewerOptions
+    private val options: ViewerOptions,
 ) : Dialog(context, R.style.Theme_Black_NoTitleBar_Fullscreen) {
 
     data class ViewerOptions(
@@ -57,7 +58,7 @@ class FullScreenImageViewer private constructor(
         val imageIndex: Int = 0,
         val totalImages: Int = 1,
         val backgroundColor: Int = Color.BLACK,
-        val onDismissListener: (() -> Unit)? = null
+        val onDismissListener: (() -> Unit)? = null,
     )
 
     private lateinit var rootLayout: FrameLayout
@@ -71,7 +72,7 @@ class FullScreenImageViewer private constructor(
         
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         window?.apply {
-            setBackgroundDrawable(ColorDrawable(options.backgroundColor))
+            setBackgroundDrawable(options.backgroundColor.toDrawable())
             setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
             @Suppress("DEPRECATION")
             addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -113,14 +114,19 @@ class FullScreenImageViewer private constructor(
         if (options.showCloseButton) {
             closeButton = ImageView(context).apply {
                 setImageResource(R.drawable.ic_menu_close_clear_cancel)
-                setColorFilter(0xFF222222.toInt())  // Dark/black icon
-                setPadding(dpToPx(12f), dpToPx(12f), dpToPx(12f), dpToPx(12f))
-                // White shadow effect via layer
-                elevation = dpToPx(4f).toFloat()
+                setColorFilter(0xFFE53935.toInt()) // Red icon
+                setPadding(dpToPx(5f), dpToPx(5f), dpToPx(5f), dpToPx(5f)) // Small padding
+                
+                // Alpha red background with rounded corners
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(0x33E53935)
+                    cornerRadius = dpToPx(4f).toFloat()
+                }
+                
                 setOnClickListener { dismiss() }
             }
             val closeParams = FrameLayout.LayoutParams(
-                dpToPx(48f), dpToPx(48f),
+                dpToPx(26f), dpToPx(26f), // Size 26dp
                 Gravity.TOP or Gravity.END
             )
             closeParams.topMargin = dpToPx(32f)
@@ -165,7 +171,10 @@ class FullScreenImageViewer private constructor(
         glideRequest
             .listener(object : RequestListener<Drawable> {
                 override fun onLoadFailed(
-                    e: GlideException?, model: Any?, target: Target<Drawable>, isFirstResource: Boolean
+                    e: GlideException?,
+                    model: Any?,
+                    target: Target<Drawable>,
+                    isFirstResource: Boolean,
                 ): Boolean {
                     loadingIndicator.visibility = View.GONE
                     return false
@@ -173,7 +182,7 @@ class FullScreenImageViewer private constructor(
 
                 override fun onResourceReady(
                     resource: Drawable, model: Any, target: Target<Drawable>,
-                    dataSource: DataSource, isFirstResource: Boolean
+                    dataSource: DataSource, isFirstResource: Boolean,
                 ): Boolean {
                     loadingIndicator.visibility = View.GONE
                     return false
@@ -423,7 +432,7 @@ class FullScreenImageViewer private constructor(
 class CarouselViewer(
     context: Context,
     private val sources: List<ImageCarousel.ImageSource>,
-    private val startIndex: Int
+    private val startIndex: Int,
 ) : Dialog(context, R.style.Theme_Black_NoTitleBar_Fullscreen) {
 
     private var currentIndex = startIndex
@@ -485,12 +494,17 @@ class CarouselViewer(
         // Close button
         val closeBtn = ImageView(context).apply {
             setImageResource(R.drawable.ic_menu_close_clear_cancel)
-            setColorFilter(0xFF333333.toInt())
-            setPadding(dpToPx(12f), dpToPx(12f), dpToPx(12f), dpToPx(12f))
-            elevation = dpToPx(4f).toFloat()
+            setColorFilter(0xFFE53935.toInt()) // Red icon
+            setPadding(dpToPx(5f), dpToPx(5f), dpToPx(5f), dpToPx(5f)) // Small padding
+
+            // Alpha red background with rounded corners
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(0x33E53935)
+                cornerRadius = dpToPx(4f).toFloat()
+            }
             setOnClickListener { dismiss() }
         }
-        val closeParams = FrameLayout.LayoutParams(dpToPx(48f), dpToPx(48f), Gravity.TOP or Gravity.END)
+        val closeParams = FrameLayout.LayoutParams(dpToPx(26f), dpToPx(26f), Gravity.TOP or Gravity.END)
         closeParams.topMargin = dpToPx(32f)
         closeParams.marginEnd = dpToPx(16f)
         root.addView(closeBtn, closeParams)
