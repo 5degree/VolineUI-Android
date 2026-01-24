@@ -19,6 +19,7 @@ object ImageViewDefaults {
     // ===== DIMENSIONS =====
     val CornerRadius: Dp = 8.dp
     val BorderWidth: Dp = 1.dp
+    val DefaultHeight: Dp = 200.dp
     val MinHeight: Dp = 120.dp
     val MinWidth: Dp = 120.dp
     

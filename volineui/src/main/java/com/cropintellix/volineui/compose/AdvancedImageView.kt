@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,7 +50,6 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.cropintellix.volineui.R
 import com.cropintellix.volineui.imageview.*
-import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
 import java.io.File
 
 /**
@@ -100,7 +98,7 @@ fun AdvancedImageView(
     source: ImageSource = ImageSource.Empty,
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,
-    aspectRatio: Float = 1f,
+    aspectRatio: Float = 0f,
     cornerRadius: Dp = ImageViewDefaults.CornerRadius,
     borderWidth: Dp = ImageViewDefaults.BorderWidth,
     colors: ImageViewColors = ImageViewDefaults.colors(),
@@ -123,9 +121,11 @@ fun AdvancedImageView(
     // Callbacks
     onImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
-    onCaptureClick: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureClick: (() -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
     onStateChange: ((ImageState) -> Unit)? = null,
+    // Force loading state (used during photo processing)
+    isLoading: Boolean = false,
 ) {
     val context = LocalContext.current
     var currentState by remember { mutableStateOf(ImageState.EMPTY) }
@@ -138,11 +138,20 @@ fun AdvancedImageView(
         }
     }
     
+    // Handle force loading state from external control
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            updateState(ImageState.LOADING)
+        }
+    }
+    
     // Determine initial state based on source
     LaunchedEffect(source) {
-        when (source) {
-            is ImageSource.Empty -> updateState(ImageState.EMPTY)
-            else -> updateState(ImageState.LOADING)
+        if (!isLoading) {
+            when (source) {
+                is ImageSource.Empty -> updateState(ImageState.EMPTY)
+                else -> updateState(ImageState.LOADING)
+            }
         }
     }
     
@@ -161,7 +170,19 @@ fun AdvancedImageView(
         label = "imageAlpha"
     )
     
-    Column(modifier = modifier) {
+    // Apply default sizing if no explicit size given
+    val effectiveModifier = if (aspectRatio <= 0) {
+        // When no aspect ratio, apply default height (can be overridden by user's modifier)
+        Modifier
+            .fillMaxWidth()
+            .height(ImageViewDefaults.DefaultHeight)
+            .then(modifier)
+    } else {
+        // With aspect ratio, just apply user's modifier
+        Modifier.fillMaxWidth().then(modifier)
+    }
+    
+    Column(modifier = effectiveModifier) {
         // Label
         if (label.isNotEmpty()) {
             Text(
@@ -175,15 +196,16 @@ fun AdvancedImageView(
             Spacer(modifier = Modifier.height(labelGap))
         }
         
-        // Image container
+        // Image container - fills remaining space in Column
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .weight(1f)  // Take remaining space after label
                 .then(
                     if (aspectRatio > 0) {
-                        Modifier.aspectRatio(aspectRatio)
+                        Modifier.aspectRatio(aspectRatio, matchHeightConstraintsFirst = false)
                     } else {
-                        Modifier.heightIn(min = ImageViewDefaults.MinHeight)
+                        Modifier  // Just fill available space
                     }
                 )
                 .clip(shape)
@@ -211,7 +233,7 @@ fun AdvancedImageView(
                         }
                         ImageState.EMPTY, ImageState.ERROR -> {
                             if (enableCameraCapture && onCaptureClick != null) {
-                                onCaptureClick(PhotoCaptureConfig())
+                                onCaptureClick()
                             }
                         }
                         else -> {}
@@ -526,7 +548,7 @@ fun AdvancedImageView(
     url: String,
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,
-    aspectRatio: Float = 1f,
+    aspectRatio: Float = 0f,
     cornerRadius: Dp = ImageViewDefaults.CornerRadius,
     borderWidth: Dp = 0.dp,
     colors: ImageViewColors = ImageViewDefaults.displayOnlyColors(),
@@ -568,9 +590,9 @@ fun AdvancedImageView(
     file: File?,
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,
-    aspectRatio: Float = 1f,
+    aspectRatio: Float = 0f,
     cornerRadius: Dp = ImageViewDefaults.CornerRadius,
-    borderWidth: Dp = 0.dp,
+    borderWidth: Dp = ImageViewDefaults.BorderWidth,
     colors: ImageViewColors = ImageViewDefaults.colors(),
     label: String = "",
     labelGap: Dp = ImageViewDefaults.LabelGap,
@@ -585,9 +607,10 @@ fun AdvancedImageView(
     showLoadingIndicator: Boolean = true,
     enableFullScreenPreview: Boolean = true,
     enableCameraCapture: Boolean = true,
+    isLoading: Boolean = false,
     onImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
-    onCaptureClick: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureClick: (() -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
 ) {
     AdvancedImageView(
@@ -611,6 +634,7 @@ fun AdvancedImageView(
         showLoadingIndicator = showLoadingIndicator,
         enableFullScreenPreview = enableFullScreenPreview,
         enableCameraCapture = enableCameraCapture,
+        isLoading = isLoading,
         onImageClick = onImageClick,
         onDeleteClick = onDeleteClick,
         onCaptureClick = onCaptureClick,
@@ -626,7 +650,7 @@ fun AdvancedImageView(
     uri: Uri?,
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,
-    aspectRatio: Float = 1f,
+    aspectRatio: Float = 0f,
     cornerRadius: Dp = ImageViewDefaults.CornerRadius,
     borderWidth: Dp = 0.dp,
     colors: ImageViewColors = ImageViewDefaults.displayOnlyColors(),
@@ -660,7 +684,7 @@ fun AdvancedImageView(
     bitmap: Bitmap?,
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,
-    aspectRatio: Float = 1f,
+    aspectRatio: Float = 0f,
     cornerRadius: Dp = ImageViewDefaults.CornerRadius,
     borderWidth: Dp = 0.dp,
     colors: ImageViewColors = ImageViewDefaults.displayOnlyColors(),
@@ -694,7 +718,7 @@ fun AdvancedImageViewFromResource(
     drawableResId: Int,
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,
-    aspectRatio: Float = 1f,
+    aspectRatio: Float = 0f,
     cornerRadius: Dp = ImageViewDefaults.CornerRadius,
     borderWidth: Dp = 0.dp,
     colors: ImageViewColors = ImageViewDefaults.displayOnlyColors(),
@@ -742,35 +766,64 @@ class AdvancedImageViewState {
     var currentState by mutableStateOf(ImageState.EMPTY)
         internal set
     
+    // Force loading state (for showing loading during processing)
+    var isForceLoading by mutableStateOf(false)
+        private set
+    
+    /**
+     * Show loading state (e.g., during photo processing).
+     * Call this when PhotoCaptureResult.Processing is received.
+     */
+    fun showLoading() {
+        isForceLoading = true
+        currentState = ImageState.LOADING
+    }
+    
+    /**
+     * Hide the forced loading state.
+     * Usually called automatically when loadFromFile/loadFromUrl is called.
+     */
+    fun hideLoading() {
+        isForceLoading = false
+    }
+    
     fun loadFromUrl(url: String) {
+        isForceLoading = false
         source = if (url.isNotBlank()) ImageSource.Url(url) else ImageSource.Empty
     }
     
     fun loadFromFile(file: File) {
+        isForceLoading = false
         source = if (file.exists()) ImageSource.File(file) else ImageSource.Empty
     }
     
     fun loadFromFilePath(path: String) {
+        isForceLoading = false
         source = ImageSource.FilePath(path)
     }
     
     fun loadFromUri(uri: Uri) {
+        isForceLoading = false
         source = ImageSource.Uri(uri)
     }
     
     fun loadFromBitmap(bitmap: Bitmap) {
+        isForceLoading = false
         source = ImageSource.Bitmap(bitmap)
     }
     
     fun loadFromDrawableRes(resId: Int) {
+        isForceLoading = false
         source = if (resId != 0) ImageSource.DrawableRes(resId) else ImageSource.Empty
     }
     
     fun loadFromBase64(base64String: String) {
+        isForceLoading = false
         source = if (base64String.isNotBlank()) ImageSource.Base64(base64String) else ImageSource.Empty
     }
     
     fun clear() {
+        isForceLoading = false
         source = ImageSource.Empty
         currentState = ImageState.EMPTY
     }
@@ -817,7 +870,7 @@ fun AdvancedImageView(
     state: AdvancedImageViewState,
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,
-    aspectRatio: Float = 1f,
+    aspectRatio: Float = 0f,
     cornerRadius: Dp = ImageViewDefaults.CornerRadius,
     borderWidth: Dp = ImageViewDefaults.BorderWidth,
     colors: ImageViewColors = ImageViewDefaults.colors(),
@@ -836,7 +889,7 @@ fun AdvancedImageView(
     enableCameraCapture: Boolean = true,
     onImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
-    onCaptureClick: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureClick: (() -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
     onStateChange: ((ImageState) -> Unit)? = null,
 ) {
@@ -867,10 +920,14 @@ fun AdvancedImageView(
             onDeleteClick?.invoke()
         },
         onCaptureClick = onCaptureClick,
-        onImageLoadResult = onImageLoadResult,
+        onImageLoadResult = { success ->
+            if (success) state.hideLoading()
+            onImageLoadResult?.invoke(success)
+        },
         onStateChange = { newState ->
             state.currentState = newState
             onStateChange?.invoke(newState)
         },
+        isLoading = state.isForceLoading,
     )
 }

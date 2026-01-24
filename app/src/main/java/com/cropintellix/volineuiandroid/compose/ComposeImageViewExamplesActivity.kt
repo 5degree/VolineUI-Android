@@ -195,7 +195,6 @@ private fun BasicUsageExample() {
         AdvancedImageView(
             source = ImageSource.Empty,
             modifier = Modifier.fillMaxWidth(),
-            aspectRatio = 4f / 3f,
             onCaptureClick = {
                 Toast.makeText(context, "Capture clicked!", Toast.LENGTH_SHORT).show()
             }
@@ -313,7 +312,7 @@ private fun CameraCaptureExample() {
 @Composable
 private fun FileLoadingFullFeaturesExample() {
     val context = LocalContext.current
-    var capturedFile by remember { mutableStateOf<File?>(null) }
+    var capturedFile by remember { mutableStateOf<Pair<File?, Boolean>>(Pair(null, false)) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -322,68 +321,41 @@ private fun FileLoadingFullFeaturesExample() {
             color = Color(0xFF888888)
         )
 
+        Text(
+            text = "Shows loading indicator while photo is being processed with watermark",
+            fontSize = 12.sp,
+            color = Color(0xFFAAAAAA)
+        )
+
         AdvancedImageView(
-            file = capturedFile,
-            modifier = Modifier.fillMaxWidth(),
-            aspectRatio = 4f / 3f,
-            scaleType = ImageScaleType.CROP,
-            cornerRadius = 16.dp,
-            borderWidth = 2.dp,
-            colors = ImageViewDefaults.colors(
-                // Custom placeholder colors
-                backgroundColor = Color(0xFFFCE4EC),
-                borderColor = Color(0xFFE91E63),
-                placeholderIconColor = Color(0xFFC2185B),
-                placeholderTextColor = Color(0xFFC2185B),
-                // Custom delete button colors
-                deleteIconTint = Color.White,
-                deleteButtonBackground = Color(0xFFE91E63)
-            ),
-            // Label configuration
+            file = capturedFile.first,
             label = "Document Photo",
-            labelGap = 8.dp,
-            labelTextSize = 16.sp,
-            labelFontWeight = FontWeight.SemiBold,
-            // Custom placeholder
             placeholderText = "Tap to capture document",
-            placeholderIconSize = 48.dp,
-            placeholderTextSize = 14.sp,
-            placeholderGap = 12.dp,
-            // Features enabled
-            showDeleteButton = true,
-            showLoadingIndicator = true,
-            enableFullScreenPreview = true,
-            enableCameraCapture = true,
-            // Callbacks
-            onImageClick = {
-                Toast.makeText(context, "Image clicked - opening fullscreen", Toast.LENGTH_SHORT).show()
-            },
+            isLoading = capturedFile.second,  // Show loading during photo processing
             onDeleteClick = {
-                capturedFile = null
                 Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show()
             },
             onCaptureClick = {
                 PhotoCaptureManager.instance.capturePhoto(
-                    PhotoCaptureConfig(watermarkText = "Document")
+                    PhotoCaptureConfig(watermarkText = "Document", printFreshLatLng = true)
                 ) { result ->
                     when (result) {
+                        is PhotoCaptureResult.Processing -> {
+                            capturedFile = capturedFile.copy(second = true)
+                        }
                         is PhotoCaptureResult.Success -> {
-                            capturedFile = result.file
+                            capturedFile = Pair(result.file, false)
                             Toast.makeText(context, "Photo captured: ${result.file.name}", Toast.LENGTH_SHORT).show()
                         }
                         is PhotoCaptureResult.Error -> {
+                            capturedFile = capturedFile.copy(second = false)
                             Toast.makeText(context, "Error: ${result.message}", Toast.LENGTH_SHORT).show()
                         }
                         is PhotoCaptureResult.Cancelled -> {
+                            capturedFile = capturedFile.copy(second = false)
                             Toast.makeText(context, "Capture cancelled", Toast.LENGTH_SHORT).show()
                         }
-                        else -> {}
                     }
-                }
-            },
-            onImageLoadResult = { success ->
-                if (success) {
-                    Toast.makeText(context, "Image loaded successfully", Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -396,12 +368,18 @@ private fun FileLoadingFullFeaturesExample() {
             Button(
                 onClick = {
                     PhotoCaptureManager.instance.capturePhoto(
-                        PhotoCaptureConfig(watermarkText = "Document")
+                        PhotoCaptureConfig(watermarkText = "Document", printFreshLatLng = true)
                     ) { result ->
                         when (result) {
-                            is PhotoCaptureResult.Success -> capturedFile = result.file
-                            is PhotoCaptureResult.Error -> Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
-                            else -> {}
+                            is PhotoCaptureResult.Processing ->
+                                capturedFile = capturedFile.copy(second = true)
+                            is PhotoCaptureResult.Success -> capturedFile = Pair(result.file, false)
+                            is PhotoCaptureResult.Error -> {
+                                capturedFile = capturedFile.copy(second = false)
+                                Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                            }
+                            is PhotoCaptureResult.Cancelled ->
+                                capturedFile = capturedFile.copy(second = false)
                         }
                     }
                 },
@@ -414,9 +392,15 @@ private fun FileLoadingFullFeaturesExample() {
                 onClick = {
                     PhotoCaptureManager.instance.pickPhotoFromGallery(PhotoCaptureConfig()) { result ->
                         when (result) {
-                            is PhotoCaptureResult.Success -> capturedFile = result.file
-                            is PhotoCaptureResult.Error -> Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
-                            else -> {}
+                            is PhotoCaptureResult.Processing ->
+                                capturedFile = capturedFile.copy(second = true)
+                            is PhotoCaptureResult.Success -> capturedFile = Pair(result.file, false)
+                            is PhotoCaptureResult.Error -> {
+                                capturedFile = capturedFile.copy(second = false)
+                                Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                            }
+                            is PhotoCaptureResult.Cancelled ->
+                                capturedFile = capturedFile.copy(second = false)
                         }
                     }
                 },
@@ -424,14 +408,6 @@ private fun FileLoadingFullFeaturesExample() {
             ) {
                 Text("Pick from Gallery")
             }
-        }
-
-        if (capturedFile != null) {
-            Text(
-                text = "File: ${capturedFile?.name}",
-                fontSize = 12.sp,
-                color = Color(0xFF666666)
-            )
         }
     }
 }
