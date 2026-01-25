@@ -115,6 +115,12 @@
             android:layout_height="wrap_content"
             android:text="Compose Button Examples" />
 
+        <Button
+            android:id="@+id/btnOpenComposeImageCarouselExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Compose ImageCarousel Examples" />
+
     </LinearLayout>
 
 </ScrollView>

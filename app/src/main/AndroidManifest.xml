@@ -68,6 +68,9 @@
             android:name=".compose.ComposeImageViewExamplesActivity"
             android:exported="false" />
         <activity
+            android:name=".compose.ComposeImageCarouselExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

@@ -417,11 +417,46 @@ class FullScreenImageViewer private constructor(
         fun show(context: Context, uri: Uri) = Builder(context).setImageUri(uri).show()
 
         /**
-         * Show carousel with swipe navigation between images
+         * Show carousel with swipe navigation between images (View-based ImageSource)
          */
         fun showCarousel(context: Context, sources: List<ImageCarousel.ImageSource>, startIndex: Int = 0) {
             if (sources.isEmpty()) return
             CarouselViewer(context, sources, startIndex).show()
+        }
+
+        /**
+         * Show carousel with swipe navigation between images (Compose ImageSource)
+         */
+        fun showCarouselCompose(context: Context, sources: List<ImageSource>, startIndex: Int = 0) {
+            if (sources.isEmpty()) return
+            ComposeCarouselViewer(context, sources, startIndex).show()
+        }
+
+        /**
+         * Show single image from Compose ImageSource
+         */
+        fun show(context: Context, source: ImageSource) {
+            val builder = Builder(context)
+            when (source) {
+                is ImageSource.File -> builder.setImageFile(source.file)
+                is ImageSource.FilePath -> builder.setImageFile(File(source.path))
+                is ImageSource.Url -> builder.setImageUrl(source.url)
+                is ImageSource.Uri -> builder.setImageUri(source.uri)
+                is ImageSource.DrawableRes -> builder.setImageDrawableRes(source.resId)
+                is ImageSource.Bitmap -> builder.setImageBitmap(source.bitmap)
+                is ImageSource.Base64 -> {
+                    try {
+                        val bytes = android.util.Base64.decode(source.base64String, android.util.Base64.DEFAULT)
+                        val bitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        if (bitmap != null) builder.setImageBitmap(bitmap)
+                        else return
+                    } catch (e: Exception) {
+                        return
+                    }
+                }
+                ImageSource.Empty -> return
+            }
+            builder.show()
         }
     }
 }
@@ -548,6 +583,166 @@ class CarouselViewer(
         }
 
         req.listener(object : RequestListener<Drawable> {
+            override fun onLoadFailed(e: GlideException?, m: Any?, t: Target<Drawable>, b: Boolean): Boolean {
+                loadingIndicator.visibility = View.GONE
+                return false
+            }
+            override fun onResourceReady(r: Drawable, m: Any, t: Target<Drawable>, d: DataSource, b: Boolean): Boolean {
+                loadingIndicator.visibility = View.GONE
+                return false
+            }
+        }).into(imageView)
+
+        updateCounter()
+    }
+
+    private fun updateCounter() {
+        counterText.text = "${currentIndex + 1} / ${sources.size}"
+        counterText.visibility = if (sources.size > 1) View.VISIBLE else View.GONE
+    }
+
+    private fun dpToPx(dp: Float): Int = (dp * context.resources.displayMetrics.density).toInt()
+}
+
+/**
+ * ComposeCarouselViewer - Full-screen viewer with horizontal swipe between images for Compose ImageSource
+ */
+class ComposeCarouselViewer(
+    context: Context,
+    private val sources: List<ImageSource>,
+    private val startIndex: Int,
+) : Dialog(context, R.style.Theme_Black_NoTitleBar_Fullscreen) {
+
+    private var currentIndex = startIndex
+    private lateinit var imageView: ImageView
+    private lateinit var counterText: TextView
+    private lateinit var loadingIndicator: ProgressBar
+    private var startX = 0f
+    private val swipeThreshold = 100f
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
+        window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.BLACK))
+            setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+            @Suppress("DEPRECATION")
+            addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        }
+
+        setupViews()
+        loadImage(currentIndex)
+    }
+
+    private fun setupViews() {
+        val root = FrameLayout(context).apply { setBackgroundColor(Color.BLACK) }
+        setContentView(root, ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+        ))
+
+        // Image
+        imageView = ImageView(context).apply {
+            scaleType = ImageView.ScaleType.FIT_CENTER
+        }
+        root.addView(imageView, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+        ))
+
+        // Loading
+        loadingIndicator = ProgressBar(context).apply { isIndeterminate = true }
+        root.addView(loadingIndicator, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER
+        ))
+
+        // Counter
+        counterText = TextView(context).apply {
+            setTextColor(Color.WHITE)
+            textSize = 14f
+            setPadding(dpToPx(12f), dpToPx(8f), dpToPx(12f), dpToPx(8f))
+            setBackgroundColor(0x66000000.toInt())
+        }
+        val counterParams = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+            Gravity.TOP or Gravity.CENTER_HORIZONTAL
+        )
+        counterParams.topMargin = dpToPx(40f)
+        root.addView(counterText, counterParams)
+
+        // Close button
+        val closeBtn = ImageView(context).apply {
+            setImageResource(R.drawable.ic_menu_close_clear_cancel)
+            setColorFilter(0xFFE53935.toInt()) // Red icon
+            setPadding(dpToPx(5f), dpToPx(5f), dpToPx(5f), dpToPx(5f)) // Small padding
+
+            // Alpha red background with rounded corners
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(0x33E53935)
+                cornerRadius = dpToPx(4f).toFloat()
+            }
+            setOnClickListener { dismiss() }
+        }
+        val closeParams = FrameLayout.LayoutParams(dpToPx(26f), dpToPx(26f), Gravity.TOP or Gravity.END)
+        closeParams.topMargin = dpToPx(32f)
+        closeParams.marginEnd = dpToPx(16f)
+        root.addView(closeBtn, closeParams)
+
+        // Swipe detection
+        root.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    startX = event.x
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    val deltaX = event.x - startX
+                    when {
+                        deltaX < -swipeThreshold && currentIndex < sources.size - 1 -> {
+                            currentIndex++
+                            loadImage(currentIndex)
+                        }
+                        deltaX > swipeThreshold && currentIndex > 0 -> {
+                            currentIndex--
+                            loadImage(currentIndex)
+                        }
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+
+        updateCounter()
+    }
+
+    private fun loadImage(index: Int) {
+        loadingIndicator.visibility = View.VISIBLE
+        val source = sources[index]
+        
+        val glideRequest = when (source) {
+            is ImageSource.File -> Glide.with(context).load(source.file)
+            is ImageSource.FilePath -> Glide.with(context).load(java.io.File(source.path))
+            is ImageSource.Url -> Glide.with(context).load(source.url)
+            is ImageSource.Uri -> Glide.with(context).load(source.uri)
+            is ImageSource.DrawableRes -> Glide.with(context).load(source.resId)
+            is ImageSource.Bitmap -> Glide.with(context).load(source.bitmap)
+            is ImageSource.Base64 -> {
+                try {
+                    val bytes = android.util.Base64.decode(source.base64String, android.util.Base64.DEFAULT)
+                    val bitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    Glide.with(context).load(bitmap)
+                } catch (e: Exception) {
+                    loadingIndicator.visibility = View.GONE
+                    return
+                }
+            }
+            ImageSource.Empty -> {
+                loadingIndicator.visibility = View.GONE
+                return
+            }
+        }
+
+        glideRequest.listener(object : RequestListener<Drawable> {
             override fun onLoadFailed(e: GlideException?, m: Any?, t: Target<Drawable>, b: Boolean): Boolean {
                 loadingIndicator.visibility = View.GONE
                 return false
