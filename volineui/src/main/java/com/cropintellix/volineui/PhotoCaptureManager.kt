@@ -508,6 +508,10 @@ class PhotoCaptureManager private constructor(
      * Must be called from background thread
      */
     private fun getLocationForWatermarkSync(fetchFresh: Boolean): LocationResult?  {
+        // Define timeouts - use same value for both location request and latch
+        val locationTimeoutMs = 30_000L  // 30 seconds for fresh location
+        val latchTimeoutSeconds = (locationTimeoutMs / 1000) + 2  // Add 2s buffer
+        
         return try {
             val latch = CountDownLatch(1)
             var result: LocationResult? = null
@@ -519,7 +523,7 @@ class PhotoCaptureManager private constructor(
                     
                     if (fetchFresh) {
                         // Fetch fresh location
-                        locationManager.getLatestLocation(timeout = 15000) { location ->
+                        locationManager.getLatestLocation(timeout = locationTimeoutMs) { location ->
                             result = location
                             latch.countDown()
                         }
@@ -537,8 +541,10 @@ class PhotoCaptureManager private constructor(
             }
             
             // Wait for location fetch to complete
-            val timeout = if (fetchFresh) 20L else 3L
-            latch.await(timeout, TimeUnit.SECONDS)
+            // For fresh location, wait the full timeout + buffer
+            // For cached location, 3 seconds is enough
+            val waitTimeout = if (fetchFresh) latchTimeoutSeconds else 3L
+            latch.await(waitTimeout, TimeUnit.SECONDS)
             
             result
         } catch (e: Exception) {

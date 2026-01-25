@@ -293,6 +293,10 @@ class LocationManager private constructor(
             return
         }
 
+        // Track if callback has been invoked to prevent duplicate calls
+        var callbackInvoked = false
+        val callbackLock = Any()
+        
         // Create a one-time location request
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0)
             .setMaxUpdateDelayMillis(timeout)
@@ -302,24 +306,60 @@ class LocationManager private constructor(
 
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: GmsLocationResult) {
+                synchronized(callbackLock) {
+                    if (callbackInvoked) return
+                    callbackInvoked = true
+                }
+                
+                // Remove this callback to stop further updates
+                fusedLocationClient.removeLocationUpdates(this)
+                
                 val location = result.lastLocation
                 if (location != null) {
                     callback(location.toLocationResult(isFromCache = false))
                 } else {
                     // Fallback to cached location
-                    getCachedLocationInternal(callback)
+                    getCachedLocationInternal(callback, promptForLocation = false)
                 }
             }
         }
+
+        // Set up a timeout handler to ensure callback is always invoked
+        val timeoutHandler = android.os.Handler(Looper.getMainLooper())
+        val timeoutRunnable = Runnable {
+            synchronized(callbackLock) {
+                if (callbackInvoked) return@Runnable
+                callbackInvoked = true
+            }
+            
+            // Remove the location callback since we're timing out
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+            
+            // Fallback to cached location on timeout
+            getCachedLocationInternal(callback, promptForLocation = false)
+        }
+        
+        // Schedule timeout - use the provided timeout value
+        timeoutHandler.postDelayed(timeoutRunnable, timeout)
 
         // Request location update
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
             Looper.getMainLooper()
-        ).addOnFailureListener {
+        ).addOnSuccessListener {
+            // Location updates started successfully
+        }.addOnFailureListener {
+            // Cancel the timeout since we're handling failure immediately
+            timeoutHandler.removeCallbacks(timeoutRunnable)
+            
+            synchronized(callbackLock) {
+                if (callbackInvoked) return@addOnFailureListener
+                callbackInvoked = true
+            }
+            
             // Fallback to cached location
-            getCachedLocationInternal(callback)
+            getCachedLocationInternal(callback, promptForLocation = false)
         }
     }
 
@@ -534,6 +574,10 @@ class LocationManager private constructor(
      */
     @Suppress("MissingPermission")
     private fun fetchFreshLocation(timeout: Long, callback: (LocationResult?) -> Unit) {
+        // Track if callback has been invoked to prevent duplicate calls
+        var callbackInvoked = false
+        val callbackLock = Any()
+        
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0)
             .setMaxUpdateDelayMillis(timeout)
             .setMinUpdateIntervalMillis(0)
@@ -542,6 +586,14 @@ class LocationManager private constructor(
 
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: GmsLocationResult) {
+                synchronized(callbackLock) {
+                    if (callbackInvoked) return
+                    callbackInvoked = true
+                }
+                
+                // Remove this callback to stop further updates
+                fusedLocationClient.removeLocationUpdates(this)
+                
                 val location = result.lastLocation
                 if (location != null) {
                     callback(location.toLocationResult(isFromCache = false))
@@ -551,11 +603,39 @@ class LocationManager private constructor(
             }
         }
 
+        // Set up a timeout handler to ensure callback is always invoked
+        val timeoutHandler = android.os.Handler(Looper.getMainLooper())
+        val timeoutRunnable = Runnable {
+            synchronized(callbackLock) {
+                if (callbackInvoked) return@Runnable
+                callbackInvoked = true
+            }
+            
+            // Remove the location callback since we're timing out
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+            
+            // Fallback to cached location on timeout
+            getCachedLocationInternal(callback, promptForLocation = false)
+        }
+        
+        // Schedule timeout
+        timeoutHandler.postDelayed(timeoutRunnable, timeout)
+
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
             Looper.getMainLooper()
-        ).addOnFailureListener {
+        ).addOnSuccessListener {
+            // Location updates started successfully
+        }.addOnFailureListener {
+            // Cancel the timeout since we're handling failure immediately
+            timeoutHandler.removeCallbacks(timeoutRunnable)
+            
+            synchronized(callbackLock) {
+                if (callbackInvoked) return@addOnFailureListener
+                callbackInvoked = true
+            }
+            
             getCachedLocationInternal(callback, promptForLocation = false)
         }
     }
