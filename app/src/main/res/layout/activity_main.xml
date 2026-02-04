@@ -121,6 +121,30 @@
             android:layout_height="wrap_content"
             android:text="Compose ImageCarousel Examples" />
 
+        <Button
+            android:id="@+id/btnOpenToastExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast Examples" />
+
+        <Button
+            android:id="@+id/btnOpenComposeToastExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Compose Toast Examples" />
+
+        <Button
+            android:id="@+id/btnOpenDialogExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Dialog Examples" />
+
+        <Button
+            android:id="@+id/btnOpenComposeDialogExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Compose Dialog Examples" />
+
     </LinearLayout>
 
 </ScrollView>

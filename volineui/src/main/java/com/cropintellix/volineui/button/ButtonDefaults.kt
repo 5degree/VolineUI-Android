@@ -51,7 +51,7 @@ object ButtonDefaults {
     )
 
     val SizeM = SizePreset(
-        minHeight = 48.dp,
+        minHeight = 24.dp,
         horizontalPadding = 20.dp,
         verticalPadding = 14.dp,
         textSize = 15.sp,

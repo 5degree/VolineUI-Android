@@ -181,7 +181,7 @@ class AdvancedButton @JvmOverloads constructor(
     
     // Dimensions
     private var cornerRadius: Float = dpToPx(8f)
-    private var borderWidth: Float = dpToPx(1.5f)
+    private var borderWidth: Float = dpToPx(2f)
     private var elevationNormal: Float = dpToPx(2f)
     private var elevationPressed: Float = dpToPx(4f)
     private var horizontalPadding: Float = dpToPx(16f)
@@ -1428,7 +1428,55 @@ class AdvancedButton @JvmOverloads constructor(
     // Style
     fun setButtonStyle(style: ButtonStyle) {
         buttonType = style
+        
+        // Apply style-specific default colors when style changes
+        applyStyleDefaults()
         applyStyle()
+    }
+    
+    /**
+     * Apply default colors based on button style.
+     * This is called when style changes programmatically.
+     */
+    private fun applyStyleDefaults() {
+        val outlinedDefaultColor = Color.parseColor("#252525")
+        
+        when (buttonType) {
+            ButtonStyle.OUTLINED -> {
+                // For outlined buttons, default to dark text and border
+                textColor = outlinedDefaultColor
+                textColorPressed = darkenColor(textColor, 0.15f)
+                borderColor = outlinedDefaultColor
+                borderColorPressed = darkenColor(borderColor, 0.15f)
+                iconColor = outlinedDefaultColor
+                iconColorPressed = darkenColor(iconColor, 0.15f)
+                loadingColor = outlinedDefaultColor
+                rippleColor = Color.parseColor("#20000000")
+            }
+            ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> {
+                // These styles use backgroundColor for text
+                textColor = backgroundColor
+                textColorPressed = darkenColor(backgroundColor, 0.15f)
+                iconColor = backgroundColor
+                iconColorPressed = darkenColor(backgroundColor, 0.15f)
+                loadingColor = backgroundColor
+            }
+            else -> {
+                // FILLED, ELEVATED, FAB, EXTENDED_FAB, ICON - use white text on primary bg
+                textColor = Color.WHITE
+                textColorPressed = Color.WHITE
+                iconColor = Color.WHITE
+                iconColorPressed = Color.WHITE
+                loadingColor = Color.WHITE
+                borderColor = backgroundColor
+                rippleColor = Color.parseColor("#40FFFFFF")
+            }
+        }
+        
+        // Update views with new colors
+        textView.setTextColor(textColor)
+        leadingIconView?.setColorFilter(iconColor)
+        trailingIconView?.setColorFilter(iconColor)
     }
     
     fun getButtonStyle(): ButtonStyle = buttonType

@@ -71,6 +71,18 @@
             android:name=".compose.ComposeImageCarouselExamplesActivity"
             android:exported="false" />
         <activity
+            android:name=".ToastExamplesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".compose.ComposeToastExamplesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DialogExamplesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".compose.ComposeDialogExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

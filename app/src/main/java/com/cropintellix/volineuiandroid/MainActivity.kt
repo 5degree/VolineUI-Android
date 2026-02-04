@@ -12,6 +12,8 @@ import com.cropintellix.volineuiandroid.compose.ComposeImageCarouselExamplesActi
 import com.cropintellix.volineuiandroid.compose.ComposeImageViewExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeInputFieldExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeRadioExamplesActivity
+import com.cropintellix.volineuiandroid.compose.ComposeToastExamplesActivity
+import com.cropintellix.volineuiandroid.compose.ComposeDialogExamplesActivity
 import com.cropintellix.volineuiandroid.databinding.ActivityMainBinding
 import kotlin.jvm.java
 
@@ -75,6 +77,18 @@ class MainActivity : AppCompatActivity() {
         }
         b.btnOpenComposeImageCarouselExamples.setOnClickListener {
             startActivity(Intent(this, ComposeImageCarouselExamplesActivity::class.java))
+        }
+        b.btnOpenToastExamples.setOnClickListener {
+            startActivity(Intent(this, ToastExamplesActivity::class.java))
+        }
+        b.btnOpenComposeToastExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeToastExamplesActivity::class.java))
+        }
+        b.btnOpenDialogExamples.setOnClickListener {
+            startActivity(Intent(this, DialogExamplesActivity::class.java))
+        }
+        b.btnOpenComposeDialogExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeDialogExamplesActivity::class.java))
         }
     }
 }

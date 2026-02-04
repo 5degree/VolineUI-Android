@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:fillViewport="true"
+    tools:context=".ToastExamplesActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast Examples (View)"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Basic Toasts Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Basic Toasts"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnDefaultToast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Default Toast" />
+
+        <Button
+            android:id="@+id/btnToastWithTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast with Title" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginVertical="16dp" />
+
+        <!-- Toast Types Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast Types"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnSuccessToast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Success Toast" />
+
+        <Button
+            android:id="@+id/btnSuccessToastWithTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Success Toast with Title" />
+
+        <Button
+            android:id="@+id/btnErrorToast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Error Toast" />
+
+        <Button
+            android:id="@+id/btnErrorToastWithTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Error Toast with Title" />
+
+        <Button
+            android:id="@+id/btnWarningToast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Warning Toast" />
+
+        <Button
+            android:id="@+id/btnWarningToastWithTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Warning Toast with Title" />
+
+        <Button
+            android:id="@+id/btnInfoToast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Info Toast" />
+
+        <Button
+            android:id="@+id/btnInfoToastWithTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Info Toast with Title" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginVertical="16dp" />
+
+        <!-- Toast Positions Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast Positions"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnToastTop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast at Top" />
+
+        <Button
+            android:id="@+id/btnToastCenter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast at Center" />
+
+        <Button
+            android:id="@+id/btnToastBottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast at Bottom" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginVertical="16dp" />
+
+        <!-- Toast Durations Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast Durations"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnToastShort"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Short Duration (2s)" />
+
+        <Button
+            android:id="@+id/btnToastMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Medium Duration (3.5s)" />
+
+        <Button
+            android:id="@+id/btnToastLong"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Long Duration (5s)" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginVertical="16dp" />
+
+        <!-- Custom Toasts Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Custom Toasts"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnCustomIconToast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toast with Custom Icon" />
+
+        <Button
+            android:id="@+id/btnDismissToast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Dismiss Current Toast" />
+
+        <Button
+            android:id="@+id/btnMultipleToasts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Multiple Toasts (Replacement)" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="32dp" />
+
+    </LinearLayout>
+
+</ScrollView>
