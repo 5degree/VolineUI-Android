@@ -327,12 +327,16 @@ class AdvancedButton @JvmOverloads constructor(
                 typedArray.getInt(R.styleable.AdvancedButton_buttonCornerType, CornerType.ROUNDED.value)
             )
             
-            // Colors - use style-specific defaults for outlined buttons
+            // Colors - use style-specific defaults for outlined/text buttons
             val defaultBgColor = getPrimaryColor()
             val outlinedDefaultColor = Color.parseColor("#252525")
             
             // Text and border defaults depend on button style
-            val defaultTextColor = if (buttonType == ButtonStyle.OUTLINED) outlinedDefaultColor else Color.WHITE
+            // For TEXT buttons, default text color should be black (outlinedDefaultColor)
+            val defaultTextColor = when (buttonType) {
+                ButtonStyle.OUTLINED, ButtonStyle.TEXT -> outlinedDefaultColor
+                else -> Color.WHITE
+            }
             val defaultBorderColor = if (buttonType == ButtonStyle.OUTLINED) outlinedDefaultColor else defaultBgColor
             
             backgroundColor = typedArray.getColor(R.styleable.AdvancedButton_buttonBackgroundColor, defaultBgColor)
@@ -608,9 +612,9 @@ class AdvancedButton @JvmOverloads constructor(
     
     private fun getGradientOrientation(): GradientDrawable.Orientation {
         return when {
-            gradientAngle >= 315 || gradientAngle < 45 -> GradientDrawable.Orientation.LEFT_RIGHT
-            gradientAngle >= 45 && gradientAngle < 135 -> GradientDrawable.Orientation.BOTTOM_TOP
-            gradientAngle >= 135 && gradientAngle < 225 -> GradientDrawable.Orientation.RIGHT_LEFT
+            gradientAngle !in 45.0..<315.0 -> GradientDrawable.Orientation.LEFT_RIGHT
+            gradientAngle in 45.0..<135.0 -> GradientDrawable.Orientation.BOTTOM_TOP
+            gradientAngle in 135.0..<225.0 -> GradientDrawable.Orientation.RIGHT_LEFT
             else -> GradientDrawable.Orientation.TOP_BOTTOM
         }
     }
@@ -720,8 +724,10 @@ class AdvancedButton @JvmOverloads constructor(
             }
             ButtonStyle.TEXT -> {
                 elevation = 0f
-                textView.setTextColor(backgroundColor)
-                iconColor = backgroundColor
+                // For TEXT style, default text/icon color should be black (or user-defined textColor),
+                // not derived from backgroundColor.
+                textView.setTextColor(textColor)
+                iconColor = textColor
             }
             ButtonStyle.ELEVATED -> {
                 elevation = elevationNormal
@@ -1033,16 +1039,16 @@ class AdvancedButton @JvmOverloads constructor(
         textView.setTextColor(Color.WHITE)
         
         // Scale animation
-        animateScale(1.1f, {
-            animateScale(1f, {
+        animateScale(1.1f) {
+            animateScale(1f) {
                 onSuccessListener?.invoke()
                 // Reset after delay
                 handler.postDelayed({
                     updateState(ButtonState.NORMAL)
                 }, 1500)
-            })
-        })
-        
+            }
+        }
+
         // Success haptic
         performSuccessHaptic()
     }
@@ -1453,7 +1459,15 @@ class AdvancedButton @JvmOverloads constructor(
                 loadingColor = outlinedDefaultColor
                 rippleColor = Color.parseColor("#20000000")
             }
-            ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> {
+            ButtonStyle.TEXT -> {
+                // TEXT buttons: default text/icon color should be dark (black-like)
+                textColor = outlinedDefaultColor
+                textColorPressed = darkenColor(outlinedDefaultColor, 0.15f)
+                iconColor = outlinedDefaultColor
+                iconColorPressed = darkenColor(outlinedDefaultColor, 0.15f)
+                loadingColor = outlinedDefaultColor
+            }
+            ButtonStyle.TONAL, ButtonStyle.CHIP -> {
                 // These styles use backgroundColor for text
                 textColor = backgroundColor
                 textColorPressed = darkenColor(backgroundColor, 0.15f)

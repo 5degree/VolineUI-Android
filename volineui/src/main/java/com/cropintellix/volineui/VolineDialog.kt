@@ -438,10 +438,10 @@ class VolineDialog(context: Context) : Dialog(context) {
             }
 
             val iconRes = when (dialogType) {
-                DialogType.SUCCESS -> R.drawable.ic_dialog_success
-                DialogType.ERROR -> R.drawable.ic_dialog_error
-                DialogType.WARNING, DialogType.DESTRUCTIVE -> R.drawable.ic_dialog_warning
-                DialogType.INFO -> R.drawable.ic_dialog_info
+                DialogType.SUCCESS -> R.drawable.ic_success_filled
+                DialogType.ERROR -> R.drawable.ic_error_filled
+                DialogType.WARNING, DialogType.DESTRUCTIVE -> R.drawable.ic_warning_filled
+                DialogType.INFO -> R.drawable.ic_info_filled
                 DialogType.DEFAULT, DialogType.CONFIRMATION -> null
             }
 

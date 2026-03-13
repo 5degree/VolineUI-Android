@@ -4,11 +4,6 @@ package com.cropintellix.volineui.compose
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,6 +21,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.cropintellix.volineui.button.ButtonStyle
 import com.cropintellix.volineui.button.CornerType
 import com.cropintellix.volineui.dialog.*
+import com.cropintellix.volineui.R
 
 /**
  * Global dialog controller for simple dialog display in Compose.
@@ -322,10 +319,10 @@ private fun DialogContent(
     // Determine icon to display
     val displayIcon: Any? = icon ?: if (showDefaultIcon) {
         when (type) {
-            DialogType.SUCCESS -> Icons.Filled.CheckCircle
-            DialogType.ERROR -> Icons.Filled.Close
-            DialogType.WARNING, DialogType.DESTRUCTIVE -> Icons.Filled.Warning
-            DialogType.INFO -> Icons.Filled.Info
+            DialogType.SUCCESS -> painterResource(R.drawable.ic_success_filled)
+            DialogType.ERROR -> painterResource(R.drawable.ic_error_filled)
+            DialogType.WARNING, DialogType.DESTRUCTIVE -> painterResource(R.drawable.ic_warning_filled)
+            DialogType.INFO -> painterResource(R.drawable.ic_info_filled)
             DialogType.DEFAULT, DialogType.CONFIRMATION -> null
         }
     } else null

@@ -31,6 +31,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -280,14 +281,16 @@ fun AdvancedButton(
     // If user used default colors(), textColor will be white - use theme primary instead
     val actualTextColor = when (style) {
         ButtonStyle.OUTLINED -> if (textColor == Color.White) Color.Black else textColor
-        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> 
+        ButtonStyle.TEXT -> if (textColor == Color.White) Color.Black else textColor
+        ButtonStyle.TONAL, ButtonStyle.CHIP ->
             if (textColor == Color.White) colors.backgroundColor else textColor
         else -> textColor
     }
 
     val actualIconColor = when (style) {
         ButtonStyle.OUTLINED -> if (iconColor == Color.White) Color.Black else iconColor
-        ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> 
+        ButtonStyle.TEXT -> if (iconColor == Color.White) Color.Black else iconColor
+        ButtonStyle.TONAL, ButtonStyle.CHIP ->
             if (iconColor == Color.White) colors.backgroundColor else iconColor
         else -> iconColor
     }
@@ -519,7 +522,8 @@ fun AdvancedButton(
                                 fontWeight = fontWeight,
                                 letterSpacing = letterSpacing
                             ),
-                            maxLines = maxLines
+                            maxLines = maxLines,
+                            textAlign = TextAlign.Center
                         )
 
                         trailingIcon?.let {

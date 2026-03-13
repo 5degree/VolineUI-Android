@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -170,12 +171,12 @@ fun AdvancedImageView(
         label = "imageAlpha"
     )
 
-    // Apply default sizing if no explicit size given
+    // Apply sensible default sizing when no aspect ratio is provided,
+    // but let caller-specified size modifiers (height, fillMaxHeight, etc.) take precedence.
     val effectiveModifier = if (aspectRatio <= 0) {
-        // When no aspect ratio, apply default height (can be overridden by user's modifier)
-        Modifier
-            .height(ImageViewDefaults.DefaultHeight)
-            .then(modifier)
+        modifier.then(
+            Modifier.heightIn(min = ImageViewDefaults.DefaultHeight)
+        )
     } else {
         modifier
     }
@@ -216,7 +217,7 @@ fun AdvancedImageView(
                 )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(),
+                    indication = if (enableFullScreenPreview) ripple() else null,
                     enabled = currentState == ImageState.LOADED ||
                             currentState == ImageState.EMPTY ||
                             currentState == ImageState.ERROR
@@ -716,7 +717,7 @@ fun AdvancedImageView(
  * Convenience composable for displaying an image from a drawable resource.
  */
 @Composable
-fun AdvancedImageViewFromResource(
+fun AdvancedImageView(
     drawableResId: Int,
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,

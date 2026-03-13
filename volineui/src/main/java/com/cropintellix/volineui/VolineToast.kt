@@ -288,10 +288,10 @@ class VolineToast @JvmOverloads constructor(
 
     private fun updateIcon() {
         val iconRes = when (toastType) {
-            ToastType.SUCCESS -> R.drawable.ic_toast_success
-            ToastType.ERROR -> R.drawable.ic_toast_error
-            ToastType.WARNING -> R.drawable.ic_toast_warning
-            ToastType.INFO -> R.drawable.ic_toast_info
+            ToastType.SUCCESS -> R.drawable.ic_success_filled
+            ToastType.ERROR -> R.drawable.ic_error_filled
+            ToastType.WARNING -> R.drawable.ic_warning_filled
+            ToastType.INFO -> R.drawable.ic_info_filled
             ToastType.DEFAULT -> null
         }
         if (iconRes != null) {

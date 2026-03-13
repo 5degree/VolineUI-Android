@@ -3,25 +3,19 @@
 package com.cropintellix.volineui.compose
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,6 +24,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import com.cropintellix.volineui.R
 import com.cropintellix.volineui.toast.*
 import kotlinx.coroutines.*
 
@@ -285,10 +280,10 @@ private fun ToastContent(
     // Determine icon to display
     val displayIcon: Any? = icon ?: if (showDefaultIcon) {
         when (type) {
-            ToastType.SUCCESS -> Icons.Filled.CheckCircle
-            ToastType.ERROR -> Icons.Filled.Close
-            ToastType.WARNING -> Icons.Filled.Warning
-            ToastType.INFO -> Icons.Filled.Info
+            ToastType.SUCCESS -> painterResource(R.drawable.ic_success_filled)
+            ToastType.ERROR -> painterResource(R.drawable.ic_error_filled)
+            ToastType.WARNING -> painterResource(R.drawable.ic_warning_filled)
+            ToastType.INFO -> painterResource(R.drawable.ic_info_filled)
             ToastType.DEFAULT -> null
         }
     } else null

@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cropintellix.volineui.PhotoCaptureManager
 import com.cropintellix.volineui.compose.AdvancedImageView
-import com.cropintellix.volineui.compose.AdvancedImageViewFromResource
 import com.cropintellix.volineui.compose.rememberAdvancedImageViewState
 import com.cropintellix.volineui.imageview.ImageScaleType
 import com.cropintellix.volineui.imageview.ImageSource
@@ -842,7 +841,7 @@ private fun DrawableResourceExample() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            AdvancedImageViewFromResource(
+            AdvancedImageView(
                 drawableResId = R.drawable.ic_launcher_foreground,
                 modifier = Modifier.weight(1f),
                 aspectRatio = 1f,
@@ -850,7 +849,7 @@ private fun DrawableResourceExample() {
                 colors = ImageViewDefaults.colors(backgroundColor = Color(0xFFF5F5F5))
             )
 
-            AdvancedImageViewFromResource(
+            AdvancedImageView(
                 drawableResId = R.drawable.ic_launcher_background,
                 modifier = Modifier.weight(1f),
                 aspectRatio = 1f,

@@ -9,15 +9,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cropintellix.volineuiandroid.R
 import androidx.compose.ui.unit.sp
 import com.cropintellix.volineui.button.*
 import com.cropintellix.volineui.button.ButtonDefaults
@@ -170,7 +170,8 @@ private fun ButtonStylesExample() {
         )
         
         AdvancedButton(
-            text = "Elevated Button - Orange",
+            text = "Elevated Button \n Orange",
+            maxLines = 2,
             onClick = {},
             colors = ButtonDefaults.colors(backgroundColor = Color(0xFFFF9800)),
             style = ButtonStyle.ELEVATED
@@ -189,7 +190,7 @@ private fun ButtonStylesExample() {
                 onClick = {},
                 colors = ButtonDefaults.colors(backgroundColor = Color(0xFFE91E63)),
                 style = ButtonStyle.ICON,
-                leadingIcon = Icons.Default.Favorite
+                leadingIcon = painterResource(R.drawable.front_hand_24px)
             )
             
             AdvancedButton(
@@ -197,7 +198,7 @@ private fun ButtonStylesExample() {
                 onClick = {},
                 colors = ButtonDefaults.colors(backgroundColor = Color(0xFF9C27B0)),
                 style = ButtonStyle.FAB,
-                leadingIcon = Icons.Default.Add
+                leadingIcon = painterResource(R.drawable.circles_ext_24px)
             )
             
             AdvancedButton(
@@ -205,7 +206,7 @@ private fun ButtonStylesExample() {
                 onClick = {},
                 colors = ButtonDefaults.colors(backgroundColor = Color(0xFF00BCD4)),
                 style = ButtonStyle.FAB,
-                leadingIcon = Icons.Default.Email
+                leadingIcon = painterResource(R.drawable.explosion_24px)
             )
         }
         
@@ -214,7 +215,7 @@ private fun ButtonStylesExample() {
             onClick = {},
             colors = ButtonDefaults.colors(backgroundColor = Color(0xFF3F51B5)),
             style = ButtonStyle.EXTENDED_FAB,
-            leadingIcon = Icons.Default.Add
+            leadingIcon = painterResource(R.drawable.check_box_24px)
         )
         
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -291,22 +292,22 @@ private fun IconButtonsExample() {
             text = "Leading Icon - Send",
             onClick = {},
             colors = ButtonDefaults.colors(backgroundColor = Color(0xFF4CAF50)),
-            leadingIcon = Icons.Default.Send
+            leadingIcon = painterResource(R.drawable.cycle_24px)
         )
         
         AdvancedButton(
             text = "Trailing Icon - Arrow",
             onClick = {},
             colors = ButtonDefaults.colors(backgroundColor = Color(0xFF2196F3)),
-            trailingIcon = Icons.Default.ArrowForward
+            trailingIcon = painterResource(R.drawable.all_inclusive_24px)
         )
         
         AdvancedButton(
             text = "Both Icons - Star & Check",
             onClick = {},
             colors = ButtonDefaults.colors(backgroundColor = Color(0xFFFF9800)),
-            leadingIcon = Icons.Default.Star,
-            trailingIcon = Icons.Default.Check
+            leadingIcon = painterResource(R.drawable.check_box_24px),
+            trailingIcon = painterResource(R.drawable.box_24px)
         )
         
         var iconClickedMessage by remember { mutableStateOf("") }
@@ -314,8 +315,8 @@ private fun IconButtonsExample() {
             text = "Icon Click Handlers",
             onClick = {},
             colors = ButtonDefaults.colors(backgroundColor = Color(0xFFE91E63)),
-            leadingIcon = Icons.Default.Favorite,
-            trailingIcon = Icons.Default.Settings,
+            leadingIcon = painterResource(R.drawable.accessibility_24px),
+            trailingIcon = painterResource(R.drawable.crossword_24px),
             onLeadingIconClick = { iconClickedMessage = "Leading icon clicked!" },
             onTrailingIconClick = { iconClickedMessage = "Trailing icon clicked!" }
         )
