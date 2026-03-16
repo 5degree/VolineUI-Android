@@ -1,5 +1,6 @@
 package com.cropintellix.volineui.inputfield
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
@@ -12,7 +13,7 @@ import androidx.compose.ui.unit.sp
  * Default values and colors for InputField composable.
  */
 object InputFieldDefaults {
-    
+
     // Default dimensions
     val CornerRadius: Dp = 8.dp
     val BorderWidth: Dp = 1.dp
@@ -23,25 +24,23 @@ object InputFieldDefaults {
     val IconSize: Dp = 24.dp
     val LabelGap: Dp = 5.dp
     val MinHeight: Dp = 48.dp
-    
+
     // Default text sizes
     val TextSize: TextUnit = 16.sp
     val LabelTextSize: TextUnit = 14.sp
     val ErrorTextSize: TextUnit = 12.sp
     val CounterTextSize: TextUnit = 12.sp
-    
+
     // Default colors
     private val BorderColor = Color(0xFFCCCCCC)
-    private val FocusedBorderColor = Color(0xFF2196F3)
     private val ErrorColor = Color(0xFFE53935)
     private val SuccessColor = Color(0xFF43A047)
     private val DisabledColor = Color(0xFF9E9E9E)
-    private val LoadingColor = Color(0xFF2196F3)
     private val BackgroundColor = Color.White
     private val TextColor = Color(0xFF212121)
     private val LabelTextColor = Color(0xFF252525)
     private val HintTextColor = Color(0xFF757575)
-    
+
     /**
      * Creates an [InputFieldColors] instance with the default colors.
      */
@@ -52,14 +51,14 @@ object InputFieldDefaults {
         hintTextColor: Color = HintTextColor,
         backgroundColor: Color = BackgroundColor,
         borderColor: Color = BorderColor,
-        focusedBorderColor: Color = FocusedBorderColor,
+        focusedBorderColor: Color = MaterialTheme.colorScheme.primary,
         errorColor: Color = ErrorColor,
         successColor: Color = SuccessColor,
         disabledColor: Color = DisabledColor,
-        loadingColor: Color = LoadingColor,
+        loadingColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
         disabledTextColor: Color = DisabledColor,
         disabledBackgroundColor: Color = Color(0xFFF5F5F5),
-        cursorColor: Color = FocusedBorderColor,
+        cursorColor: Color = MaterialTheme.colorScheme.primary,
         iconColor: Color = Color(0xFF757575),
     ): InputFieldColors = InputFieldColors(
         textColor = textColor,
@@ -118,14 +117,14 @@ data class InputFieldColors(
             else -> borderColor
         }
     }
-    
+
     /**
      * Get text color based on enabled state.
      */
     fun textColor(enabled: Boolean): Color {
         return if (enabled) textColor else disabledTextColor
     }
-    
+
     /**
      * Get background color based on enabled state.
      */

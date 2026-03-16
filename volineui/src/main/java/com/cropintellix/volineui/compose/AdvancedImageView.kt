@@ -99,6 +99,7 @@ fun AdvancedImageView(
     source: ImageSource = ImageSource.Empty,
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,
+    imageAlignment: Alignment = Alignment.Center,
     aspectRatio: Float = 0f,
     cornerRadius: Dp = ImageViewDefaults.CornerRadius,
     borderWidth: Dp = ImageViewDefaults.BorderWidth,
@@ -239,7 +240,7 @@ fun AdvancedImageView(
                         else -> {}
                     }
                 },
-            contentAlignment = Alignment.Center
+            contentAlignment = imageAlignment
         ) {
             // Content based on state
             when {
@@ -265,6 +266,7 @@ fun AdvancedImageView(
                         source = source,
                         contentScale = contentScale,
                         cornerRadius = cornerRadius,
+                        alignment = imageAlignment,
                         imageAlpha = imageAlpha,
                         onLoading = { updateState(ImageState.LOADING) },
                         onSuccess = {
@@ -413,6 +415,7 @@ private fun ImageContent(
     source: ImageSource,
     contentScale: ContentScale,
     cornerRadius: Dp,
+    alignment: Alignment,
     imageAlpha: Float,
     onLoading: () -> Unit,
     onSuccess: () -> Unit,
@@ -442,6 +445,7 @@ private fun ImageContent(
             Image(
                 painter = painterResource(id = source.resId),
                 contentDescription = "Image",
+                alignment = alignment,
                 modifier = Modifier
                     .fillMaxSize()
                     .alpha(imageAlpha)
@@ -722,6 +726,7 @@ fun AdvancedImageView(
     modifier: Modifier = Modifier,
     scaleType: ImageScaleType = ImageScaleType.CROP,
     aspectRatio: Float = 0f,
+    imageAlignment: Alignment = Alignment.Center,
     cornerRadius: Dp = ImageViewDefaults.CornerRadius,
     borderWidth: Dp = 0.dp,
     colors: ImageViewColors = ImageViewDefaults.displayOnlyColors(),
@@ -734,6 +739,7 @@ fun AdvancedImageView(
         modifier = modifier,
         scaleType = scaleType,
         aspectRatio = aspectRatio,
+        imageAlignment = imageAlignment,
         cornerRadius = cornerRadius,
         borderWidth = borderWidth,
         colors = colors,

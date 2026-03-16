@@ -44,6 +44,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
@@ -141,13 +142,16 @@ fun InputField(
     val isFocused by interactionSource.collectIsFocusedAsState()
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
-    
+
     // Password visibility state
     var passwordVisible by remember { mutableStateOf(false) }
-    
+
     // Shake animation for error
     val shakeOffset = remember { Animatable(0f) }
-    
+
+    // Focus manager to toggle keyboard visibility
+    val focusManager = LocalFocusManager.current
+
     // Trigger shake animation when error state becomes true
     LaunchedEffect(isError, errorMessage) {
         if (isError && !errorMessage.isNullOrEmpty()) {
@@ -168,7 +172,7 @@ fun InputField(
             )
         }
     }
-    
+
     // Validation
     LaunchedEffect(value, validationType) {
         if (validationType != ValidationType.NONE && value.isNotEmpty()) {
@@ -186,7 +190,7 @@ fun InputField(
             onValidationResult?.invoke(isValid)
         }
     }
-    
+
     // Determine current border color with animation
     val animatedBorderColor by animateColorAsState(
         targetValue = colors.borderColor(
@@ -199,7 +203,7 @@ fun InputField(
         animationSpec = tween(durationMillis = 200),
         label = "borderColor"
     )
-    
+
     // Determine current border width
     val currentBorderWidth = when {
         !enabled -> borderWidth
@@ -207,14 +211,14 @@ fun InputField(
         isFocused -> focusedBorderWidth
         else -> borderWidth
     }
-    
+
     // Visual transformation
     val visualTransformation = when {
         isPassword && !passwordVisible -> ImmediatePasswordTransformation()
         inputMask.isNotEmpty() -> InputMaskTransformation(inputMask, maskCharacter)
         else -> VisualTransformation.None
     }
-    
+
     // Handle text change with max length
     val handleValueChange: (String) -> Unit = { newValue ->
         // For masked input, extract only the input characters
@@ -223,12 +227,15 @@ fun InputField(
         } else {
             newValue
         }
-        
+
         if (actualValue.length <= maxLength) {
             onValueChange(actualValue)
+            if (actualValue.length == maxLength) {
+                focusManager.clearFocus()
+            }
         }
     }
-    
+
     Column(
         modifier = modifier
             .offset { IntOffset(shakeOffset.value.roundToInt(), 0) }
@@ -244,7 +251,7 @@ fun InputField(
             )
             Spacer(modifier = Modifier.height(InputFieldDefaults.LabelGap))
         }
-        
+
         // Input field container
         Box(
             modifier = Modifier
@@ -276,7 +283,7 @@ fun InputField(
                     )
                     Spacer(modifier = Modifier.width(InputFieldDefaults.IconPadding))
                 }
-                
+
                 // Text field
                 BasicTextField(
                     value = value,
@@ -316,7 +323,7 @@ fun InputField(
                         }
                     }
                 )
-                
+
                 // Trailing icons
                 Row(
                     horizontalArrangement = Arrangement.End,
@@ -331,12 +338,12 @@ fun InputField(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    
+
                     // Password toggle
                     if (isPassword) {
                         Icon(
                             painter = painterResource(
-                                id = if (passwordVisible) R.drawable.ic_visibility 
+                                id = if (passwordVisible) R.drawable.ic_visibility
                                 else R.drawable.ic_visibility_off
                             ),
                             contentDescription = if (passwordVisible) "Hide password" else "Show password",
@@ -352,7 +359,7 @@ fun InputField(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    
+
                     // Clear icon
                     if (showClearIcon && value.isNotEmpty() && enabled && !readOnly) {
                         Icon(
@@ -370,7 +377,7 @@ fun InputField(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    
+
                     // Trailing icon
                     if (trailingIcon != null) {
                         Icon(
@@ -383,7 +390,7 @@ fun InputField(
                 }
             }
         }
-        
+
         // Error message and counter row
         if (!errorMessage.isNullOrEmpty() || showCharacterCounter) {
             Spacer(modifier = Modifier.height(4.dp))
@@ -404,7 +411,7 @@ fun InputField(
                 } else {
                     Spacer(modifier = Modifier.weight(1f))
                 }
-                
+
                 // Character counter
                 if (showCharacterCounter) {
                     val counterText = if (maxLength < Int.MAX_VALUE) {
@@ -431,7 +438,7 @@ fun InputField(
 @Composable
 private fun InputFieldPreview() {
     var text by remember { mutableStateOf("") }
-    
+
     Column(
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -442,7 +449,7 @@ private fun InputFieldPreview() {
             label = "Username",
             hint = "Enter your username"
         )
-        
+
         InputField(
             value = text,
             onValueChange = { text = it },
@@ -450,7 +457,7 @@ private fun InputFieldPreview() {
             hint = "Enter your password",
             isPassword = true
         )
-        
+
         InputField(
             value = text,
             onValueChange = { text = it },
@@ -459,7 +466,7 @@ private fun InputFieldPreview() {
             isError = true,
             errorMessage = "Invalid email address"
         )
-        
+
         InputField(
             value = text,
             onValueChange = { text = it },
@@ -469,7 +476,7 @@ private fun InputFieldPreview() {
             showCharacterCounter = true,
             showClearIcon = true
         )
-        
+
         InputField(
             value = text,
             onValueChange = { text = it },
