@@ -196,13 +196,18 @@ class InputField @JvmOverloads constructor(
             val label = typedArray.getString(R.styleable.InputField_label)
 
             inputEditText.setText(text)
-            inputEditText.hint = hint
+            val effectiveHint = when {
+                !hint.isNullOrEmpty() -> hint
+                !label.isNullOrEmpty() -> "Enter $label"
+                else -> null
+            }
+            inputEditText.hint = effectiveHint
 
             if (!label.isNullOrEmpty()) {
                 labelTextView.text = label
                 labelTextView.visibility = VISIBLE
-            } else if (!hint.isNullOrEmpty()) {
-                labelTextView.text = hint
+            } else if (!effectiveHint.isNullOrEmpty()) {
+                labelTextView.text = effectiveHint
                 labelTextView.visibility = VISIBLE
             }
 

@@ -215,15 +215,18 @@ fun AdvancedButton(
     // Border width
     val borderWidth = customBorderWidth ?: ButtonDefaults.BorderWidth
 
-    // Elevation
-    val elevation = customElevation ?: when (style) {
-        ButtonStyle.ELEVATED -> if (isPressed) ButtonDefaults.ElevationPressed else ButtonDefaults.ElevationNormal
-        ButtonStyle.FAB, ButtonStyle.EXTENDED_FAB -> 6.dp
+    // Elevation - flat when disabled (matches tonal/disabled behavior from View)
+    val elevation = customElevation ?: when {
+        currentState == ButtonState.DISABLED -> 0.dp
+        style == ButtonStyle.ELEVATED -> if (isPressed) ButtonDefaults.ElevationPressed else ButtonDefaults.ElevationNormal
+        style == ButtonStyle.FAB || style == ButtonStyle.EXTENDED_FAB -> 6.dp
         else -> 0.dp
     }
 
-    // Background brush or color - apply 3D effect for depth
+    // Background brush or color - apply 3D effect for depth when enabled
     val backgroundBrush = when {
+        // Disabled buttons should be flat (no 3D gradient), similar to tonal style
+        currentState == ButtonState.DISABLED -> null
         // Custom gradient
         useGradient && gradientColors != null && style in listOf(
             ButtonStyle.FILLED,

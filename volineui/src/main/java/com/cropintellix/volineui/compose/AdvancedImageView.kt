@@ -152,6 +152,7 @@ fun AdvancedImageView(
         if (!isLoading) {
             when (source) {
                 is ImageSource.Empty -> updateState(ImageState.EMPTY)
+                is ImageSource.DrawableRes -> updateState(ImageState.LOADED)
                 else -> updateState(ImageState.LOADING)
             }
         }
@@ -439,21 +440,6 @@ private fun ImageContent(
             )
         }
 
-        is ImageSource.DrawableRes -> {
-            // Drawable resource
-            LaunchedEffect(source) { onSuccess() }
-            Image(
-                painter = painterResource(id = source.resId),
-                contentDescription = "Image",
-                alignment = alignment,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(imageAlpha)
-                    .clip(shape),
-                contentScale = contentScale
-            )
-        }
-
         is ImageSource.Base64 -> {
             // Decode Base64 and display
             val bitmap = remember(source.base64String) {
@@ -483,13 +469,14 @@ private fun ImageContent(
         }
 
         else -> {
-            // Use Coil for URL, File, Uri, FilePath
+            // Use Coil for URL, File, Uri, FilePath, Drawable
             val model = remember(source) {
                 when (source) {
                     is ImageSource.Url -> source.url
                     is ImageSource.File -> source.file
                     is ImageSource.FilePath -> File(source.path)
                     is ImageSource.Uri -> source.uri
+                    is ImageSource.DrawableRes -> source.resId
                     else -> null
                 }
             }

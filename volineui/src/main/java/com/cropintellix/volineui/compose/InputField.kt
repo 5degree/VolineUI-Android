@@ -138,6 +138,8 @@ fun InputField(
     maskCharacter: Char = '#',
     onValidationResult: ((Boolean) -> Unit)? = null,
 ) {
+    val effectiveHint = hint ?: label?.takeIf { it.isNotBlank() }?.let { "Enter $it" }
+
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     val focusRequester = remember { FocusRequester() }
@@ -310,9 +312,9 @@ fun InputField(
                     cursorBrush = SolidColor(colors.cursorColor),
                     decorationBox = { innerTextField ->
                         Box {
-                            if (value.isEmpty() && !hint.isNullOrEmpty()) {
+                            if (value.isEmpty() && !effectiveHint.isNullOrEmpty()) {
                                 Text(
-                                    text = hint,
+                                    text = effectiveHint,
                                     style = TextStyle(
                                         fontSize = InputFieldDefaults.TextSize,
                                         color = colors.hintTextColor

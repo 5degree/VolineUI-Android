@@ -134,7 +134,7 @@ fun Dropdown(
     selectedOptions: Set<DropdownOption> = emptySet(),
     onMultiSelectionChange: ((Set<DropdownOption>) -> Unit)? = null,
     label: String? = null,
-    hint: String = "Select...",
+    hint: String? = null,
     enabled: Boolean = true,
     readOnly: Boolean = false,
     isError: Boolean = false,
@@ -164,6 +164,8 @@ fun Dropdown(
     var expanded by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var filteredOptions by remember(options) { mutableStateOf(options) }
+
+    val effectiveHint = hint ?: label?.takeIf { it.isNotBlank() }?.let { "Select $it" } ?: "Select..."
     
     // Debounced search
     LaunchedEffect(searchQuery, options) {
@@ -312,7 +314,7 @@ fun Dropdown(
                 
                 // Text
                 Text(
-                    text = if (hasSelection) displayText else hint,
+                    text = if (hasSelection) displayText else effectiveHint,
                     style = TextStyle(
                         fontSize = DropdownDefaults.TextSize,
                         color = colors.triggerTextColor(enabled, hasSelection)

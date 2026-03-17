@@ -256,7 +256,8 @@ class Dropdown @JvmOverloads constructor(
         try {
             // Text configuration
             label = typedArray.getString(R.styleable.Dropdown_label) ?: ""
-            hint = typedArray.getString(R.styleable.Dropdown_android_hint) ?: "Select..."
+            val explicitHint = typedArray.getString(R.styleable.Dropdown_android_hint)
+            hint = explicitHint ?: if (label.isNotEmpty()) "Select $label" else "Select..."
             labelGap = typedArray.getDimension(R.styleable.Dropdown_labelGap, dpToPx(5f))
             emptyMsg = typedArray.getString(R.styleable.Dropdown_emptyMsg) ?: "No options available"
             
@@ -1376,17 +1377,14 @@ class Dropdown @JvmOverloads constructor(
 
     private fun layoutTriggerIcons(contentWidth: Int, triggerHeight: Int) {
         val iconSize = dpToPx(24f).toInt()
-        var leftOffset = paddingStart
-        var rightOffset = contentWidth - paddingEnd
+        // IMPORTANT: children are laid out inside `triggerContainer`, so coordinates must be
+        // relative to `triggerContainer` (0..triggerContainerWidth), not this parent view.
+        val containerWidth = triggerContainer.measuredWidth.takeIf { it > 0 } ?: contentWidth
+        var leftOffset = 0
+        var rightOffset = containerWidth
 
-        // Apply horizontal padding if no leading icon
-        if (leadingIconView?.isVisible == true) {
-            dpToPx(12f).toInt() // Icon margin
-        } else {
-            horizontalPadding.toInt() // Horizontal padding when no icon
-        }
-        
-        val effectiveRightPadding = dpToPx(12f).toInt() // Always use icon margin for trailing icons
+        val effectiveLeftPadding = horizontalPadding.toInt()
+        val effectiveRightPadding = dpToPx(12f).toInt() // icon margin for trailing icons
 
         // Layout leading icon
         if (leadingIconView?.isVisible == true) {
@@ -1400,7 +1398,7 @@ class Dropdown @JvmOverloads constructor(
             leftOffset += iconSize + dpToPx(24f).toInt()
         } else {
             // No leading icon, apply horizontal padding
-            leftOffset += horizontalPadding.toInt()
+            leftOffset += effectiveLeftPadding
         }
 
         // Layout trailing icons
@@ -1422,7 +1420,7 @@ class Dropdown @JvmOverloads constructor(
         
         // Apply right padding if no trailing icons
         if (rightIcons.isEmpty()) {
-            rightOffset -= horizontalPadding.toInt()
+            rightOffset -= effectiveLeftPadding
         }
 
         // Layout trigger text with proper bounds
