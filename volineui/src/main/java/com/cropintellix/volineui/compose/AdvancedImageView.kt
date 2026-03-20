@@ -14,9 +14,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +27,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -93,6 +97,7 @@ import java.io.File
  * @param captureConfig Configuration passed to capture callback when placeholder is tapped
  * @param onCapturedImageClick Callback when loaded image is clicked
  * @param onDeleteClick Callback when delete button is clicked
+ * @param actionButtons Optional chips at bottom-right when image is loaded (horizontally scrollable)
  * @param onCaptureRequest Callback with [PhotoCaptureConfig] when placeholder is tapped
  * @param onCaptureResult Callback when image is captured and all related operations are completed
  * @param onImageLoadResult Callback with load result (success/failure)
@@ -129,6 +134,7 @@ fun AdvancedImageView(
     // Callbacks
     onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
+    actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
     onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
@@ -350,6 +356,32 @@ fun AdvancedImageView(
                     cornerRadius = (cornerRadius.value * 0.4f).coerceAtLeast(4f).dp
                 )
             }
+
+            val actionScroll = rememberScrollState()
+            val chipCorner = (cornerRadius.value * 0.4f).coerceAtLeast(4f).dp
+            androidx.compose.animation.AnimatedVisibility(
+                visible = currentState == ImageState.LOADED && actionButtons.isNotEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomEnd)
+                    .padding(ImageViewDefaults.ActionButtonRowMargin)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(actionScroll),
+                        horizontalArrangement = Arrangement.spacedBy(ImageViewDefaults.ActionButtonSpacing),
+                    ) {
+                        actionButtons.forEach { cfg ->
+                            ActionButtonChip(config = cfg, cornerRadius = chipCorner)
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -424,6 +456,48 @@ private fun DeleteButton(
                 .size(ImageViewDefaults.DeleteButtonSize - ImageViewDefaults.DeleteButtonPadding * 2),
             tint = iconTint
         )
+    }
+}
+
+@Composable
+private fun ActionButtonChip(
+    config: ActionButtonConfig,
+    cornerRadius: Dp,
+) {
+    val shape = RoundedCornerShape(cornerRadius)
+    Row(
+        modifier = Modifier
+            .heightIn(min = ImageViewDefaults.ActionButtonMinHeight)
+            .clip(shape)
+            .background(Color(config.backgroundColor))
+            .clickable(
+                enabled = config.enabled,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple()
+            ) { config.onClick() }
+            .padding(
+                horizontal = ImageViewDefaults.ActionButtonHorizontalPadding,
+                vertical = 4.dp
+            )
+            .alpha(if (config.enabled) 1f else 0.5f),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(id = config.iconResId),
+            contentDescription = config.resolvedContentDescription(),
+            modifier = Modifier.size(ImageViewDefaults.ActionButtonIconSize),
+            tint = Color(config.iconTint)
+        )
+        if (!config.text.isNullOrEmpty()) {
+            Spacer(modifier = Modifier.width(ImageViewDefaults.ActionButtonIconTextGap))
+            Text(
+                text = config.text,
+                style = TextStyle(
+                    fontSize = ImageViewDefaults.ActionButtonTextSize,
+                    color = Color(config.textColor)
+                )
+            )
+        }
     }
 }
 
@@ -577,6 +651,7 @@ fun AdvancedImageView(
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
+    actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
     onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
@@ -601,6 +676,7 @@ fun AdvancedImageView(
         captureConfig = captureConfig,
         onCapturedImageClick = onCapturedImageClick,
         onDeleteClick = onDeleteClick,
+        actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
         onCaptureResult = onCaptureResult,
         onImageLoadResult = onImageLoadResult,
@@ -637,6 +713,7 @@ fun AdvancedImageView(
     isLoading: Boolean = false,
     onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
+    actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
     onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
@@ -667,6 +744,7 @@ fun AdvancedImageView(
         isLoading = isLoading,
         onCapturedImageClick = onCapturedImageClick,
         onDeleteClick = onDeleteClick,
+        actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
         onCaptureResult = onCaptureResult,
         onImageLoadResult = onImageLoadResult,
@@ -693,6 +771,7 @@ fun AdvancedImageView(
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
+    actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
     onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
@@ -713,6 +792,7 @@ fun AdvancedImageView(
         captureConfig = captureConfig,
         onCapturedImageClick = onCapturedImageClick,
         onDeleteClick = onDeleteClick,
+        actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
         onCaptureResult = onCaptureResult,
         onImageLoadResult = onImageLoadResult,
@@ -739,6 +819,7 @@ fun AdvancedImageView(
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
+    actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
     onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
@@ -759,6 +840,7 @@ fun AdvancedImageView(
         captureConfig = captureConfig,
         onCapturedImageClick = onCapturedImageClick,
         onDeleteClick = onDeleteClick,
+        actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
         onCaptureResult = onCaptureResult,
         onImageLoadResult = onImageLoadResult,
@@ -785,6 +867,7 @@ fun AdvancedImageView(
     enableCameraCapture: Boolean = false,
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
+    actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
     onCaptureResult: ((ImageSource) -> Unit)? = null,
 ) {
@@ -804,6 +887,7 @@ fun AdvancedImageView(
         enableCameraCapture = enableCameraCapture,
         captureConfig = captureConfig,
         onCapturedImageClick = onCapturedImageClick,
+        actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
         onCaptureResult = onCaptureResult,
     )
@@ -982,6 +1066,7 @@ fun AdvancedImageView(
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
+    actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
     onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
@@ -1015,6 +1100,7 @@ fun AdvancedImageView(
             state.clear()
             onDeleteClick?.invoke()
         },
+        actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
         onCaptureResult = onCaptureResult,
         onImageLoadResult = { success ->

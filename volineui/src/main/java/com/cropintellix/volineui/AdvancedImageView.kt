@@ -18,6 +18,7 @@ import android.util.Base64
 import android.util.TypedValue
 import android.view.Gravity
 import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -31,6 +32,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.cropintellix.volineui.imageview.ActionButtonConfig
 import com.cropintellix.volineui.imageview.FullScreenImageViewer
 import com.cropintellix.volineui.imageview.ImageScaleType
 import com.cropintellix.volineui.imageview.ImageState
@@ -59,6 +61,8 @@ class AdvancedImageView @JvmOverloads constructor(
     private val placeholderContainer: LinearLayout
     private val placeholderIcon: ImageView
     private val placeholderTextView: TextView
+    private val actionButtonsScroll: HorizontalScrollView
+    private val actionButtonsRow: LinearLayout
 
     // Label properties (matching Radio component)
     private var imageLabel: String = ""
@@ -100,6 +104,7 @@ class AdvancedImageView @JvmOverloads constructor(
     private var currentImageUri: Uri? = null
     private var currentImageUrl: String? = null
     private var editModeDrawable: Drawable? = null  // For design preview
+    private var actionButtonConfigs: List<ActionButtonConfig> = emptyList()
 
     // Listeners
     private var onDeleteClickListener: (() -> Unit)? = null
@@ -214,6 +219,26 @@ class AdvancedImageView @JvmOverloads constructor(
         textParams.topMargin = placeholderGap.toInt()
         placeholderContainer.addView(placeholderTextView, textParams)
 
+        actionButtonsRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+        }
+        actionButtonsScroll = HorizontalScrollView(context).apply {
+            isFillViewport = true
+            isHorizontalScrollBarEnabled = false
+            visibility = GONE
+            isClickable = false
+            addView(
+                actionButtonsRow,
+                LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+            )
+        }
+        val actionScrollParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        actionScrollParams.gravity = Gravity.BOTTOM or Gravity.END
+        actionScrollParams.bottomMargin = dpToPx(6f).toInt()
+        actionScrollParams.marginEnd = dpToPx(6f).toInt()
+        imageContainer.addView(actionButtonsScroll, actionScrollParams)
+
         // Parse XML attributes
         if (attrs != null) parseAttributes(attrs, defStyleAttr)
 
@@ -319,6 +344,8 @@ class AdvancedImageView @JvmOverloads constructor(
                     imageView.visibility = VISIBLE
                     placeholderContainer.visibility = GONE
                     deleteButton.visibility = GONE
+                    actionButtonsScroll.visibility =
+                        if (actionButtonConfigs.isNotEmpty()) VISIBLE else GONE
                     loadingIndicator.visibility = GONE
                     loadingGifView.visibility = GONE
                     currentState = ImageState.LOADED
@@ -343,6 +370,80 @@ class AdvancedImageView @JvmOverloads constructor(
             cornerRadius = deleteCorner
         }
         deleteButton.background = bg
+    }
+
+    private fun rebuildActionButtons() {
+        actionButtonsRow.removeAllViews()
+        val chipCorner = (imageCornerRadius * 0.4f).coerceAtLeast(dpToPx(4f))
+        val spacing = dpToPx(6f).toInt()
+        val hPad = dpToPx(8f).toInt()
+        val vPad = dpToPx(4f).toInt()
+        val minH = dpToPx(28f).toInt()
+        val iconSize = dpToPx(18f).toInt()
+        val iconTextGap = dpToPx(4f).toInt()
+
+        actionButtonConfigs.forEachIndexed { index, cfg ->
+            val chip = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(hPad, vPad, hPad, vPad)
+                minimumHeight = minH
+                background = GradientDrawable().apply {
+                    setColor(cfg.backgroundColor)
+                    cornerRadius = chipCorner
+                }
+                isClickable = true
+                isFocusable = true
+                alpha = if (cfg.enabled) 1f else 0.5f
+                contentDescription = cfg.resolvedContentDescription()
+                setOnClickListener {
+                    if (cfg.enabled) cfg.onClick()
+                }
+            }
+            val icon = ImageView(context).apply {
+                setImageResource(cfg.iconResId)
+                setColorFilter(cfg.iconTint)
+            }
+            chip.addView(
+                icon,
+                LinearLayout.LayoutParams(iconSize, iconSize)
+            )
+            if (!cfg.text.isNullOrEmpty()) {
+                val tv = TextView(context).apply {
+                    text = cfg.text
+                    setTextColor(cfg.textColor)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                    setPaddingRelative(iconTextGap, 0, 0, 0)
+                }
+                chip.addView(
+                    tv,
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                )
+            }
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            if (index > 0) lp.marginStart = spacing
+            actionButtonsRow.addView(chip, lp)
+        }
+    }
+
+    /**
+     * Sets optional action chips shown at the bottom-right when an image is loaded.
+     * Pass an empty list to hide the row.
+     */
+    fun setActionButtons(configs: List<ActionButtonConfig>) {
+        actionButtonConfigs = configs
+        rebuildActionButtons()
+        when (currentState) {
+            ImageState.LOADED ->
+                actionButtonsScroll.visibility = if (configs.isNotEmpty()) VISIBLE else GONE
+            else -> actionButtonsScroll.visibility = GONE
+        }
     }
 
     private fun updateContainerBackground() {
@@ -479,6 +580,7 @@ class AdvancedImageView @JvmOverloads constructor(
                 loadingIndicator.visibility = GONE
                 loadingGifView.visibility = GONE
                 deleteButton.visibility = GONE
+                actionButtonsScroll.visibility = GONE
                 placeholderContainer.visibility = VISIBLE
                 // Restore placeholder
                 if (placeholderIconResId != 0) {
@@ -495,6 +597,7 @@ class AdvancedImageView @JvmOverloads constructor(
                 imageView.visibility = GONE
                 placeholderContainer.visibility = GONE
                 deleteButton.visibility = GONE
+                actionButtonsScroll.visibility = GONE
                 
                 if (loadingGifResId != 0) {
                     loadingIndicator.visibility = GONE
@@ -510,6 +613,8 @@ class AdvancedImageView @JvmOverloads constructor(
                 loadingIndicator.visibility = GONE
                 loadingGifView.visibility = GONE
                 deleteButton.visibility = if (showDeleteIcon) VISIBLE else GONE
+                actionButtonsScroll.visibility =
+                    if (actionButtonConfigs.isNotEmpty()) VISIBLE else GONE
                 placeholderContainer.visibility = GONE
             }
             ImageState.ERROR -> {
@@ -517,6 +622,7 @@ class AdvancedImageView @JvmOverloads constructor(
                 loadingIndicator.visibility = GONE
                 loadingGifView.visibility = GONE
                 deleteButton.visibility = GONE
+                actionButtonsScroll.visibility = GONE
                 placeholderContainer.visibility = VISIBLE
                 placeholderTextView.text = "Failed to load"
             }
@@ -557,6 +663,7 @@ class AdvancedImageView @JvmOverloads constructor(
     fun setCornerRadius(radius: Float) {
         imageCornerRadius = radius
         updateDeleteButtonStyle()
+        rebuildActionButtons()
         updateContainerBackground()
         reloadCurrentImage()
     }

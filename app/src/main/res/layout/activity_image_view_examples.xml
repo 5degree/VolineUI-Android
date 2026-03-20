@@ -354,12 +354,31 @@
             app:enableCameraCapture="true"
             android:layout_marginBottom="16dp" />
 
-        <!-- Example 20: Picture Gallery Demo -->
+        <!-- Action buttons (bottom-right, scrollable) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="20. Action buttons (Upload, scroll when many)"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="4dp" />
+
+        <com.cropintellix.volineui.AdvancedImageView
+            android:id="@+id/actionButtonsDemo"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            app:imageLabel="Loaded from URL — use chips below"
+            app:imageCornerRadius="10dp"
+            app:showDeleteIcon="true"
+            app:enableCameraCapture="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Example 21: Picture Gallery Demo -->
         <com.cropintellix.volineui.ImageCarousel
             android:id="@+id/galleryDemo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:carouselLabel="20. Photo Gallery Demo"
+            app:carouselLabel="21. Photo Gallery Demo"
             app:carouselItemWidth="160dp"
             app:carouselItemHeight="160dp"
             app:carouselCornerRadius="8dp"

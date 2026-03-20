@@ -40,6 +40,15 @@ object ImageViewDefaults {
     val DeleteButtonMargin: Dp = 6.dp
     val DeleteButtonCornerRadius: Dp = 4.dp
     
+    // ===== ACTION BUTTONS (bottom-right row) =====
+    val ActionButtonRowMargin: Dp = 6.dp
+    val ActionButtonSpacing: Dp = 6.dp
+    val ActionButtonMinHeight: Dp = 28.dp
+    val ActionButtonHorizontalPadding: Dp = 8.dp
+    val ActionButtonIconSize: Dp = 18.dp
+    val ActionButtonTextSize: TextUnit = 12.sp
+    val ActionButtonIconTextGap: Dp = 4.dp
+    
     // ===== LOADING INDICATOR =====
     val LoadingIndicatorSize: Dp = 36.dp
     val LoadingIndicatorStrokeWidth: Dp = 3.dp

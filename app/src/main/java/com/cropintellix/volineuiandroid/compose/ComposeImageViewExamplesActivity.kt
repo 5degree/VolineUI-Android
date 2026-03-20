@@ -38,12 +38,14 @@ import androidx.compose.ui.unit.sp
 import com.cropintellix.volineui.PhotoCaptureManager
 import com.cropintellix.volineui.compose.AdvancedImageView
 import com.cropintellix.volineui.compose.rememberAdvancedImageViewState
+import com.cropintellix.volineui.imageview.ActionButtonConfig
 import com.cropintellix.volineui.imageview.ImageScaleType
 import com.cropintellix.volineui.imageview.ImageSource
 import com.cropintellix.volineui.imageview.ImageState
 import com.cropintellix.volineui.imageview.ImageViewDefaults
 import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
 import com.cropintellix.volineui.photocapturemanager.PhotoCaptureResult
+import com.cropintellix.volineui.R as VolineR
 import com.cropintellix.volineuiandroid.R
 import com.cropintellix.volineuiandroid.ui.theme.AppTheme
 import java.io.File
@@ -159,6 +161,12 @@ private fun ImageViewExamplesScreen(modifier: Modifier = Modifier) {
         // Drawable Resource
         SectionTitle("Load from Drawable Resource")
         DrawableResourceExample()
+
+        HorizontalDivider()
+
+        // Action buttons
+        SectionTitle("Action buttons")
+        ActionButtonsExample()
 
         HorizontalDivider()
 
@@ -856,6 +864,84 @@ private fun DrawableResourceExample() {
                 cornerRadius = 8.dp
             )
         }
+    }
+}
+
+@Composable
+private fun ActionButtonsExample() {
+    val context = LocalContext.current
+    val imageState = rememberAdvancedImageViewState(
+        initialSource = ImageSource.Url("https://picsum.photos/800/450?random=composeActionBtns")
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Bottom-right chips when loaded (scroll horizontally if many). Delete stays top-right.",
+            fontSize = 14.sp,
+            color = Color(0xFF888888)
+        )
+
+        AdvancedImageView(
+            state = imageState,
+            modifier = Modifier.fillMaxWidth(),
+            aspectRatio = 16f / 9f,
+            cornerRadius = 10.dp,
+            showDeleteButton = true,
+            onDeleteClick = {
+                Toast.makeText(context, "Cleared", Toast.LENGTH_SHORT).show()
+            },
+            actionButtons = listOf(
+                ActionButtonConfig(
+                    iconResId = R.drawable.ic_cloud_upload,
+                    text = "Upload",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC1976D2.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        Toast.makeText(context, "Upload image", Toast.LENGTH_SHORT).show()
+                    },
+                ),
+                ActionButtonConfig(
+                    iconResId = VolineR.drawable.ic_info_filled,
+                    text = "Details",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC00796B.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        Toast.makeText(context, "Details", Toast.LENGTH_SHORT).show()
+                    },
+                ),
+                ActionButtonConfig(
+                    iconResId = VolineR.drawable.ic_check,
+                    text = "Approve",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC388E3C.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    enabled = false,
+                    onClick = { },
+                ),
+                ActionButtonConfig(
+                    iconResId = VolineR.drawable.ic_add_photo,
+                    text = "Retake",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC5D4037.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        Toast.makeText(context, "Retake (demo)", Toast.LENGTH_SHORT).show()
+                    },
+                ),
+                ActionButtonConfig(
+                    iconResId = VolineR.drawable.ic_warning_filled,
+                    text = "Report",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCCE65100.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        Toast.makeText(context, "Report", Toast.LENGTH_SHORT).show()
+                    },
+                ),
+            ),
+        )
     }
 }
 

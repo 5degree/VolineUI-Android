@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import com.cropintellix.volineui.AdvancedImageView
 import com.cropintellix.volineui.ImageCarousel
+import com.cropintellix.volineui.R as VolineR
+import com.cropintellix.volineui.imageview.ActionButtonConfig
 import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
 import com.cropintellix.volineui.PhotoCaptureManager
 import com.cropintellix.volineui.photocapturemanager.PhotoCaptureResult
@@ -126,6 +128,62 @@ class ImageViewExamplesActivity : AppCompatActivity() {
 
         val noFullscreen = findViewById<AdvancedImageView>(R.id.noFullscreen)
         noFullscreen.setOnCaptureClickListener { capturePhoto(noFullscreen) }
+
+        val actionButtonsDemo = findViewById<AdvancedImageView>(R.id.actionButtonsDemo)
+        actionButtonsDemo.loadFromUrl("https://picsum.photos/800/450?random=actionChips")
+        actionButtonsDemo.setActionButtons(
+            listOf(
+                ActionButtonConfig(
+                    iconResId = R.drawable.ic_cloud_upload,
+                    text = "Upload",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC1976D2.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        Toast.makeText(this, "Upload image", Toast.LENGTH_SHORT).show()
+                    },
+                ),
+                ActionButtonConfig(
+                    iconResId = VolineR.drawable.ic_info_filled,
+                    text = "Details",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC00796B.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        Toast.makeText(this, "Image details", Toast.LENGTH_SHORT).show()
+                    },
+                ),
+                ActionButtonConfig(
+                    iconResId = VolineR.drawable.ic_check,
+                    text = "Approve",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC388E3C.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    enabled = false,
+                    onClick = { },
+                ),
+                ActionButtonConfig(
+                    iconResId = VolineR.drawable.ic_add_photo,
+                    text = "Retake",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC5D4037.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        Toast.makeText(this, "Retake (demo)", Toast.LENGTH_SHORT).show()
+                    },
+                ),
+                ActionButtonConfig(
+                    iconResId = VolineR.drawable.ic_warning_filled,
+                    text = "Report",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCCE65100.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        Toast.makeText(this, "Report", Toast.LENGTH_SHORT).show()
+                    },
+                ),
+            ),
+        )
     }
 
     private fun setupCarouselExamples() {
