@@ -51,6 +51,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.cropintellix.volineui.R
 import com.cropintellix.volineui.imageview.*
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
 import java.io.File
 
 /**
@@ -86,11 +87,14 @@ import java.io.File
  * @param placeholderGap Gap between placeholder icon and text
  * @param showDeleteButton Whether to show delete button when image is loaded
  * @param showLoadingIndicator Whether to show loading indicator
+ * @param loadingGifResId Optional GIF drawable shown while loading (overrides spinner)
  * @param enableFullScreenPreview Whether to enable full-screen preview on tap
  * @param enableCameraCapture Whether to enable camera capture on placeholder tap
- * @param onImageClick Callback when image is clicked
+ * @param captureConfig Configuration passed to capture callback when placeholder is tapped
+ * @param onCapturedImageClick Callback when loaded image is clicked
  * @param onDeleteClick Callback when delete button is clicked
- * @param onCaptureClick Callback when placeholder is clicked for camera capture
+ * @param onCaptureRequest Callback with [PhotoCaptureConfig] when placeholder is tapped
+ * @param onCaptureResult Callback when image is captured and all related operations are completed
  * @param onImageLoadResult Callback with load result (success/failure)
  * @param onStateChange Callback when state changes
  */
@@ -118,12 +122,15 @@ fun AdvancedImageView(
     // Features
     showDeleteButton: Boolean = true,
     showLoadingIndicator: Boolean = true,
+    loadingGifResId: Int = 0,
     enableFullScreenPreview: Boolean = true,
     enableCameraCapture: Boolean = true,
+    captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     // Callbacks
-    onImageClick: (() -> Unit)? = null,
+    onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
-    onCaptureClick: (() -> Unit)? = null,
+    onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
     onStateChange: ((ImageState) -> Unit)? = null,
     // Force loading state (used during photo processing)
@@ -229,12 +236,12 @@ fun AdvancedImageView(
                             if (enableFullScreenPreview) {
                                 showFullScreenPreview(context, source)
                             }
-                            onImageClick?.invoke()
+                            onCapturedImageClick?.invoke()
                         }
 
                         ImageState.EMPTY, ImageState.ERROR -> {
-                            if (enableCameraCapture && onCaptureClick != null) {
-                                onCaptureClick()
+                            if (enableCameraCapture) {
+                                onCaptureRequest?.invoke(captureConfig)
                             }
                         }
 
@@ -270,8 +277,9 @@ fun AdvancedImageView(
                         alignment = imageAlignment,
                         imageAlpha = imageAlpha,
                         onLoading = { updateState(ImageState.LOADING) },
-                        onSuccess = {
+                        onSuccess = { resolvedSource ->
                             updateState(ImageState.LOADED)
+                            onCaptureResult?.invoke(resolvedSource)
                             onImageLoadResult?.invoke(true)
                         },
                         onError = {
@@ -306,11 +314,22 @@ fun AdvancedImageView(
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(ImageViewDefaults.LoadingIndicatorSize),
-                    color = colors.loadingColor,
-                    strokeWidth = ImageViewDefaults.LoadingIndicatorStrokeWidth
-                )
+                if (loadingGifResId != 0) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(loadingGifResId)
+                            .build(),
+                        contentDescription = "Loading",
+                        modifier = Modifier.size(48.dp),
+                        contentScale = ContentScale.Inside
+                    )
+                } else {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(ImageViewDefaults.LoadingIndicatorSize),
+                        color = colors.loadingColor,
+                        strokeWidth = ImageViewDefaults.LoadingIndicatorStrokeWidth
+                    )
+                }
             }
 
             // Delete button
@@ -419,7 +438,7 @@ private fun ImageContent(
     alignment: Alignment,
     imageAlpha: Float,
     onLoading: () -> Unit,
-    onSuccess: () -> Unit,
+    onSuccess: (ImageSource) -> Unit,
     onError: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -428,7 +447,7 @@ private fun ImageContent(
     when (source) {
         is ImageSource.Bitmap -> {
             // Direct bitmap display
-            LaunchedEffect(source) { onSuccess() }
+            LaunchedEffect(source) { onSuccess(source) }
             Image(
                 bitmap = source.bitmap.asImageBitmap(),
                 contentDescription = "Image",
@@ -452,7 +471,7 @@ private fun ImageContent(
             }
 
             LaunchedEffect(bitmap) {
-                if (bitmap != null) onSuccess() else onError()
+                if (bitmap != null) onSuccess(source) else onError()
             }
 
             bitmap?.let {
@@ -495,7 +514,7 @@ private fun ImageContent(
                 onState = { state ->
                     when (state) {
                         is AsyncImagePainter.State.Loading -> onLoading()
-                        is AsyncImagePainter.State.Success -> onSuccess()
+                        is AsyncImagePainter.State.Success -> onSuccess(source)
                         is AsyncImagePainter.State.Error -> onError()
                         else -> {}
                     }
@@ -551,9 +570,15 @@ fun AdvancedImageView(
     labelTextSize: TextUnit = ImageViewDefaults.LabelTextSize,
     labelFontWeight: FontWeight = ImageViewDefaults.LabelFontWeight,
     showDeleteButton: Boolean = false,
+    showLoadingIndicator: Boolean = true,
+    loadingGifResId: Int = 0,
     enableFullScreenPreview: Boolean = true,
-    onImageClick: (() -> Unit)? = null,
+    enableCameraCapture: Boolean = false,
+    captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
+    onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
+    onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
 ) {
     AdvancedImageView(
@@ -569,9 +594,15 @@ fun AdvancedImageView(
         labelTextSize = labelTextSize,
         labelFontWeight = labelFontWeight,
         showDeleteButton = showDeleteButton,
+        showLoadingIndicator = showLoadingIndicator,
+        loadingGifResId = loadingGifResId,
         enableFullScreenPreview = enableFullScreenPreview,
-        onImageClick = onImageClick,
+        enableCameraCapture = enableCameraCapture,
+        captureConfig = captureConfig,
+        onCapturedImageClick = onCapturedImageClick,
         onDeleteClick = onDeleteClick,
+        onCaptureRequest = onCaptureRequest,
+        onCaptureResult = onCaptureResult,
         onImageLoadResult = onImageLoadResult,
     )
 }
@@ -599,12 +630,15 @@ fun AdvancedImageView(
     placeholderGap: Dp = ImageViewDefaults.PlaceholderGap,
     showDeleteButton: Boolean = true,
     showLoadingIndicator: Boolean = true,
+    loadingGifResId: Int = 0,
     enableFullScreenPreview: Boolean = true,
     enableCameraCapture: Boolean = true,
+    captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     isLoading: Boolean = false,
-    onImageClick: (() -> Unit)? = null,
+    onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
-    onCaptureClick: (() -> Unit)? = null,
+    onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
 ) {
     AdvancedImageView(
@@ -626,12 +660,15 @@ fun AdvancedImageView(
         placeholderGap = placeholderGap,
         showDeleteButton = showDeleteButton,
         showLoadingIndicator = showLoadingIndicator,
+        loadingGifResId = loadingGifResId,
         enableFullScreenPreview = enableFullScreenPreview,
         enableCameraCapture = enableCameraCapture,
+        captureConfig = captureConfig,
         isLoading = isLoading,
-        onImageClick = onImageClick,
+        onCapturedImageClick = onCapturedImageClick,
         onDeleteClick = onDeleteClick,
-        onCaptureClick = onCaptureClick,
+        onCaptureRequest = onCaptureRequest,
+        onCaptureResult = onCaptureResult,
         onImageLoadResult = onImageLoadResult,
     )
 }
@@ -649,9 +686,15 @@ fun AdvancedImageView(
     borderWidth: Dp = 0.dp,
     colors: ImageViewColors = ImageViewDefaults.displayOnlyColors(),
     showDeleteButton: Boolean = false,
+    showLoadingIndicator: Boolean = true,
+    loadingGifResId: Int = 0,
     enableFullScreenPreview: Boolean = true,
-    onImageClick: (() -> Unit)? = null,
+    enableCameraCapture: Boolean = false,
+    captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
+    onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
+    onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
 ) {
     AdvancedImageView(
@@ -663,9 +706,15 @@ fun AdvancedImageView(
         borderWidth = borderWidth,
         colors = colors,
         showDeleteButton = showDeleteButton,
+        showLoadingIndicator = showLoadingIndicator,
+        loadingGifResId = loadingGifResId,
         enableFullScreenPreview = enableFullScreenPreview,
-        onImageClick = onImageClick,
+        enableCameraCapture = enableCameraCapture,
+        captureConfig = captureConfig,
+        onCapturedImageClick = onCapturedImageClick,
         onDeleteClick = onDeleteClick,
+        onCaptureRequest = onCaptureRequest,
+        onCaptureResult = onCaptureResult,
         onImageLoadResult = onImageLoadResult,
     )
 }
@@ -683,9 +732,15 @@ fun AdvancedImageView(
     borderWidth: Dp = 0.dp,
     colors: ImageViewColors = ImageViewDefaults.displayOnlyColors(),
     showDeleteButton: Boolean = false,
+    showLoadingIndicator: Boolean = true,
+    loadingGifResId: Int = 0,
     enableFullScreenPreview: Boolean = true,
-    onImageClick: (() -> Unit)? = null,
+    enableCameraCapture: Boolean = false,
+    captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
+    onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
+    onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
 ) {
     AdvancedImageView(
@@ -697,9 +752,15 @@ fun AdvancedImageView(
         borderWidth = borderWidth,
         colors = colors,
         showDeleteButton = showDeleteButton,
+        showLoadingIndicator = showLoadingIndicator,
+        loadingGifResId = loadingGifResId,
         enableFullScreenPreview = enableFullScreenPreview,
-        onImageClick = onImageClick,
+        enableCameraCapture = enableCameraCapture,
+        captureConfig = captureConfig,
+        onCapturedImageClick = onCapturedImageClick,
         onDeleteClick = onDeleteClick,
+        onCaptureRequest = onCaptureRequest,
+        onCaptureResult = onCaptureResult,
         onImageLoadResult = onImageLoadResult,
     )
 }
@@ -718,8 +779,14 @@ fun AdvancedImageView(
     borderWidth: Dp = 0.dp,
     colors: ImageViewColors = ImageViewDefaults.displayOnlyColors(),
     showDeleteButton: Boolean = false,
+    showLoadingIndicator: Boolean = true,
+    loadingGifResId: Int = 0,
     enableFullScreenPreview: Boolean = true,
-    onImageClick: (() -> Unit)? = null,
+    enableCameraCapture: Boolean = false,
+    captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
+    onCapturedImageClick: (() -> Unit)? = null,
+    onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureResult: ((ImageSource) -> Unit)? = null,
 ) {
     AdvancedImageView(
         source = if (drawableResId != 0) ImageSource.DrawableRes(drawableResId) else ImageSource.Empty,
@@ -731,8 +798,14 @@ fun AdvancedImageView(
         borderWidth = borderWidth,
         colors = colors,
         showDeleteButton = showDeleteButton,
+        showLoadingIndicator = showLoadingIndicator,
+        loadingGifResId = loadingGifResId,
         enableFullScreenPreview = enableFullScreenPreview,
-        onImageClick = onImageClick,
+        enableCameraCapture = enableCameraCapture,
+        captureConfig = captureConfig,
+        onCapturedImageClick = onCapturedImageClick,
+        onCaptureRequest = onCaptureRequest,
+        onCaptureResult = onCaptureResult,
     )
 }
 
@@ -825,6 +898,27 @@ class AdvancedImageViewState {
         currentState = ImageState.EMPTY
     }
 
+    fun getImageFile(): File? = when (val current = source) {
+        is ImageSource.File -> current.file
+        is ImageSource.FilePath -> File(current.path)
+        else -> null
+    }
+
+    fun getImageBitmap(): Bitmap? = when (val current = source) {
+        is ImageSource.Bitmap -> current.bitmap
+        else -> null
+    }
+
+    fun getImageUri(): Uri? = when (val current = source) {
+        is ImageSource.Uri -> current.uri
+        else -> null
+    }
+
+    fun getImageUrl(): String? = when (val current = source) {
+        is ImageSource.Url -> current.url
+        else -> null
+    }
+
     fun hasImage(): Boolean = currentState == ImageState.LOADED
 
     fun isLoading(): Boolean = currentState == ImageState.LOADING
@@ -882,11 +976,14 @@ fun AdvancedImageView(
     placeholderGap: Dp = ImageViewDefaults.PlaceholderGap,
     showDeleteButton: Boolean = true,
     showLoadingIndicator: Boolean = true,
+    loadingGifResId: Int = 0,
     enableFullScreenPreview: Boolean = true,
     enableCameraCapture: Boolean = true,
-    onImageClick: (() -> Unit)? = null,
+    captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
+    onCapturedImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
-    onCaptureClick: (() -> Unit)? = null,
+    onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
+    onCaptureResult: ((ImageSource) -> Unit)? = null,
     onImageLoadResult: ((Boolean) -> Unit)? = null,
     onStateChange: ((ImageState) -> Unit)? = null,
 ) {
@@ -909,14 +1006,17 @@ fun AdvancedImageView(
         placeholderGap = placeholderGap,
         showDeleteButton = showDeleteButton,
         showLoadingIndicator = showLoadingIndicator,
+        loadingGifResId = loadingGifResId,
         enableFullScreenPreview = enableFullScreenPreview,
         enableCameraCapture = enableCameraCapture,
-        onImageClick = onImageClick,
+        captureConfig = captureConfig,
+        onCapturedImageClick = onCapturedImageClick,
         onDeleteClick = {
             state.clear()
             onDeleteClick?.invoke()
         },
-        onCaptureClick = onCaptureClick,
+        onCaptureRequest = onCaptureRequest,
+        onCaptureResult = onCaptureResult,
         onImageLoadResult = { success ->
             if (success) state.hideLoading()
             onImageLoadResult?.invoke(success)

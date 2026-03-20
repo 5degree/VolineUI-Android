@@ -194,7 +194,7 @@ private fun BasicUsageExample() {
         AdvancedImageView(
             source = ImageSource.Empty,
             modifier = Modifier.fillMaxWidth(),
-            onCaptureClick = {
+            onCaptureRequest = {
                 Toast.makeText(context, "Capture clicked!", Toast.LENGTH_SHORT).show()
             }
         )
@@ -222,7 +222,7 @@ private fun StateManagementExample() {
             onStateChange = { state ->
                 stateText = state.name
             },
-            onCaptureClick = {
+            onCaptureRequest = {
                 PhotoCaptureManager.instance.capturePhoto(PhotoCaptureConfig()) { result ->
                     when (result) {
                         is PhotoCaptureResult.Success -> imageState.loadFromFile(result.file)
@@ -280,7 +280,7 @@ private fun CameraCaptureExample() {
                 state = imageState1,
                 modifier = Modifier.weight(1f),
                 label = "Photo 1",
-                onCaptureClick = {
+                onCaptureRequest = {
                     PhotoCaptureManager.instance.capturePhoto(PhotoCaptureConfig("Photo 1")) { result ->
                         when (result) {
                             is PhotoCaptureResult.Success -> imageState1.loadFromFile(result.file)
@@ -300,7 +300,7 @@ private fun CameraCaptureExample() {
                 state = imageState2,
                 modifier = Modifier.weight(1f),
                 label = "Photo 2",
-                onCaptureClick = {
+                onCaptureRequest = {
                     PhotoCaptureManager.instance.capturePhoto(PhotoCaptureConfig("Photo 2")) { result ->
                         when (result) {
                             is PhotoCaptureResult.Success -> imageState2.loadFromFile(result.file)
@@ -340,7 +340,7 @@ private fun FileLoadingFullFeaturesExample() {
                 capturedFile = Pair(null, false)
                 Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show()
             },
-            onCaptureClick = {
+            onCaptureRequest = {
                 PhotoCaptureManager.instance.capturePhoto(PhotoCaptureConfig(watermarkText = "Document")) { result ->
                     when (result) {
                         is PhotoCaptureResult.Processing -> {
@@ -623,7 +623,7 @@ private fun LabelsExample() {
                 aspectRatio = 1f,
                 label = "Profile Photo",
                 labelTextSize = 14.sp,
-                onCaptureClick = {
+                onCaptureRequest = {
                     Toast.makeText(context, "Profile photo capture", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -635,7 +635,7 @@ private fun LabelsExample() {
                 label = "ID Document",
                 labelTextSize = 14.sp,
                 labelFontWeight = FontWeight.Bold,
-                onCaptureClick = {
+                onCaptureRequest = {
                     Toast.makeText(context, "ID document capture", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -669,7 +669,7 @@ private fun CustomPlaceholderExample() {
                 placeholderText = "Add Photo",
                 placeholderIconSize = 32.dp,
                 placeholderTextSize = 11.sp,
-                onCaptureClick = {
+                onCaptureRequest = {
                     Toast.makeText(context, "Add photo clicked", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -681,7 +681,7 @@ private fun CustomPlaceholderExample() {
                 placeholderText = "Upload Image",
                 placeholderIconSize = 40.dp,
                 placeholderGap = 12.dp,
-                onCaptureClick = {
+                onCaptureRequest = {
                     Toast.makeText(context, "Upload clicked", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -692,7 +692,7 @@ private fun CustomPlaceholderExample() {
                 aspectRatio = 1f,
                 placeholderText = "Scan Document",
                 placeholderIconResId = R.drawable.ic_launcher_foreground,
-                onCaptureClick = {
+                onCaptureRequest = {
                     Toast.makeText(context, "Scan clicked", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -720,7 +720,7 @@ private fun CustomColorsExample() {
                     placeholderIconColor = Color(0xFF1976D2),
                     placeholderTextColor = Color(0xFF1976D2)
                 ),
-                onCaptureClick = {
+                onCaptureRequest = {
                     Toast.makeText(context, "Blue theme", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -736,7 +736,7 @@ private fun CustomColorsExample() {
                     placeholderIconColor = Color(0xFF388E3C),
                     placeholderTextColor = Color(0xFF388E3C)
                 ),
-                onCaptureClick = {
+                onCaptureRequest = {
                     Toast.makeText(context, "Green theme", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -752,7 +752,7 @@ private fun CustomColorsExample() {
                     placeholderIconColor = Color(0xFFF57C00),
                     placeholderTextColor = Color(0xFFF57C00)
                 ),
-                onCaptureClick = {
+                onCaptureRequest = {
                     Toast.makeText(context, "Orange theme", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -910,7 +910,7 @@ private fun FeatureTogglesExample() {
                     borderWidth = 0.dp,
                     showDeleteButton = false,
                     enableFullScreenPreview = true,
-                    onImageClick = {
+                    onCapturedImageClick = {
                         Toast.makeText(context, "Opening fullscreen...", Toast.LENGTH_SHORT).show()
                     }
                 )
@@ -925,7 +925,7 @@ private fun FeatureTogglesExample() {
                     borderWidth = 0.dp,
                     showDeleteButton = false,
                     enableFullScreenPreview = false,
-                    onImageClick = {
+                    onCapturedImageClick = {
                         Toast.makeText(context, "Clicked (no fullscreen)", Toast.LENGTH_SHORT)
                             .show()
                     }
