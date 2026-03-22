@@ -145,6 +145,12 @@
             android:layout_height="wrap_content"
             android:text="Compose Dialog Examples" />
 
+        <Button
+            android:id="@+id/btnOpenComposeDateTimePickerExamples"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Compose DateTimePicker Examples" />
+
     </LinearLayout>
 
 </ScrollView>

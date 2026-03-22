@@ -83,6 +83,9 @@
             android:name=".compose.ComposeDialogExamplesActivity"
             android:exported="false" />
         <activity
+            android:name=".compose.ComposeDateTimePickerExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

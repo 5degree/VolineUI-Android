@@ -13,6 +13,7 @@ import com.cropintellix.volineuiandroid.compose.ComposeImageViewExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeInputFieldExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeRadioExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeToastExamplesActivity
+import com.cropintellix.volineuiandroid.compose.ComposeDateTimePickerExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeDialogExamplesActivity
 import com.cropintellix.volineuiandroid.databinding.ActivityMainBinding
 import kotlin.jvm.java
@@ -89,6 +90,9 @@ class MainActivity : AppCompatActivity() {
         }
         b.btnOpenComposeDialogExamples.setOnClickListener {
             startActivity(Intent(this, ComposeDialogExamplesActivity::class.java))
+        }
+        b.btnOpenComposeDateTimePickerExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeDateTimePickerExamplesActivity::class.java))
         }
     }
 }
