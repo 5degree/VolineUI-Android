@@ -95,7 +95,10 @@ import java.io.File
  * @param enableFullScreenPreview Whether to enable full-screen preview on tap
  * @param enableCameraCapture Whether to enable camera capture on placeholder tap
  * @param captureConfig Configuration passed to capture callback when placeholder is tapped
- * @param onCapturedImageClick Callback when loaded image is clicked
+ * @param onCapturedImageClick Callback when loaded image is clicked (after fullscreen preview if enabled)
+ * @param onImageClick Callback when the image container is tapped (below the label), including empty,
+ *   loading, loaded, and error states. Use this instead of putting Modifier.clickable on the root when
+ *   you only want the image region to be clickable.
  * @param onDeleteClick Callback when delete button is clicked
  * @param actionButtons Optional chips at bottom-right when image is loaded (horizontally scrollable)
  * @param onCaptureRequest Callback with [PhotoCaptureConfig] when placeholder is tapped
@@ -133,6 +136,7 @@ fun AdvancedImageView(
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     // Callbacks
     onCapturedImageClick: (() -> Unit)? = null,
+    onImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
     actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
@@ -235,8 +239,10 @@ fun AdvancedImageView(
                     indication = if (enableFullScreenPreview) ripple() else null,
                     enabled = currentState == ImageState.LOADED ||
                             currentState == ImageState.EMPTY ||
-                            currentState == ImageState.ERROR
+                            currentState == ImageState.ERROR ||
+                            (currentState == ImageState.LOADING && onImageClick != null)
                 ) {
+                    onImageClick?.invoke()
                     when (currentState) {
                         ImageState.LOADED -> {
                             if (enableFullScreenPreview) {
@@ -650,6 +656,7 @@ fun AdvancedImageView(
     enableCameraCapture: Boolean = false,
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
+    onImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
     actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
@@ -675,6 +682,7 @@ fun AdvancedImageView(
         enableCameraCapture = enableCameraCapture,
         captureConfig = captureConfig,
         onCapturedImageClick = onCapturedImageClick,
+        onImageClick = onImageClick,
         onDeleteClick = onDeleteClick,
         actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
@@ -712,6 +720,7 @@ fun AdvancedImageView(
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     isLoading: Boolean = false,
     onCapturedImageClick: (() -> Unit)? = null,
+    onImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
     actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
@@ -743,6 +752,7 @@ fun AdvancedImageView(
         captureConfig = captureConfig,
         isLoading = isLoading,
         onCapturedImageClick = onCapturedImageClick,
+        onImageClick = onImageClick,
         onDeleteClick = onDeleteClick,
         actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
@@ -770,6 +780,7 @@ fun AdvancedImageView(
     enableCameraCapture: Boolean = false,
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
+    onImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
     actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
@@ -791,6 +802,7 @@ fun AdvancedImageView(
         enableCameraCapture = enableCameraCapture,
         captureConfig = captureConfig,
         onCapturedImageClick = onCapturedImageClick,
+        onImageClick = onImageClick,
         onDeleteClick = onDeleteClick,
         actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
@@ -818,6 +830,7 @@ fun AdvancedImageView(
     enableCameraCapture: Boolean = false,
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
+    onImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
     actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
@@ -839,6 +852,7 @@ fun AdvancedImageView(
         enableCameraCapture = enableCameraCapture,
         captureConfig = captureConfig,
         onCapturedImageClick = onCapturedImageClick,
+        onImageClick = onImageClick,
         onDeleteClick = onDeleteClick,
         actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
@@ -867,6 +881,7 @@ fun AdvancedImageView(
     enableCameraCapture: Boolean = false,
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
+    onImageClick: (() -> Unit)? = null,
     actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
     onCaptureResult: ((ImageSource) -> Unit)? = null,
@@ -887,6 +902,7 @@ fun AdvancedImageView(
         enableCameraCapture = enableCameraCapture,
         captureConfig = captureConfig,
         onCapturedImageClick = onCapturedImageClick,
+        onImageClick = onImageClick,
         actionButtons = actionButtons,
         onCaptureRequest = onCaptureRequest,
         onCaptureResult = onCaptureResult,
@@ -1065,6 +1081,7 @@ fun AdvancedImageView(
     enableCameraCapture: Boolean = true,
     captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
     onCapturedImageClick: (() -> Unit)? = null,
+    onImageClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
     actionButtons: List<ActionButtonConfig> = emptyList(),
     onCaptureRequest: ((PhotoCaptureConfig) -> Unit)? = null,
@@ -1096,6 +1113,7 @@ fun AdvancedImageView(
         enableCameraCapture = enableCameraCapture,
         captureConfig = captureConfig,
         onCapturedImageClick = onCapturedImageClick,
+        onImageClick = onImageClick,
         onDeleteClick = {
             state.clear()
             onDeleteClick?.invoke()

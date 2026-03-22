@@ -109,7 +109,7 @@ data class InputFieldColors(
         isLoading: Boolean,
     ): Color {
         return when {
-            !enabled -> disabledColor
+            !enabled -> disabledBackgroundColor
             isError -> errorColor
             isSuccess -> successColor
             isLoading -> loadingColor

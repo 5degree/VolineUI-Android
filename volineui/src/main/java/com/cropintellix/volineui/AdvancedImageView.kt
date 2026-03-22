@@ -198,7 +198,10 @@ class AdvancedImageView @JvmOverloads constructor(
             gravity = Gravity.CENTER
             isClickable = true
             isFocusable = true
-            setOnClickListener { handlePlaceholderClick() }
+            setOnClickListener {
+                onImageClickListener?.invoke()
+                handlePlaceholderClick()
+            }
         }
         imageContainer.addView(placeholderContainer, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
 
@@ -628,6 +631,32 @@ class AdvancedImageView @JvmOverloads constructor(
             }
         }
         invalidate()
+        configureImageAreaAuxiliaryClicks()
+    }
+
+    private fun configureImageAreaAuxiliaryClicks() {
+        when (currentState) {
+            ImageState.LOADING -> {
+                if (onImageClickListener != null) {
+                    val listener = OnClickListener { onImageClickListener?.invoke() }
+                    loadingIndicator.setOnClickListener(listener)
+                    loadingGifView.setOnClickListener(listener)
+                    imageContainer.isClickable = true
+                    imageContainer.setOnClickListener(listener)
+                } else {
+                    loadingIndicator.setOnClickListener(null)
+                    loadingGifView.setOnClickListener(null)
+                    imageContainer.setOnClickListener(null)
+                    imageContainer.isClickable = false
+                }
+            }
+            else -> {
+                loadingIndicator.setOnClickListener(null)
+                loadingGifView.setOnClickListener(null)
+                imageContainer.setOnClickListener(null)
+                imageContainer.isClickable = false
+            }
+        }
     }
 
     fun clearImage() {
@@ -648,7 +677,15 @@ class AdvancedImageView @JvmOverloads constructor(
 
     // Listeners
     fun setOnDeleteClickListener(listener: (() -> Unit)?) { onDeleteClickListener = listener }
-    fun setOnImageClickListener(listener: (() -> Unit)?) { onImageClickListener = listener }
+
+    /**
+     * Called when the user taps the image region (below the label): empty placeholder, loading indicator,
+     * or loaded image. Not called for the label or for taps on delete / action chips.
+     */
+    fun setOnImageClickListener(listener: (() -> Unit)?) {
+        onImageClickListener = listener
+        configureImageAreaAuxiliaryClicks()
+    }
     fun setOnCaptureClickListener(listener: ((PhotoCaptureConfig) -> Unit)?) { onCaptureClickListener = listener }
     fun setOnImageLoadListener(listener: ((Boolean) -> Unit)?) { onImageLoadListener = listener }
 
