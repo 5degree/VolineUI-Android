@@ -47,6 +47,7 @@ import com.cropintellix.volineui.R
  * )
  *
  * VolineDialog.success("Success!", "Operation completed")
+ * VolineDialog.success("Success!", "Operation completed", isCancelable = false) // back/outside disabled
  * VolineDialog.error("Error", "Something went wrong")
  *
  * VolineDialog.confirm(
@@ -110,6 +111,7 @@ object VolineDialog {
         message: String,
         buttonText: String = "OK",
         onButtonClick: (() -> Unit)? = null,
+        isCancelable: Boolean = true,
     ) {
         show(
             title = title,
@@ -117,6 +119,7 @@ object VolineDialog {
             type = DialogType.SUCCESS,
             primaryButtonText = buttonText,
             onPrimaryClick = onButtonClick,
+            isCancelable = isCancelable,
         )
     }
 
@@ -130,6 +133,7 @@ object VolineDialog {
         message: String,
         buttonText: String = "OK",
         onButtonClick: (() -> Unit)? = null,
+        isCancelable: Boolean = true,
     ) {
         show(
             title = title,
@@ -137,6 +141,7 @@ object VolineDialog {
             type = DialogType.ERROR,
             primaryButtonText = buttonText,
             onPrimaryClick = onButtonClick,
+            isCancelable = isCancelable,
         )
     }
 
@@ -150,6 +155,7 @@ object VolineDialog {
         message: String,
         buttonText: String = "OK",
         onButtonClick: (() -> Unit)? = null,
+        isCancelable: Boolean = true,
     ) {
         show(
             title = title,
@@ -157,6 +163,7 @@ object VolineDialog {
             type = DialogType.WARNING,
             primaryButtonText = buttonText,
             onPrimaryClick = onButtonClick,
+            isCancelable = isCancelable,
         )
     }
 
@@ -170,6 +177,7 @@ object VolineDialog {
         message: String,
         buttonText: String = "OK",
         onButtonClick: (() -> Unit)? = null,
+        isCancelable: Boolean = true,
     ) {
         show(
             title = title,
@@ -177,6 +185,7 @@ object VolineDialog {
             type = DialogType.INFO,
             primaryButtonText = buttonText,
             onPrimaryClick = onButtonClick,
+            isCancelable = isCancelable,
         )
     }
 
@@ -192,6 +201,7 @@ object VolineDialog {
         cancelText: String = "Cancel",
         onConfirm: (() -> Unit)? = null,
         onCancel: (() -> Unit)? = null,
+        isCancelable: Boolean = true,
     ) {
         show(
             title = title,
@@ -201,6 +211,7 @@ object VolineDialog {
             secondaryButtonText = cancelText,
             onPrimaryClick = onConfirm,
             onSecondaryClick = onCancel,
+            isCancelable = isCancelable,
         )
     }
 
@@ -216,6 +227,7 @@ object VolineDialog {
         cancelText: String = "Cancel",
         onDestructive: (() -> Unit)? = null,
         onCancel: (() -> Unit)? = null,
+        isCancelable: Boolean = true,
     ) {
         show(
             title = title,
@@ -225,6 +237,7 @@ object VolineDialog {
             secondaryButtonText = cancelText,
             onPrimaryClick = onDestructive,
             onSecondaryClick = onCancel,
+            isCancelable = isCancelable,
         )
     }
 
@@ -279,14 +292,15 @@ object VolineDialog {
                     icon = icon,
                     showDefaultIcon = showDefaultIcon,
                     primaryButtonText = primaryButtonText,
+                    // Dismiss before callback so a chained VolineDialog.show/confirm in the listener is not cleared by this dismiss().
                     onPrimaryClick = {
-                        onPrimaryClick?.invoke()
                         dismiss()
+                        onPrimaryClick?.invoke()
                     },
                     secondaryButtonText = secondaryButtonText,
                     onSecondaryClick = {
-                        onSecondaryClick?.invoke()
                         dismiss()
+                        onSecondaryClick?.invoke()
                     },
                     colors = colors,
                 )

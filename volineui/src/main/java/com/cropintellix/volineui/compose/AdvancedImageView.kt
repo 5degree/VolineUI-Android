@@ -52,9 +52,11 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.cropintellix.volineui.PhotoCaptureManager
 import com.cropintellix.volineui.R
 import com.cropintellix.volineui.imageview.*
 import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureResult
 import java.io.File
 
 /**
@@ -147,6 +149,7 @@ fun AdvancedImageView(
 ) {
     val context = LocalContext.current
     var currentState by remember { mutableStateOf(ImageState.EMPTY) }
+    var internalLoading by remember { mutableStateOf(false) }
 
     // Update state and notify
     fun updateState(newState: ImageState) {
@@ -156,20 +159,26 @@ fun AdvancedImageView(
         }
     }
 
-    // Handle force loading state from external control
-    LaunchedEffect(isLoading) {
-        if (isLoading) {
+    // Handle force loading state from external or internal (capture processing) control
+    LaunchedEffect(isLoading, internalLoading) {
+        if (isLoading || internalLoading) {
             updateState(ImageState.LOADING)
         }
     }
 
-    // Determine initial state based on source
+    // Determine initial state based on source.
+    // Guard against overwriting LOADED – async loaders (Coil) may resolve from
+    // memory cache during composition, before this effect runs.
     LaunchedEffect(source) {
-        if (!isLoading) {
+        if (!isLoading && !internalLoading) {
             when (source) {
                 is ImageSource.Empty -> updateState(ImageState.EMPTY)
                 is ImageSource.DrawableRes -> updateState(ImageState.LOADED)
-                else -> updateState(ImageState.LOADING)
+                else -> {
+                    if (currentState != ImageState.LOADED) {
+                        updateState(ImageState.LOADING)
+                    }
+                }
             }
         }
     }
@@ -252,7 +261,28 @@ fun AdvancedImageView(
 
                         ImageState.EMPTY, ImageState.ERROR -> {
                             if (enableCameraCapture) {
-                                onCaptureRequest?.invoke(captureConfig)
+                                if (onCaptureRequest != null) {
+                                    onCaptureRequest.invoke(captureConfig)
+                                } else if (onImageClick == null) {
+                                    PhotoCaptureManager.instance.capturePhoto(captureConfig) { result ->
+                                        when (result) {
+                                            is PhotoCaptureResult.Processing -> {
+                                                internalLoading = true
+                                            }
+                                            is PhotoCaptureResult.Success -> {
+                                                internalLoading = false
+                                                onCaptureResult?.invoke(ImageSource.File(result.file))
+                                            }
+                                            is PhotoCaptureResult.Error -> {
+                                                internalLoading = false
+                                                updateState(ImageState.ERROR)
+                                            }
+                                            is PhotoCaptureResult.Cancelled -> {
+                                                internalLoading = false
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
 

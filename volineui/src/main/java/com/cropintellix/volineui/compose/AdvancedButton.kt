@@ -302,8 +302,8 @@ fun AdvancedButton(
     // This checks the NORMAL state borderColor to detect if default was used, then applies black consistently
     val normalStateBorderColor = colors.borderColor(ButtonState.NORMAL)
     val actualBorderColor = when (style) {
-        ButtonStyle.OUTLINED -> if (normalStateBorderColor == colors.backgroundColor || 
-                                    normalStateBorderColor == Color.Black) Color.Black else borderColor
+        ButtonStyle.OUTLINED -> if (normalStateBorderColor == colors.backgroundColor ||
+            normalStateBorderColor == Color.Black) Color.Black else borderColor
         else -> borderColor
     }
 
@@ -425,7 +425,7 @@ fun AdvancedButton(
                 .let { mod ->
                     val actualRippleColor = when {
                         style in listOf(ButtonStyle.OUTLINED, ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP)
-                            && colors.rippleColor == Color(0x40FFFFFF) -> Color(0x40000000)
+                                && colors.rippleColor == Color(0x40FFFFFF) -> Color(0x40000000)
                         else -> colors.rippleColor
                     }
                     mod.combinedClickable(
@@ -489,13 +489,28 @@ fun AdvancedButton(
                 }
 
                 style == ButtonStyle.ICON || style == ButtonStyle.FAB -> {
-                    // Icon only button
-                    leadingIcon?.let {
+                    val iconToShow = leadingIcon ?: trailingIcon
+                    if (iconToShow != null) {
                         IconContent(
-                            icon = it,
+                            icon = iconToShow,
                             size = sizePreset.iconSize,
                             tint = actualIconColor,
-                            onClick = if (enabled && !isLoading) onLeadingIconClick else null
+                            onClick = if (enabled && !isLoading)
+                                (if (leadingIcon != null) onLeadingIconClick else onTrailingIconClick)
+                            else null
+                        )
+                    } else {
+                        Text(
+                            text = displayText,
+                            style = TextStyle(
+                                fontSize = sizePreset.textSize,
+                                color = actualTextColor,
+                                fontFamily = fontFamily,
+                                fontWeight = fontWeight,
+                                letterSpacing = letterSpacing
+                            ),
+                            maxLines = maxLines,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
