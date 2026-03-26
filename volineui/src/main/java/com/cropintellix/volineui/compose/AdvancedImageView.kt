@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -462,48 +461,6 @@ private fun DeleteButton(
                 .size(ImageViewDefaults.DeleteButtonSize - ImageViewDefaults.DeleteButtonPadding * 2),
             tint = iconTint
         )
-    }
-}
-
-@Composable
-private fun ActionButtonChip(
-    config: ActionButtonConfig,
-    cornerRadius: Dp,
-) {
-    val shape = RoundedCornerShape(cornerRadius)
-    Row(
-        modifier = Modifier
-            .heightIn(min = ImageViewDefaults.ActionButtonMinHeight)
-            .clip(shape)
-            .background(Color(config.backgroundColor))
-            .clickable(
-                enabled = config.enabled,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple()
-            ) { config.onClick() }
-            .padding(
-                horizontal = ImageViewDefaults.ActionButtonHorizontalPadding,
-                vertical = 4.dp
-            )
-            .alpha(if (config.enabled) 1f else 0.5f),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            painter = painterResource(id = config.iconResId),
-            contentDescription = config.resolvedContentDescription(),
-            modifier = Modifier.size(ImageViewDefaults.ActionButtonIconSize),
-            tint = Color(config.iconTint)
-        )
-        if (!config.text.isNullOrEmpty()) {
-            Spacer(modifier = Modifier.width(ImageViewDefaults.ActionButtonIconTextGap))
-            Text(
-                text = config.text,
-                style = TextStyle(
-                    fontSize = ImageViewDefaults.ActionButtonTextSize,
-                    color = Color(config.textColor)
-                )
-            )
-        }
     }
 }
 

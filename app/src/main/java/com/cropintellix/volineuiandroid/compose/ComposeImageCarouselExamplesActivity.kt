@@ -29,10 +29,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cropintellix.volineui.PhotoCaptureManager
+import com.cropintellix.volineui.R as VolineR
 import com.cropintellix.volineui.compose.ImageCarousel
+import com.cropintellix.volineui.imageview.ActionButtonConfig
 import com.cropintellix.volineui.imageview.ImageCarouselDefaults
 import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
 import com.cropintellix.volineui.photocapturemanager.PhotoCaptureResult
+import com.cropintellix.volineuiandroid.R
 import com.cropintellix.volineuiandroid.ui.theme.AppTheme
 import java.io.File
 
@@ -86,6 +89,12 @@ private fun ImageCarouselExamplesScreen(modifier: Modifier = Modifier) {
         // URL-based Carousel
         SectionTitle("URL-based Carousel")
         UrlCarouselExample()
+
+        HorizontalDivider()
+
+        // Action buttons on each slide
+        SectionTitle("Action buttons per slide")
+        ActionButtonsCarouselExample()
 
         HorizontalDivider()
 
@@ -199,6 +208,67 @@ private fun UrlCarouselExample() {
                 // Add a random URL
                 urls = urls + "https://picsum.photos/400/400?random=${System.currentTimeMillis()}"
             }
+        )
+    }
+}
+
+@Composable
+private fun ActionButtonsCarouselExample() {
+    val context = LocalContext.current
+    var urls by remember {
+        mutableStateOf(
+            listOf(
+                "https://picsum.photos/400/400?random=carouselAct1",
+                "https://picsum.photos/400/400?random=carouselAct2",
+            )
+        )
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Each loaded slide shows scrollable chips (e.g. Upload). Delete stays top-right.",
+            fontSize = 12.sp,
+            color = Color(0xFF888888)
+        )
+
+        ImageCarousel(
+            urls = urls,
+            onUrlsChange = { urls = it },
+            label = "Carousel with actions",
+            carouselHeight = 220.dp,
+            itemWidth = 200.dp,
+            actionButtons = { index ->
+                listOf(
+                    ActionButtonConfig(
+                        iconResId = R.drawable.ic_cloud_upload,
+                        text = "Upload",
+                        iconTint = 0xFFFFFFFF.toInt(),
+                        backgroundColor = 0xCC1976D2.toInt(),
+                        textColor = 0xFFFFFFFF.toInt(),
+                        onClick = {
+                            Toast.makeText(
+                                context,
+                                "Upload slide $index",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                    ),
+                    ActionButtonConfig(
+                        iconResId = VolineR.drawable.ic_info_filled,
+                        text = "Info",
+                        iconTint = 0xFFFFFFFF.toInt(),
+                        backgroundColor = 0xCC00796B.toInt(),
+                        textColor = 0xFFFFFFFF.toInt(),
+                        onClick = {
+                            Toast.makeText(
+                                context,
+                                "Info for slide $index",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                    ),
+                )
+            },
         )
     }
 }

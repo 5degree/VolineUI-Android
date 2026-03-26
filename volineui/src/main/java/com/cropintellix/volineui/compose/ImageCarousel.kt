@@ -57,10 +57,12 @@ import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.cropintellix.volineui.R
+import com.cropintellix.volineui.imageview.ActionButtonConfig
 import com.cropintellix.volineui.imageview.FullScreenImageViewer
 import com.cropintellix.volineui.imageview.ImageCarouselColors
 import com.cropintellix.volineui.imageview.ImageCarouselDefaults
 import com.cropintellix.volineui.imageview.ImageSource
+import com.cropintellix.volineui.imageview.ImageViewDefaults
 import java.io.File
 
 /**
@@ -70,6 +72,7 @@ import java.io.File
  * - Horizontal scrolling image carousel
  * - Add button to add new images (disabled while processing)
  * - Delete button on each image
+ * - Optional bottom-right action chips per slide (horizontally scrollable)
  * - Image indicators (dots)
  * - Full-screen preview on tap
  * - Processing state with loading placeholder
@@ -126,6 +129,7 @@ import java.io.File
  * @param onImageClick Callback when an image is clicked
  * @param onImageDelete Callback when an image is deleted (receives the index)
  * @param onAddClick Callback when add button is clicked
+ * @param actionButtons Factory for bottom-right action chips per item index (shown when image is loaded)
  * @param modifier Modifier for the component (width fills max by default)
  */
 @Composable
@@ -156,6 +160,7 @@ fun ImageCarousel(
     onImageClick: ((Int) -> Unit)? = null,
     onImageDelete: ((Int) -> Unit)? = null,
     onAddClick: (() -> Unit)? = null,
+    actionButtons: (Int) -> List<ActionButtonConfig> = { emptyList() },
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -224,6 +229,7 @@ fun ImageCarousel(
                         borderWidth = borderWidth,
                         colors = colors,
                         showDeleteIcon = showDeleteIcon,
+                        actionButtons = actionButtons(index),
                         onImageClick = {
                             if (enableFullScreen) {
                                 FullScreenImageViewer.showCarouselCompose(
@@ -315,6 +321,7 @@ fun ImageCarousel(
  * @param onImageClick Callback when an image is clicked
  * @param onImageDelete Callback when an image is deleted
  * @param onAddClick Callback when add button is clicked
+ * @param actionButtons Factory for bottom-right action chips per item index (shown when image is loaded)
  * @param modifier Modifier for the component (width fills max by default)
  */
 @Composable
@@ -344,6 +351,7 @@ fun ImageCarousel(
     onImageClick: ((Int) -> Unit)? = null,
     onImageDelete: ((Int) -> Unit)? = null,
     onAddClick: (() -> Unit)? = null,
+    actionButtons: (Int) -> List<ActionButtonConfig> = { emptyList() },
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -408,6 +416,7 @@ fun ImageCarousel(
                         borderWidth = borderWidth,
                         colors = colors,
                         showDeleteIcon = showDeleteIcon,
+                        actionButtons = actionButtons(index),
                         onImageClick = {
                             if (enableFullScreen) {
                                 FullScreenImageViewer.showCarouselCompose(
@@ -471,11 +480,13 @@ private fun CarouselImageItem(
     borderWidth: Dp,
     colors: ImageCarouselColors,
     showDeleteIcon: Boolean,
+    actionButtons: List<ActionButtonConfig> = emptyList(),
     onImageClick: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val shape = RoundedCornerShape(cornerRadius)
+    val itemActionScroll = rememberScrollState()
     var isLoading by remember { mutableStateOf(true) }
     var isLoaded by remember { mutableStateOf(false) }
 
@@ -645,6 +656,31 @@ private fun CarouselImageItem(
                         ),
                         tint = colors.deleteIconTint
                     )
+                }
+            }
+        }
+
+        val actionChipCorner = (cornerRadius.value * 0.4f).coerceAtLeast(4f).dp
+        AnimatedVisibility(
+            visible = isLoaded && actionButtons.isNotEmpty(),
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomEnd)
+                .padding(ImageViewDefaults.ActionButtonRowMargin)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                Row(
+                    modifier = Modifier.horizontalScroll(itemActionScroll),
+                    horizontalArrangement = Arrangement.spacedBy(ImageViewDefaults.ActionButtonSpacing),
+                ) {
+                    actionButtons.forEach { cfg ->
+                        ActionButtonChip(config = cfg, cornerRadius = actionChipCorner)
+                    }
                 }
             }
         }
