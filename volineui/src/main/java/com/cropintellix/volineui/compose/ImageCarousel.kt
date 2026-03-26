@@ -56,6 +56,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.cropintellix.volineui.PhotoCaptureManager
 import com.cropintellix.volineui.R
 import com.cropintellix.volineui.imageview.ActionButtonConfig
 import com.cropintellix.volineui.imageview.FullScreenImageViewer
@@ -63,6 +64,8 @@ import com.cropintellix.volineui.imageview.ImageCarouselColors
 import com.cropintellix.volineui.imageview.ImageCarouselDefaults
 import com.cropintellix.volineui.imageview.ImageSource
 import com.cropintellix.volineui.imageview.ImageViewDefaults
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
+import com.cropintellix.volineui.photocapturemanager.PhotoCaptureResult
 import java.io.File
 
 /**
@@ -81,34 +84,25 @@ import java.io.File
  * - Max image count limit
  * - Images displayed with CROP scale type for consistent appearance
  *
- * Usage:
+ * Usage (simplified with captureConfig + onCaptureResult):
  * ```kotlin
  * var files by remember { mutableStateOf<List<File>>(emptyList()) }
- * var isProcessing by remember { mutableStateOf(false) }
  *
  * ImageCarousel(
  *     files = files,
  *     label = "Photos",
  *     maxImageCount = 5,
- *     isProcessing = isProcessing,
+ *     captureConfig = PhotoCaptureConfig("Watermark Text"),
+ *     onCaptureResult = { file -> files = files + file },
  *     onImageDelete = { index ->
  *         files = files.toMutableList().apply { removeAt(index) }
  *     },
- *     onAddClick = {
- *         PhotoCaptureManager.instance.capturePhoto(config) { result ->
- *             when (result) {
- *                 is PhotoCaptureResult.Processing -> isProcessing = true
- *                 is PhotoCaptureResult.Success -> {
- *                     isProcessing = false
- *                     files = files + result.file
- *                 }
- *                 is PhotoCaptureResult.Error -> isProcessing = false
- *                 is PhotoCaptureResult.Cancelled -> isProcessing = false
- *             }
- *         }
- *     }
  * )
  * ```
+ *
+ * The carousel internally manages the loading placeholder and add button
+ * while [PhotoCaptureManager] is processing. If you need full manual control
+ * use [onAddClick] instead (it takes precedence over the built-in capture).
  *
  * @param files List of image files to display
  * @param label Optional label text above the carousel
@@ -128,7 +122,10 @@ import java.io.File
  * @param isProcessing Whether an image is currently being processed (shows loading placeholder, disables add button)
  * @param onImageClick Callback when an image is clicked
  * @param onImageDelete Callback when an image is deleted (receives the index)
- * @param onAddClick Callback when add button is clicked
+ * @param onAddClick Callback when add button is clicked (takes precedence over built-in capture)
+ * @param captureConfig Configuration for built-in photo capture (used when [onAddClick] is null)
+ * @param onCaptureResult Callback with captured [File] after a successful capture
+ * @param onCaptureError Optional callback when capture fails
  * @param actionButtons Factory for bottom-right action chips per item index (shown when image is loaded)
  * @param modifier Modifier for the component (width fills max by default)
  */
@@ -160,12 +157,18 @@ fun ImageCarousel(
     onImageClick: ((Int) -> Unit)? = null,
     onImageDelete: ((Int) -> Unit)? = null,
     onAddClick: (() -> Unit)? = null,
+    captureConfig: PhotoCaptureConfig = PhotoCaptureConfig(),
+    onCaptureResult: ((File) -> Unit)? = null,
+    onCaptureError: ((String) -> Unit)? = null,
     actionButtons: (Int) -> List<ActionButtonConfig> = { emptyList() },
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
     val scrollState = rememberScrollState()
+
+    var internalProcessing by remember { mutableStateOf(false) }
+    val effectiveProcessing = isProcessing || internalProcessing
 
     // Convert files to ImageSource
     val imageSources = remember(files) {
@@ -186,11 +189,34 @@ fun ImageCarousel(
         }
     }
 
-    // Account for processing when determining if more can be added
-    // Add button is disabled when processing OR when max count is reached
-    val processingCount = if (isProcessing) 1 else 0
-    val canAddMore = !isProcessing && files.size < maxImageCount
+    val processingCount = if (effectiveProcessing) 1 else 0
+    val canAddMore = !effectiveProcessing && files.size < maxImageCount
     val totalItemCount = files.size + processingCount
+
+    val handleAddClick: () -> Unit = {
+        if (onAddClick != null) {
+            onAddClick()
+        } else if (onCaptureResult != null) {
+            PhotoCaptureManager.instance.capturePhoto(captureConfig) { result ->
+                when (result) {
+                    is PhotoCaptureResult.Processing -> {
+                        internalProcessing = true
+                    }
+                    is PhotoCaptureResult.Success -> {
+                        internalProcessing = false
+                        onCaptureResult(result.file)
+                    }
+                    is PhotoCaptureResult.Error -> {
+                        internalProcessing = false
+                        onCaptureError?.invoke(result.message)
+                    }
+                    is PhotoCaptureResult.Cancelled -> {
+                        internalProcessing = false
+                    }
+                }
+            }
+        }
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Label
@@ -247,7 +273,7 @@ fun ImageCarousel(
                 }
 
                 // Processing placeholder (loading indicator)
-                if (isProcessing) {
+                if (effectiveProcessing) {
                     ProcessingPlaceholder(
                         modifier = Modifier.size(itemWidth, carouselHeight),
                         cornerRadius = cornerRadius,
@@ -263,7 +289,7 @@ fun ImageCarousel(
                         cornerRadius = cornerRadius,
                         borderWidth = borderWidth,
                         colors = colors,
-                        onClick = { onAddClick?.invoke() }
+                        onClick = handleAddClick
                     )
                 }
             }
@@ -286,7 +312,7 @@ fun ImageCarousel(
                         )
                     }
                     // Indicator for processing item
-                    if (isProcessing) {
+                    if (effectiveProcessing) {
                         IndicatorDot(
                             isActive = false,
                             activeColor = colors.indicatorActiveColor,

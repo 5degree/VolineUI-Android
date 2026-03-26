@@ -28,13 +28,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.cropintellix.volineui.PhotoCaptureManager
 import com.cropintellix.volineui.R as VolineR
 import com.cropintellix.volineui.compose.ImageCarousel
 import com.cropintellix.volineui.imageview.ActionButtonConfig
 import com.cropintellix.volineui.imageview.ImageCarouselDefaults
 import com.cropintellix.volineui.photocapturemanager.PhotoCaptureConfig
-import com.cropintellix.volineui.photocapturemanager.PhotoCaptureResult
 import com.cropintellix.volineuiandroid.R
 import com.cropintellix.volineuiandroid.ui.theme.AppTheme
 import java.io.File
@@ -126,7 +124,6 @@ private fun SectionTitle(title: String) {
 private fun FileCarouselExample() {
     val context = LocalContext.current
     var files by remember { mutableStateOf<List<File>>(emptyList()) }
-    var isProcessing by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         ImageCarousel(
@@ -134,34 +131,18 @@ private fun FileCarouselExample() {
             label = "Captured Photos",
             carouselHeight = 250.dp,
             itemWidth = 180.dp,
-            isProcessing = isProcessing,
             maxImageCount = 5,
+            captureConfig = PhotoCaptureConfig("Demo Watermark ${files.size + 1}", true),
+            onCaptureResult = { file ->
+                files = files + file
+                Toast.makeText(context, "Photo added", Toast.LENGTH_SHORT).show()
+            },
+            onCaptureError = { message ->
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            },
             onImageDelete = { index ->
                 files = files.toMutableList().apply { removeAt(index) }
             },
-            onAddClick = {
-                PhotoCaptureManager.instance.capturePhoto(
-                    PhotoCaptureConfig("Demo Watermark ${files.size + 1}", true)
-                ) { result ->
-                    when (result) {
-                        is PhotoCaptureResult.Processing -> {
-                            isProcessing = true
-                        }
-                        is PhotoCaptureResult.Success -> {
-                            isProcessing = false
-                            files = files + result.file
-                            Toast.makeText(context, "Photo added", Toast.LENGTH_SHORT).show()
-                        }
-                        is PhotoCaptureResult.Error -> {
-                            isProcessing = false
-                            Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
-                        }
-                        is PhotoCaptureResult.Cancelled -> {
-                            isProcessing = false
-                        }
-                    }
-                }
-            }
         )
 
         Text(
