@@ -48,9 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
@@ -107,16 +105,15 @@ import java.io.File
  * @param files List of image files to display
  * @param label Optional label text above the carousel
  * @param labelGap Gap between label and carousel
- * @param labelTextSize Label text size
- * @param labelFontWeight Label font weight
+ * @param labelTextStyle Full typography for the label (including color when you override the default)
  * @param carouselHeight Height of the carousel container (default 200dp)
  * @param itemWidth Width of each carousel item
  * @param itemSpacing Spacing between items
  * @param cornerRadius Corner radius for items
  * @param borderWidth Border width for items
- * @param colors Color configuration
+ * @param colors Color configuration for the carousel chrome (not the label; use [labelTextStyle] for label appearance)
  * @param showIndicators Whether to show indicators
- * @param showDeleteIcon Whether to show delete icon on items
+ * @param showDeleteIcon Whether to show the delete icon for the item at each index
  * @param enableFullScreen Whether to enable full-screen preview on tap
  * @param maxImageCount Maximum number of images allowed
  * @param isProcessing Whether an image is currently being processed (shows loading placeholder, disables add button)
@@ -135,8 +132,7 @@ fun ImageCarousel(
     // Label
     label: String = "",
     labelGap: Dp = ImageCarouselDefaults.LabelGap,
-    labelTextSize: TextUnit = ImageCarouselDefaults.LabelTextSize,
-    labelFontWeight: FontWeight = ImageCarouselDefaults.LabelFontWeight,
+    labelTextStyle: TextStyle = ImageCarouselDefaults.LabelTextStyle,
     // Carousel dimensions
     carouselHeight: Dp = ImageCarouselDefaults.CarouselHeight,
     // Item dimensions
@@ -148,7 +144,7 @@ fun ImageCarousel(
     colors: ImageCarouselColors = ImageCarouselDefaults.colors(),
     // Features
     showIndicators: Boolean = true,
-    showDeleteIcon: Boolean = true,
+    showDeleteIcon: (Int) -> Boolean = { true },
     enableFullScreen: Boolean = true,
     maxImageCount: Int = ImageCarouselDefaults.DefaultMaxImageCount,
     // Processing state - shows loading placeholder and disables add button
@@ -193,7 +189,7 @@ fun ImageCarousel(
     val canAddMore = !effectiveProcessing && files.size < maxImageCount
     val totalItemCount = files.size + processingCount
 
-    val handleAddClick: () -> Unit = {
+    @Suppress("AssignedValueIsNeverRead") val handleAddClick: () -> Unit = {
         if (onAddClick != null) {
             onAddClick()
         } else if (onCaptureResult != null) {
@@ -221,14 +217,7 @@ fun ImageCarousel(
     Column(modifier = modifier.fillMaxWidth()) {
         // Label
         if (label.isNotEmpty()) {
-            Text(
-                text = label,
-                style = TextStyle(
-                    fontSize = labelTextSize,
-                    fontWeight = labelFontWeight,
-                    color = colors.labelColor
-                )
-            )
+            Text(text = label, style = labelTextStyle)
             Spacer(modifier = Modifier.height(labelGap))
         }
 
@@ -254,7 +243,7 @@ fun ImageCarousel(
                         cornerRadius = cornerRadius,
                         borderWidth = borderWidth,
                         colors = colors,
-                        showDeleteIcon = showDeleteIcon,
+                        showDeleteIcon = showDeleteIcon(index),
                         actionButtons = actionButtons(index),
                         onImageClick = {
                             if (enableFullScreen) {
@@ -332,16 +321,15 @@ fun ImageCarousel(
  * @param onUrlsChange Callback when URLs list changes (after delete), null for read-only
  * @param label Optional label text above the carousel
  * @param labelGap Gap between label and carousel
- * @param labelTextSize Label text size
- * @param labelFontWeight Label font weight
+ * @param labelTextStyle Full typography for the label (including color when you override the default)
  * @param carouselHeight Height of the carousel container (default 200dp)
  * @param itemWidth Width of each carousel item
  * @param itemSpacing Spacing between items
  * @param cornerRadius Corner radius for items
  * @param borderWidth Border width for items
- * @param colors Color configuration
+ * @param colors Color configuration for the carousel chrome (not the label; use [labelTextStyle] for label appearance)
  * @param showIndicators Whether to show indicators
- * @param showDeleteIcon Whether to show delete icon on items (auto-disabled if onUrlsChange is null)
+ * @param showDeleteIcon Whether to show the delete icon for the item at each index (ignored when read-only)
  * @param enableFullScreen Whether to enable full-screen preview on tap
  * @param maxImageCount Maximum number of images allowed
  * @param onImageClick Callback when an image is clicked
@@ -357,8 +345,7 @@ fun ImageCarousel(
     // Label
     label: String = "",
     labelGap: Dp = ImageCarouselDefaults.LabelGap,
-    labelTextSize: TextUnit = ImageCarouselDefaults.LabelTextSize,
-    labelFontWeight: FontWeight = ImageCarouselDefaults.LabelFontWeight,
+    labelTextStyle: TextStyle = ImageCarouselDefaults.LabelTextStyle,
     // Carousel dimensions
     carouselHeight: Dp = ImageCarouselDefaults.CarouselHeight,
     // Item dimensions
@@ -370,7 +357,7 @@ fun ImageCarousel(
     colors: ImageCarouselColors = ImageCarouselDefaults.colors(),
     // Features
     showIndicators: Boolean = true,
-    showDeleteIcon: Boolean = onUrlsChange != null,
+    showDeleteIcon: (Int) -> Boolean = { onUrlsChange != null },
     enableFullScreen: Boolean = true,
     maxImageCount: Int = ImageCarouselDefaults.DefaultMaxImageCount,
     // Callbacks
@@ -383,6 +370,7 @@ fun ImageCarousel(
     val context = LocalContext.current
     val density = LocalDensity.current
     val scrollState = rememberScrollState()
+    val canDelete = onUrlsChange != null
 
     // Convert URLs to ImageSource
     val imageSources = remember(urls) {
@@ -408,14 +396,7 @@ fun ImageCarousel(
     Column(modifier = modifier.fillMaxWidth()) {
         // Label
         if (label.isNotEmpty()) {
-            Text(
-                text = label,
-                style = TextStyle(
-                    fontSize = labelTextSize,
-                    fontWeight = labelFontWeight,
-                    color = colors.labelColor
-                )
-            )
+            Text(text = label, style = labelTextStyle)
             Spacer(modifier = Modifier.height(labelGap))
         }
 
@@ -441,7 +422,7 @@ fun ImageCarousel(
                         cornerRadius = cornerRadius,
                         borderWidth = borderWidth,
                         colors = colors,
-                        showDeleteIcon = showDeleteIcon,
+                        showDeleteIcon = canDelete && showDeleteIcon(index),
                         actionButtons = actionButtons(index),
                         onImageClick = {
                             if (enableFullScreen) {
@@ -677,8 +658,8 @@ private fun CarouselImageItem(
                         painter = painterResource(id = R.drawable.ic_clear),
                         contentDescription = "Delete",
                         modifier = Modifier.size(
-                            ImageCarouselDefaults.DeleteButtonSize - 
-                            ImageCarouselDefaults.DeleteButtonPadding * 2
+                            ImageCarouselDefaults.DeleteButtonSize -
+                                    ImageCarouselDefaults.DeleteButtonPadding * 2
                         ),
                         tint = colors.deleteIconTint
                     )

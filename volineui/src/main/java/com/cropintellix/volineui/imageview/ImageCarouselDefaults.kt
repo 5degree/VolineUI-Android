@@ -5,6 +5,7 @@ package com.cropintellix.volineui.imageview
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -18,10 +19,28 @@ import androidx.compose.ui.unit.sp
  */
 object ImageCarouselDefaults {
 
+    // ===== DEFAULT COLORS (private palette for defaults) =====
+    private val DefaultLabelColor = Color(0xFF252525)
+    private val DefaultBorderColor = Color(0xFFCCCCCC)
+    private val DefaultBackgroundColor = Color.White
+    private val DefaultAddButtonIconColor = Color(0xFF666666)
+    private val DefaultDeleteIconTint = Color(0xFFE53935)
+    private val DefaultDeleteButtonBackground = Color(0x33E53935)
+    private val DefaultLoadingColor = Color(0xFF666666)
+    private val DefaultIndicatorActiveColor = Color.White
+    private val DefaultIndicatorInactiveColor = Color(0x80FFFFFF)
+
     // ===== LABEL DEFAULTS =====
     val LabelGap: Dp = 5.dp
     val LabelTextSize: TextUnit = 14.sp
     val LabelFontWeight: FontWeight = FontWeight.Normal
+
+    /** Default typography for the carousel label, including color. */
+    val LabelTextStyle: TextStyle = TextStyle(
+        color = DefaultLabelColor,
+        fontSize = LabelTextSize,
+        fontWeight = LabelFontWeight,
+    )
 
     // ===== CAROUSEL DIMENSIONS =====
     val CarouselHeight: Dp = 200.dp
@@ -57,23 +76,11 @@ object ImageCarouselDefaults {
     // ===== DEFAULT MAX IMAGE COUNT =====
     const val DefaultMaxImageCount: Int = Int.MAX_VALUE
 
-    // ===== DEFAULT COLORS =====
-    private val DefaultLabelColor = Color(0xFF252525)
-    private val DefaultBorderColor = Color(0xFFCCCCCC)
-    private val DefaultBackgroundColor = Color.White
-    private val DefaultAddButtonIconColor = Color(0xFF666666)
-    private val DefaultDeleteIconTint = Color(0xFFE53935)
-    private val DefaultDeleteButtonBackground = Color(0x33E53935)
-    private val DefaultLoadingColor = Color(0xFF666666)
-    private val DefaultIndicatorActiveColor = Color.White
-    private val DefaultIndicatorInactiveColor = Color(0x80FFFFFF)
-
     /**
      * Creates a [ImageCarouselColors] instance with the default colors.
      */
     @Composable
     fun colors(
-        labelColor: Color = DefaultLabelColor,
         borderColor: Color = DefaultBorderColor,
         backgroundColor: Color = DefaultBackgroundColor,
         addButtonIconColor: Color = DefaultAddButtonIconColor,
@@ -83,7 +90,6 @@ object ImageCarouselDefaults {
         indicatorActiveColor: Color = DefaultIndicatorActiveColor,
         indicatorInactiveColor: Color = DefaultIndicatorInactiveColor,
     ): ImageCarouselColors = ImageCarouselColors(
-        labelColor = labelColor,
         borderColor = borderColor,
         backgroundColor = backgroundColor,
         addButtonIconColor = addButtonIconColor,
@@ -112,7 +118,6 @@ object ImageCarouselDefaults {
  */
 @Immutable
 data class ImageCarouselColors(
-    val labelColor: Color,
     val borderColor: Color,
     val backgroundColor: Color,
     val addButtonIconColor: Color,
