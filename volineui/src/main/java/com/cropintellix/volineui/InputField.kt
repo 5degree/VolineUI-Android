@@ -12,6 +12,7 @@ import android.os.Parcelable
 import android.text.Editable
 import android.text.InputFilter
 import android.text.InputType
+import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -133,6 +134,8 @@ class InputField @JvmOverloads constructor(
             visibility = GONE
             textSize = 14f
             setTextColor(0xFF757575.toInt())
+            maxLines = 2
+            ellipsize = TextUtils.TruncateAt.END
         }
         
         // Create input
@@ -140,6 +143,7 @@ class InputField @JvmOverloads constructor(
             background = null
             textSize = 16f
             setTextColor(0xFF212121.toInt())
+            ellipsize = TextUtils.TruncateAt.END
             setPadding(
                 horizontalPadding.toInt(),
                 verticalPadding.toInt(),
@@ -153,6 +157,8 @@ class InputField @JvmOverloads constructor(
             visibility = GONE
             textSize = 12f
             setTextColor(errorColor)
+            maxLines = 3
+            ellipsize = TextUtils.TruncateAt.END
         }
         
         // Create counter
@@ -161,11 +167,15 @@ class InputField @JvmOverloads constructor(
             textSize = 12f
             setTextColor(0xFF757575.toInt())
             gravity = Gravity.END
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
         }
 
         // Parse attributes
         if (attrs != null) {
             parseAttributes(attrs, defStyleAttr)
+        } else {
+            inputEditText.isSingleLine = true
         }
 
         // Add views
@@ -351,6 +361,20 @@ class InputField @JvmOverloads constructor(
                 counterTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, counterTextSize)
             }
 
+            // Text overflow (default end ellipsis; none/start/middle/end/marquee from android:ellipsize)
+            inputEditText.ellipsize = if (typedArray.hasValue(R.styleable.InputField_android_ellipsize)) {
+                when (typedArray.getInt(R.styleable.InputField_android_ellipsize, 3)) {
+                    0 -> null
+                    1 -> TextUtils.TruncateAt.START
+                    2 -> TextUtils.TruncateAt.MIDDLE
+                    3 -> TextUtils.TruncateAt.END
+                    4 -> TextUtils.TruncateAt.MARQUEE
+                    else -> TextUtils.TruncateAt.END
+                }
+            } else {
+                TextUtils.TruncateAt.END
+            }
+
             // Set theme-based defaults if not explicitly set in XML
             if (!typedArray.hasValue(R.styleable.InputField_focusedBorderColor)) {
                 focusedBorderColor = getThemePrimaryColor()
@@ -368,6 +392,9 @@ class InputField @JvmOverloads constructor(
             inputEditText.inputType = inputEditText.inputType or InputType.TYPE_TEXT_FLAG_MULTI_LINE
             inputEditText.maxLines = 5
             inputEditText.gravity = Gravity.TOP or Gravity.START
+            inputEditText.isSingleLine = false
+        } else {
+            inputEditText.isSingleLine = true
         }
 
         // Apply read-only

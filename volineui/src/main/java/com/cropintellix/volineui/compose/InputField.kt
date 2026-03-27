@@ -50,6 +50,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -105,6 +106,7 @@ import kotlin.math.roundToInt
  * @param inputMask Input mask pattern (e.g., "(###) ###-####")
  * @param maskCharacter Character used as placeholder in mask
  * @param onValidationResult Callback for validation result
+ * @param textOverflow How visual overflow is handled for label, hint, and error text (default end ellipsis).
  */
 @Composable
 fun InputField(
@@ -138,6 +140,7 @@ fun InputField(
     inputMask: String = "",
     maskCharacter: Char = '#',
     onValidationResult: ((Boolean) -> Unit)? = null,
+    textOverflow: TextOverflow = TextOverflow.Ellipsis,
 ) {
     val effectiveHint = hint ?: label?.takeIf { it.isNotBlank() }?.let { "Enter $it" }
 
@@ -250,7 +253,10 @@ fun InputField(
                 style = TextStyle(
                     fontSize = InputFieldDefaults.LabelTextSize,
                     color = colors.labelTextColor
-                )
+                ),
+                maxLines = 2,
+                overflow = textOverflow,
+                modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(InputFieldDefaults.LabelGap))
         }
@@ -313,14 +319,17 @@ fun InputField(
                     interactionSource = interactionSource,
                     cursorBrush = SolidColor(colors.cursorColor),
                     decorationBox = { innerTextField ->
-                        Box {
+                        Box(modifier = Modifier.fillMaxWidth()) {
                             if (value.isEmpty() && !effectiveHint.isNullOrEmpty()) {
                                 Text(
                                     text = effectiveHint,
                                     style = TextStyle(
                                         fontSize = InputFieldDefaults.TextSize,
                                         color = colors.hintTextColor
-                                    )
+                                    ),
+                                    maxLines = if (singleLine) 1 else maxLines,
+                                    overflow = textOverflow,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                             innerTextField()
@@ -410,6 +419,8 @@ fun InputField(
                             fontSize = InputFieldDefaults.ErrorTextSize,
                             color = colors.errorColor
                         ),
+                        maxLines = 3,
+                        overflow = textOverflow,
                         modifier = Modifier.weight(1f)
                     )
                 } else {
@@ -428,7 +439,9 @@ fun InputField(
                         style = TextStyle(
                             fontSize = InputFieldDefaults.CounterTextSize,
                             color = colors.hintTextColor
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = textOverflow
                     )
                 }
             }
