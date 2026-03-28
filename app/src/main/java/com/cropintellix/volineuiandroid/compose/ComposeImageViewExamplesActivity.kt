@@ -630,7 +630,7 @@ private fun LabelsExample() {
                 modifier = Modifier.weight(1f),
                 aspectRatio = 1f,
                 label = "Profile Photo",
-                labelTextSize = 14.sp,
+                labelTextStyle = ImageViewDefaults.LabelTextStyle.copy(fontSize = 14.sp),
                 onCaptureRequest = {
                     Toast.makeText(context, "Profile photo capture", Toast.LENGTH_SHORT).show()
                 }
@@ -641,8 +641,10 @@ private fun LabelsExample() {
                 modifier = Modifier.weight(1f),
                 aspectRatio = 1f,
                 label = "ID Document",
-                labelTextSize = 14.sp,
-                labelFontWeight = FontWeight.Bold,
+                labelTextStyle = ImageViewDefaults.LabelTextStyle.copy(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
                 onCaptureRequest = {
                     Toast.makeText(context, "ID document capture", Toast.LENGTH_SHORT).show()
                 }

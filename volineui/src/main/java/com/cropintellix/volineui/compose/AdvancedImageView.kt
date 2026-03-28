@@ -44,7 +44,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -66,7 +65,7 @@ import java.io.File
  * - Image loading from multiple sources (URL, File, Bitmap, Uri, Drawable, Base64)
  * - Scale types (FIT, FILL, CROP, CENTER, STRETCH)
  * - Visual styling (corner radius, border width/color, background color)
- * - Label support (text, gap, size, color, weight)
+ * - Label support (text, gap, labelTextStyle)
  * - Placeholder (icon, text, colors, gap)
  * - Loading states (progress indicator)
  * - Delete button (optional, customizable tint)
@@ -80,11 +79,10 @@ import java.io.File
  * @param aspectRatio Optional aspect ratio (width/height). If 0, uses available space
  * @param cornerRadius Corner radius for the image
  * @param borderWidth Border width
- * @param colors Color configuration
+ * @param colors Color configuration for the image chrome (not the label; use [labelTextStyle] for label appearance)
  * @param label Optional label text above the image
  * @param labelGap Gap between label and image
- * @param labelTextSize Label text size
- * @param labelFontWeight Label font weight
+ * @param labelTextStyle Full typography for the label (including color when you override the default)
  * @param placeholderText Text to show in placeholder
  * @param placeholderIconResId Custom placeholder icon resource ID
  * @param placeholderIconSize Placeholder icon size
@@ -120,8 +118,7 @@ fun AdvancedImageView(
     // Label
     label: String = "",
     labelGap: Dp = ImageViewDefaults.LabelGap,
-    labelTextSize: TextUnit = ImageViewDefaults.LabelTextSize,
-    labelFontWeight: FontWeight = ImageViewDefaults.LabelFontWeight,
+    labelTextStyle: TextStyle = ImageViewDefaults.LabelTextStyle,
     // Placeholder
     placeholderText: String = ImageViewDefaults.PlaceholderText,
     placeholderIconResId: Int = 0,
@@ -211,14 +208,7 @@ fun AdvancedImageView(
     Column(modifier = effectiveModifier) {
         // Label
         if (label.isNotEmpty()) {
-            Text(
-                text = label,
-                style = TextStyle(
-                    fontSize = labelTextSize,
-                    fontWeight = labelFontWeight,
-                    color = colors.labelColor
-                )
-            )
+            Text(text = label, style = labelTextStyle)
             Spacer(modifier = Modifier.height(labelGap))
         }
 
@@ -634,8 +624,7 @@ fun AdvancedImageView(
     colors: ImageViewColors = ImageViewDefaults.displayOnlyColors(),
     label: String = "",
     labelGap: Dp = ImageViewDefaults.LabelGap,
-    labelTextSize: TextUnit = ImageViewDefaults.LabelTextSize,
-    labelFontWeight: FontWeight = ImageViewDefaults.LabelFontWeight,
+    labelTextStyle: TextStyle = ImageViewDefaults.LabelTextStyle,
     showDeleteButton: Boolean = false,
     showLoadingIndicator: Boolean = true,
     loadingGifResId: Int = 0,
@@ -660,8 +649,7 @@ fun AdvancedImageView(
         colors = colors,
         label = label,
         labelGap = labelGap,
-        labelTextSize = labelTextSize,
-        labelFontWeight = labelFontWeight,
+        labelTextStyle = labelTextStyle,
         showDeleteButton = showDeleteButton,
         showLoadingIndicator = showLoadingIndicator,
         loadingGifResId = loadingGifResId,
@@ -692,8 +680,7 @@ fun AdvancedImageView(
     colors: ImageViewColors = ImageViewDefaults.colors(),
     label: String = "",
     labelGap: Dp = ImageViewDefaults.LabelGap,
-    labelTextSize: TextUnit = ImageViewDefaults.LabelTextSize,
-    labelFontWeight: FontWeight = ImageViewDefaults.LabelFontWeight,
+    labelTextStyle: TextStyle = ImageViewDefaults.LabelTextStyle,
     placeholderText: String = ImageViewDefaults.PlaceholderText,
     placeholderIconResId: Int = 0,
     placeholderIconSize: Dp = ImageViewDefaults.PlaceholderIconSize,
@@ -724,8 +711,7 @@ fun AdvancedImageView(
         colors = colors,
         label = label,
         labelGap = labelGap,
-        labelTextSize = labelTextSize,
-        labelFontWeight = labelFontWeight,
+        labelTextStyle = labelTextStyle,
         placeholderText = placeholderText,
         placeholderIconResId = placeholderIconResId,
         placeholderIconSize = placeholderIconSize,
@@ -1054,8 +1040,7 @@ fun AdvancedImageView(
     colors: ImageViewColors = ImageViewDefaults.colors(),
     label: String = "",
     labelGap: Dp = ImageViewDefaults.LabelGap,
-    labelTextSize: TextUnit = ImageViewDefaults.LabelTextSize,
-    labelFontWeight: FontWeight = ImageViewDefaults.LabelFontWeight,
+    labelTextStyle: TextStyle = ImageViewDefaults.LabelTextStyle,
     placeholderText: String = ImageViewDefaults.PlaceholderText,
     placeholderIconResId: Int = 0,
     placeholderIconSize: Dp = ImageViewDefaults.PlaceholderIconSize,
@@ -1086,8 +1071,7 @@ fun AdvancedImageView(
         colors = colors,
         label = label,
         labelGap = labelGap,
-        labelTextSize = labelTextSize,
-        labelFontWeight = labelFontWeight,
+        labelTextStyle = labelTextStyle,
         placeholderText = placeholderText,
         placeholderIconResId = placeholderIconResId,
         placeholderIconSize = placeholderIconSize,

@@ -5,6 +5,7 @@ package com.cropintellix.volineui.imageview
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -15,6 +16,17 @@ import androidx.compose.ui.unit.sp
  * Default values and configurations for AdvancedImageView composable.
  */
 object ImageViewDefaults {
+
+    // ===== DEFAULT COLORS (private palette for defaults) =====
+    private val DefaultLabelColor = Color(0xFF252525)
+    private val DefaultBorderColor = Color(0xFFCCCCCC)
+    private val DefaultBackgroundColor = Color.Transparent
+    private val DefaultPlaceholderIconColor = Color(0xFF666666)
+    private val DefaultPlaceholderTextColor = Color(0xFF666666)
+    private val DefaultDeleteIconTint = Color(0xFFE53935)
+    private val DefaultDeleteButtonBackground = Color(0x33E53935)
+    private val DefaultLoadingColor = Color(0xFF666666)
+    private val DefaultErrorColor = Color(0xFFF44336)
 
     // ===== DIMENSIONS =====
     val CornerRadius: Dp = 8.dp
@@ -27,6 +39,13 @@ object ImageViewDefaults {
     val LabelGap: Dp = 5.dp
     val LabelTextSize: TextUnit = 14.sp
     val LabelFontWeight: FontWeight = FontWeight.Normal
+
+    /** Default typography for the image view label, including color. */
+    val LabelTextStyle: TextStyle = TextStyle(
+        color = DefaultLabelColor,
+        fontSize = LabelTextSize,
+        fontWeight = LabelFontWeight,
+    )
     
     // ===== PLACEHOLDER DEFAULTS =====
     val PlaceholderIconSize: Dp = 36.dp
@@ -57,23 +76,11 @@ object ImageViewDefaults {
     const val AnimationDuration: Int = 200
     const val FadeAnimationDuration: Int = 300
     
-    // ===== DEFAULT COLORS =====
-    private val DefaultLabelColor = Color(0xFF252525)
-    private val DefaultBorderColor = Color(0xFFCCCCCC)
-    private val DefaultBackgroundColor = Color.Transparent
-    private val DefaultPlaceholderIconColor = Color(0xFF666666)
-    private val DefaultPlaceholderTextColor = Color(0xFF666666)
-    private val DefaultDeleteIconTint = Color(0xFFE53935)
-    private val DefaultDeleteButtonBackground = Color(0x33E53935)
-    private val DefaultLoadingColor = Color(0xFF666666)
-    private val DefaultErrorColor = Color(0xFFF44336)
-    
     /**
      * Creates a [ImageViewColors] instance with the default colors.
      */
     @Composable
     fun colors(
-        labelColor: Color = DefaultLabelColor,
         borderColor: Color = DefaultBorderColor,
         backgroundColor: Color = DefaultBackgroundColor,
         placeholderIconColor: Color = DefaultPlaceholderIconColor,
@@ -83,7 +90,6 @@ object ImageViewDefaults {
         loadingColor: Color = DefaultLoadingColor,
         errorColor: Color = DefaultErrorColor,
     ): ImageViewColors = ImageViewColors(
-        labelColor = labelColor,
         borderColor = borderColor,
         backgroundColor = backgroundColor,
         placeholderIconColor = placeholderIconColor,
@@ -123,7 +129,6 @@ object ImageViewDefaults {
  */
 @Immutable
 data class ImageViewColors(
-    val labelColor: Color,
     val borderColor: Color,
     val backgroundColor: Color,
     val placeholderIconColor: Color,
@@ -165,8 +170,7 @@ data class ImageViewColors(
 data class ImageViewLabelConfig(
     val text: String = "",
     val gap: Dp = ImageViewDefaults.LabelGap,
-    val textSize: TextUnit = ImageViewDefaults.LabelTextSize,
-    val fontWeight: FontWeight = ImageViewDefaults.LabelFontWeight,
+    val textStyle: TextStyle = ImageViewDefaults.LabelTextStyle,
 )
 
 /**
