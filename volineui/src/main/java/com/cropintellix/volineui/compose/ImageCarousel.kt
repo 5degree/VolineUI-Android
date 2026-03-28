@@ -35,6 +35,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -237,28 +238,30 @@ fun ImageCarousel(
             ) {
                 // Image items
                 files.forEachIndexed { index, file ->
-                    CarouselImageItem(
-                        source = ImageSource.File(file),
-                        modifier = Modifier.size(itemWidth, carouselHeight),
-                        cornerRadius = cornerRadius,
-                        borderWidth = borderWidth,
-                        colors = colors,
-                        showDeleteIcon = showDeleteIcon(index),
-                        actionButtons = actionButtons(index),
-                        onImageClick = {
-                            if (enableFullScreen) {
-                                FullScreenImageViewer.showCarouselCompose(
-                                    context,
-                                    imageSources,
-                                    index
-                                )
+                    key(file.absolutePath) {
+                        CarouselImageItem(
+                            source = ImageSource.File(file),
+                            modifier = Modifier.size(itemWidth, carouselHeight),
+                            cornerRadius = cornerRadius,
+                            borderWidth = borderWidth,
+                            colors = colors,
+                            showDeleteIcon = showDeleteIcon(index),
+                            actionButtons = actionButtons(index),
+                            onImageClick = {
+                                if (enableFullScreen) {
+                                    FullScreenImageViewer.showCarouselCompose(
+                                        context,
+                                        imageSources,
+                                        index
+                                    )
+                                }
+                                onImageClick?.invoke(index)
+                            },
+                            onDeleteClick = {
+                                onImageDelete?.invoke(index)
                             }
-                            onImageClick?.invoke(index)
-                        },
-                        onDeleteClick = {
-                            onImageDelete?.invoke(index)
-                        }
-                    )
+                        )
+                    }
                 }
 
                 // Processing placeholder (loading indicator)
@@ -416,30 +419,32 @@ fun ImageCarousel(
             ) {
                 // Image items
                 urls.forEachIndexed { index, url ->
-                    CarouselImageItem(
-                        source = ImageSource.Url(url),
-                        modifier = Modifier.size(itemWidth, carouselHeight),
-                        cornerRadius = cornerRadius,
-                        borderWidth = borderWidth,
-                        colors = colors,
-                        showDeleteIcon = canDelete && showDeleteIcon(index),
-                        actionButtons = actionButtons(index),
-                        onImageClick = {
-                            if (enableFullScreen) {
-                                FullScreenImageViewer.showCarouselCompose(
-                                    context,
-                                    imageSources,
-                                    index
-                                )
+                    key(url, index) {
+                        CarouselImageItem(
+                            source = ImageSource.Url(url),
+                            modifier = Modifier.size(itemWidth, carouselHeight),
+                            cornerRadius = cornerRadius,
+                            borderWidth = borderWidth,
+                            colors = colors,
+                            showDeleteIcon = canDelete && showDeleteIcon(index),
+                            actionButtons = actionButtons(index),
+                            onImageClick = {
+                                if (enableFullScreen) {
+                                    FullScreenImageViewer.showCarouselCompose(
+                                        context,
+                                        imageSources,
+                                        index
+                                    )
+                                }
+                                onImageClick?.invoke(index)
+                            },
+                            onDeleteClick = {
+                                val newUrls = urls.toMutableList().apply { removeAt(index) }
+                                onUrlsChange?.invoke(newUrls)
+                                onImageDelete?.invoke(index)
                             }
-                            onImageClick?.invoke(index)
-                        },
-                        onDeleteClick = {
-                            val newUrls = urls.toMutableList().apply { removeAt(index) }
-                            onUrlsChange?.invoke(newUrls)
-                            onImageDelete?.invoke(index)
-                        }
-                    )
+                        )
+                    }
                 }
 
                 // Add button
@@ -494,8 +499,8 @@ private fun CarouselImageItem(
     val context = LocalContext.current
     val shape = RoundedCornerShape(cornerRadius)
     val itemActionScroll = rememberScrollState()
-    var isLoading by remember { mutableStateOf(true) }
-    var isLoaded by remember { mutableStateOf(false) }
+    var isLoading by remember(source) { mutableStateOf(true) }
+    var isLoaded by remember(source) { mutableStateOf(false) }
 
     val imageAlpha by animateFloatAsState(
         targetValue = if (isLoaded) 1f else 0f,
