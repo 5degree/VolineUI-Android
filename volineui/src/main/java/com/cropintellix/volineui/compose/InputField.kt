@@ -14,6 +14,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -31,6 +33,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -92,6 +95,7 @@ import kotlin.math.roundToInt
  * @param borderWidth Border width in normal state
  * @param focusedBorderWidth Border width when focused
  * @param leadingIcon Optional icon at the start of the field
+ * @param trailingText Optional suffix text (e.g. "Kg/acre") shown in a trailing slot
  * @param trailingIcon Optional icon at the end of the field
  * @param showClearIcon Whether to show a clear button when text is present
  * @param keyboardOptions Keyboard configuration
@@ -126,6 +130,7 @@ fun InputField(
     borderWidth: Dp = InputFieldDefaults.BorderWidth,
     focusedBorderWidth: Dp = InputFieldDefaults.FocusedBorderWidth,
     leadingIcon: Painter? = null,
+    trailingText: String? = null,
     trailingIcon: Painter? = null,
     showClearIcon: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -143,6 +148,7 @@ fun InputField(
     textOverflow: TextOverflow = TextOverflow.Ellipsis,
 ) {
     val effectiveHint = hint ?: label?.takeIf { it.isNotBlank() }?.let { "Enter $it" }
+    val showTrailingSlot = !trailingText.isNullOrBlank()
 
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -273,132 +279,166 @@ fun InputField(
                     shape = RoundedCornerShape(cornerRadius)
                 )
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = InputFieldDefaults.MinHeight)
-                    .padding(
-                        horizontal = InputFieldDefaults.HorizontalPadding,
-                        vertical = InputFieldDefaults.VerticalPadding
-                    ),
-                verticalAlignment = Alignment.CenterVertically
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // Leading icon
-                if (leadingIcon != null) {
-                    Icon(
-                        painter = leadingIcon,
-                        contentDescription = null,
-                        modifier = Modifier.size(InputFieldDefaults.IconSize),
-                        tint = colors.iconColor
-                    )
-                    Spacer(modifier = Modifier.width(InputFieldDefaults.IconPadding))
-                }
-
-                // Text field
-                BasicTextField(
-                    value = value,
-                    onValueChange = handleValueChange,
-                    modifier = Modifier
-                        .weight(1f)
-                        .focusRequester(focusRequester),
-                    enabled = enabled && !readOnly,
-                    readOnly = readOnly,
-                    textStyle = TextStyle(
-                        fontSize = InputFieldDefaults.TextSize,
-                        color = colors.textColor(enabled)
-                    ),
-                    keyboardOptions = if (isPassword) {
-                        keyboardOptions.copy(keyboardType = KeyboardType.Password)
-                    } else {
-                        keyboardOptions
-                    },
-                    keyboardActions = keyboardActions,
-                    singleLine = singleLine,
-                    maxLines = maxLines,
-                    visualTransformation = visualTransformation,
-                    interactionSource = interactionSource,
-                    cursorBrush = SolidColor(colors.cursorColor),
-                    decorationBox = { innerTextField ->
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            if (value.isEmpty() && !effectiveHint.isNullOrEmpty()) {
-                                Text(
-                                    text = effectiveHint,
-                                    style = TextStyle(
-                                        fontSize = InputFieldDefaults.TextSize,
-                                        color = colors.hintTextColor
-                                    ),
-                                    maxLines = if (singleLine) 1 else maxLines,
-                                    overflow = textOverflow,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                            innerTextField()
-                        }
-                    }
-                )
-
-                // Trailing icons
+                val trailingTextMaxWidth =
+                    (maxWidth * InputFieldDefaults.TrailingTextMaxWidthFraction).coerceAtLeast(48.dp)
+                val trailingDividerHeight = InputFieldDefaults.TrailingDividerHeight
                 Row(
-                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = InputFieldDefaults.MinHeight)
+                        .padding(
+                            horizontal = InputFieldDefaults.HorizontalPadding,
+                            vertical = InputFieldDefaults.VerticalPadding
+                        ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Loading indicator
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(InputFieldDefaults.IconSize),
-                            color = colors.loadingColor,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-
-                    // Password toggle
-                    if (isPassword) {
+                    // Leading icon
+                    if (leadingIcon != null) {
                         Icon(
-                            painter = painterResource(
-                                id = if (passwordVisible) R.drawable.ic_visibility
-                                else R.drawable.ic_visibility_off
-                            ),
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                            modifier = Modifier
-                                .size(InputFieldDefaults.IconSize)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    passwordVisible = !passwordVisible
-                                },
-                            tint = colors.iconColor
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-
-                    // Clear icon
-                    if (showClearIcon && value.isNotEmpty() && enabled && !readOnly) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_clear),
-                            contentDescription = "Clear",
-                            modifier = Modifier
-                                .size(InputFieldDefaults.IconSize)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    onValueChange("")
-                                },
-                            tint = colors.iconColor
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-
-                    // Trailing icon
-                    if (trailingIcon != null) {
-                        Icon(
-                            painter = trailingIcon,
+                            painter = leadingIcon,
                             contentDescription = null,
                             modifier = Modifier.size(InputFieldDefaults.IconSize),
                             tint = colors.iconColor
                         )
+                        Spacer(modifier = Modifier.width(InputFieldDefaults.IconPadding))
+                    }
+
+                    // Text field
+                    BasicTextField(
+                        value = value,
+                        onValueChange = handleValueChange,
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(focusRequester),
+                        enabled = enabled && !readOnly,
+                        readOnly = readOnly,
+                        textStyle = TextStyle(
+                            fontSize = InputFieldDefaults.TextSize,
+                            color = colors.textColor(enabled)
+                        ),
+                        keyboardOptions = if (isPassword) {
+                            keyboardOptions.copy(keyboardType = KeyboardType.Password)
+                        } else {
+                            keyboardOptions
+                        },
+                        keyboardActions = keyboardActions,
+                        singleLine = singleLine,
+                        maxLines = maxLines,
+                        visualTransformation = visualTransformation,
+                        interactionSource = interactionSource,
+                        cursorBrush = SolidColor(colors.cursorColor),
+                        decorationBox = { innerTextField ->
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                if (value.isEmpty() && !effectiveHint.isNullOrEmpty()) {
+                                    Text(
+                                        text = effectiveHint,
+                                        style = TextStyle(
+                                            fontSize = InputFieldDefaults.TextSize,
+                                            color = colors.hintTextColor
+                                        ),
+                                        maxLines = if (singleLine) 1 else maxLines,
+                                        overflow = textOverflow,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        }
+                    )
+
+                    // Trailing icons + optional divider / unit text / trailing icon
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Loading indicator
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(InputFieldDefaults.IconSize),
+                                color = colors.loadingColor,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        // Password toggle
+                        if (isPassword) {
+                            Icon(
+                                painter = painterResource(
+                                    id = if (passwordVisible) R.drawable.ic_visibility
+                                    else R.drawable.ic_visibility_off
+                                ),
+                                contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                modifier = Modifier
+                                    .size(InputFieldDefaults.IconSize)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
+                                        passwordVisible = !passwordVisible
+                                    },
+                                tint = colors.iconColor
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        // Clear icon
+                        if (showClearIcon && value.isNotEmpty() && enabled && !readOnly) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_clear),
+                                contentDescription = "Clear",
+                                modifier = Modifier
+                                    .size(InputFieldDefaults.IconSize)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
+                                        onValueChange("")
+                                    },
+                                tint = colors.iconColor
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        if (showTrailingSlot) {
+                            Spacer(modifier = Modifier.width(InputFieldDefaults.TrailingInputToDividerGap))
+                            VerticalDivider(
+                                modifier = Modifier.height(trailingDividerHeight.coerceAtLeast(1.dp)),
+                                thickness = InputFieldDefaults.TrailingDividerWidth,
+                                color = colors.trailingDividerColor,
+                            )
+                            Text(
+                                text = trailingText.trim(),
+                                style = TextStyle(
+                                    fontSize = InputFieldDefaults.TextSize,
+                                    color = colors.trailingTextColor(enabled)
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .padding(
+                                        start = InputFieldDefaults.TrailingTextStartPadding,
+                                        end = if (trailingIcon != null) {
+                                            InputFieldDefaults.TrailingTextEndPadding
+                                        } else {
+                                            0.dp
+                                        },
+                                    )
+                                    .widthIn(max = trailingTextMaxWidth)
+                            )
+                        }
+
+                        if (trailingIcon != null) {
+                            Icon(
+                                painter = trailingIcon,
+                                contentDescription = null,
+                                modifier = Modifier.size(InputFieldDefaults.IconSize),
+                                tint = colors.iconColor
+                            )
+                        }
                     }
                 }
             }
@@ -500,6 +540,24 @@ private fun InputFieldPreview() {
             label = "Disabled",
             hint = "Cannot edit",
             enabled = false
+        )
+
+        InputField(
+            value = text,
+            onValueChange = { text = it },
+            label = "Quantity (trailing unit)",
+            hint = "0",
+            trailingText = "Kg/acre",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+
+        InputField(
+            value = text,
+            onValueChange = { text = it },
+            label = "Unit + trailing icon",
+            hint = "0",
+            trailingText = "Very long unit that ellipsize…",
+            trailingIcon = painterResource(id = R.drawable.ic_clear)
         )
     }
 }

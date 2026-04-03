@@ -108,6 +108,32 @@
             app:cornerRadius="12dp"
             android:layout_marginBottom="16dp" />
 
+        <!-- Trailing unit text (divider + Kg/acre) -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/ureaInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Total quantity of Urea applied"
+            android:hint="0"
+            android:inputType="numberDecimal"
+            app:trailingText="Kg/acre"
+            app:cornerRadius="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Trailing text + suffix icon (text left of icon) -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/fertilizerInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Fertilizer amount"
+            android:hint="0"
+            android:inputType="number"
+            app:trailingText="Kg/acre"
+            app:suffixIcon="@drawable/ic_launcher_foreground"
+            app:showClearIcon="true"
+            app:cornerRadius="8dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- Disabled Input -->
         <com.cropintellix.volineui.InputField
             android:id="@+id/disabledInput"

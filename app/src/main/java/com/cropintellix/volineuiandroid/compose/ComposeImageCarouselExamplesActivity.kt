@@ -62,10 +62,10 @@ class ComposeImageCarouselExamplesActivity : ComponentActivity() {
 private fun ImageCarouselExamplesScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+	        .fillMaxSize()
+	        .background(Color.White)
+	        .verticalScroll(rememberScrollState())
+	        .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
@@ -279,7 +279,7 @@ private fun CustomStylingExample() {
                 indicatorActiveColor = Color(0xFF2196F3),
                 indicatorInactiveColor = Color(0x402196F3)
             ),
-            showDeleteIcon = false
+            showDeleteIcon = { false }
         )
 
         Text(
@@ -299,7 +299,7 @@ private fun CustomStylingExample() {
                 indicatorActiveColor = Color(0xFF4CAF50),
                 indicatorInactiveColor = Color(0x404CAF50)
             ),
-            showDeleteIcon = false
+            showDeleteIcon = { false }
         )
     }
 }
@@ -324,7 +324,7 @@ private fun ReadOnlyExample() {
             urls = urls,
             // No onUrlsChange = read-only, no delete button
             label = "Photo Gallery",
-            showDeleteIcon = false,
+            showDeleteIcon = { false },
             enableFullScreen = true
         )
     }

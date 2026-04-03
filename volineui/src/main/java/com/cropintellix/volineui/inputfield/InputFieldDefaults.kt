@@ -24,6 +24,21 @@ object InputFieldDefaults {
     val IconSize: Dp = 24.dp
     val LabelGap: Dp = 5.dp
     val MinHeight: Dp = 48.dp
+    /** Vertical inset so the trailing divider does not span the full field height (Figma-style). */
+    val TrailingDividerVerticalInset: Dp = 8.dp
+    val TrailingDividerWidth: Dp = 1.dp
+    /**
+     * Trailing vertical divider height — matches View [InputField] (`minRowHeight - 2 * inset`), not the
+     * smaller inner padded band (`MinHeight - 2 * VerticalPadding`).
+     */
+    val TrailingDividerHeight: Dp = MinHeight - TrailingDividerVerticalInset * 2
+    /** Space between the editable text and the trailing divider (View + Compose). */
+    val TrailingInputToDividerGap: Dp = 8.dp
+    /** Space between divider and trailing text, and before optional trailing icon. */
+    val TrailingTextStartPadding: Dp = 12.dp
+    val TrailingTextEndPadding: Dp = 8.dp
+    /** Max width for trailing unit text; ellipsis applies beyond this (fraction of field width). */
+    const val TrailingTextMaxWidthFraction: Float = 0.42f
 
     // Default text sizes
     val TextSize: TextUnit = 16.sp
@@ -40,6 +55,7 @@ object InputFieldDefaults {
     private val TextColor = Color(0xFF212121)
     private val LabelTextColor = Color(0xFF252525)
     private val HintTextColor = Color(0xFF757575)
+    private val TrailingTextColorDefault = Color(0xFF9E9E9E)
 
     /**
      * Creates an [InputFieldColors] instance with the default colors.
@@ -60,6 +76,8 @@ object InputFieldDefaults {
         disabledBackgroundColor: Color = Color(0xFFF5F5F5),
         cursorColor: Color = MaterialTheme.colorScheme.primary,
         iconColor: Color = Color(0xFF757575),
+        trailingTextColor: Color = TrailingTextColorDefault,
+        trailingDividerColor: Color = BorderColor,
     ): InputFieldColors = InputFieldColors(
         textColor = textColor,
         labelTextColor = labelTextColor,
@@ -75,6 +93,8 @@ object InputFieldDefaults {
         disabledBackgroundColor = disabledBackgroundColor,
         cursorColor = cursorColor,
         iconColor = iconColor,
+        trailingTextColor = trailingTextColor,
+        trailingDividerColor = trailingDividerColor,
     )
 }
 
@@ -97,6 +117,8 @@ data class InputFieldColors(
     val disabledBackgroundColor: Color,
     val cursorColor: Color,
     val iconColor: Color,
+    val trailingTextColor: Color,
+    val trailingDividerColor: Color,
 ) {
     /**
      * Get border color based on current state.
@@ -130,5 +152,9 @@ data class InputFieldColors(
      */
     fun backgroundColor(enabled: Boolean): Color {
         return if (enabled) backgroundColor else disabledBackgroundColor
+    }
+
+    fun trailingTextColor(enabled: Boolean): Color {
+        return if (enabled) trailingTextColor else trailingTextColor.copy(alpha = 0.5f)
     }
 }

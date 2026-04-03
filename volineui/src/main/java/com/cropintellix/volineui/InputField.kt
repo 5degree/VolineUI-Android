@@ -25,6 +25,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import com.cropintellix.volineui.inputfield.FieldState
 import com.cropintellix.volineui.inputfield.InputMask
 import com.cropintellix.volineui.inputfield.InputValidator
@@ -56,6 +57,13 @@ class InputField @JvmOverloads constructor(
     private var clearIconView: ImageView? = null
     private var passwordToggleView: ImageView? = null
     private var loadingProgressBar: ProgressBar? = null
+    private var trailingTextView: TextView? = null
+    private var trailingDividerView: View? = null
+
+    /** Shown to the right of the input, left of suffix/clear/password/loading icons. */
+    private var trailingTextContent: String = ""
+    private var trailingTextColorValue: Int = 0xFF9E9E9E.toInt()
+    private var trailingDividerColorValue: Int = 0xFFCCCCCC.toInt()
 
     // Paint for border
     private val borderPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -189,6 +197,8 @@ class InputField @JvmOverloads constructor(
         
         // Apply initial state
         updateState(currentState)
+
+        applyTrailingTextVisibility()
     }
 
     private fun parseAttributes(attrs: AttributeSet, defStyleAttr: Int) {
@@ -293,6 +303,18 @@ class InputField @JvmOverloads constructor(
             if (suffixIconRes != 0) {
                 setSuffixIcon(ContextCompat.getDrawable(context, suffixIconRes))
             }
+
+            trailingTextContent = typedArray.getString(R.styleable.InputField_trailingText)?.trim() ?: ""
+            if (typedArray.hasValue(R.styleable.InputField_trailingTextColor)) {
+                trailingTextColorValue = typedArray.getColor(
+                    R.styleable.InputField_trailingTextColor,
+                    trailingTextColorValue
+                )
+            }
+            trailingDividerColorValue = typedArray.getColor(
+                R.styleable.InputField_trailingDividerColor,
+                borderColor
+            )
             
             // Custom clear and password toggle icons
             clearIconRes = typedArray.getResourceId(R.styleable.InputField_clearIcon, 0)
@@ -711,9 +733,60 @@ class InputField @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Optional unit label (e.g. "Kg/acre") shown after a vertical divider to the left of suffix/clear/password icons.
+     * Long text is ellipsized at the end. Pass null or blank to remove.
+     */
+    fun setTrailingText(text: CharSequence?) {
+        trailingTextContent = text?.toString()?.trim() ?: ""
+        applyTrailingTextVisibility()
+        requestLayout()
+    }
+
+    private fun ensureTrailingViews() {
+        if (trailingDividerView == null) {
+            trailingDividerView = View(context).apply {
+                visibility = GONE
+            }
+            addView(trailingDividerView)
+        }
+        trailingDividerView?.setBackgroundColor(trailingDividerColorValue)
+        if (trailingTextView == null) {
+            trailingTextView = TextView(context).apply {
+                visibility = GONE
+                textSize = 16f
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
+                includeFontPadding = false
+            }
+            addView(trailingTextView)
+        }
+    }
+
+    private fun applyTrailingTextVisibility() {
+        if (trailingTextContent.isEmpty()) {
+            trailingTextView?.visibility = GONE
+            trailingDividerView?.visibility = GONE
+        } else {
+            ensureTrailingViews()
+            trailingTextView?.text = trailingTextContent
+            updateTrailingTextColorUi()
+            trailingTextView?.visibility = VISIBLE
+            trailingDividerView?.visibility = VISIBLE
+        }
+    }
+
+    private fun updateTrailingTextColorUi() {
+        val base = trailingTextColorValue
+        trailingTextView?.setTextColor(
+            if (isEnabled) base else ColorUtils.setAlphaComponent(base, (255 * 0.5f).toInt())
+        )
+    }
+
     override fun setEnabled(enabled: Boolean) {
         super.setEnabled(enabled)
         inputEditText.isEnabled = enabled
+        updateTrailingTextColorUi()
         if (!enabled) {
             updateState(FieldState.DISABLED)
         } else if (currentState == FieldState.DISABLED) {
@@ -801,6 +874,39 @@ class InputField @JvmOverloads constructor(
         
         inputWidth -= rightIconsCount * (iconSize + iconPadding.toInt())
 
+        val trailingGapBeforeDivider = dpToPx(8f).toInt()
+        val trailingInnerEndPad = if (trailingTextContent.isNotEmpty()) {
+            if (rightIconsCount > 0) dpToPx(8f).toInt() else horizontalPadding.toInt()
+        } else {
+            0
+        }
+        var trailingSectionWidth = 0
+        if (trailingTextContent.isNotEmpty()) {
+            ensureTrailingViews()
+            val maxTextW = (width * 0.42f).toInt().coerceAtLeast(1)
+            val textPadEnd = if (rightIconsCount > 0) dpToPx(8f).toInt() else 0
+            val textPadStart = dpToPx(12f).toInt()
+            val dividerW = dpToPx(1f).toInt()
+            trailingTextView!!.measure(
+                MeasureSpec.makeMeasureSpec((maxTextW - textPadEnd).coerceAtLeast(1), MeasureSpec.AT_MOST),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+            )
+            trailingSectionWidth =
+                trailingGapBeforeDivider + dividerW + textPadStart +
+                    trailingTextView!!.measuredWidth + textPadEnd
+            val minInputRowH = dpToPx(48f).toInt()
+            val inset = dpToPx(8f).toInt()
+            val divH = (minInputRowH - inset * 2).coerceAtLeast(1)
+            trailingDividerView!!.measure(
+                MeasureSpec.makeMeasureSpec(dividerW, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(divH, MeasureSpec.EXACTLY)
+            )
+        }
+        inputWidth -= trailingSectionWidth
+        if (trailingTextContent.isNotEmpty()) {
+            inputWidth -= trailingInnerEndPad
+        }
+
         measureChild(
             inputEditText,
             MeasureSpec.makeMeasureSpec(inputWidth, MeasureSpec.EXACTLY),
@@ -855,6 +961,21 @@ class InputField @JvmOverloads constructor(
         
         var leftOffset = paddingStart
         var rightOffset = right - left - paddingEnd
+        val rightIconsCountLayout = listOfNotNull(
+            suffixIconView?.takeIf { it.visibility == VISIBLE },
+            clearIconView?.takeIf { it.visibility == VISIBLE },
+            passwordToggleView?.takeIf { it.visibility == VISIBLE },
+            loadingProgressBar?.takeIf { it.visibility == VISIBLE }
+        ).size
+        val trailingInnerEndPadPx = if (trailingTextView?.visibility == VISIBLE) {
+            if (rightIconsCountLayout > 0) dpToPx(8f).toInt() else horizontalPadding.toInt()
+        } else {
+            0
+        }
+        val trailingGapBeforeDividerPx = dpToPx(8f).toInt()
+        if (trailingTextView?.visibility == VISIBLE) {
+            rightOffset -= trailingInnerEndPadPx
+        }
 
         // Layout prefix icon with proper spacing
         if (prefixIconView?.visibility == VISIBLE) {
@@ -888,11 +1009,40 @@ class InputField @JvmOverloads constructor(
             rightOffset -= iconSize + iconMargin * 2
         }
 
+        var editRight = rightOffset
+        if (trailingTextView?.visibility == VISIBLE && trailingDividerView?.visibility == VISIBLE) {
+            val gapBeforeDivider = trailingGapBeforeDividerPx
+            val dividerW = trailingDividerView!!.measuredWidth
+            val textPadStart = dpToPx(12f).toInt()
+            val textPadEnd = if (rightIconsCountLayout > 0) dpToPx(8f).toInt() else 0
+            val tw = trailingTextView!!.measuredWidth
+            val th = trailingTextView!!.measuredHeight
+            val trailingW = gapBeforeDivider + dividerW + textPadStart + tw + textPadEnd
+            editRight = rightOffset - trailingW
+            val divH = trailingDividerView!!.measuredHeight
+            val divTop = inputTop + (inputHeight - divH) / 2
+            val dividerLeft = editRight + gapBeforeDivider
+            trailingDividerView!!.layout(
+                dividerLeft,
+                divTop,
+                dividerLeft + dividerW,
+                divTop + divH
+            )
+            val textTop = inputTop + (inputHeight - th) / 2
+            val textLeft = dividerLeft + dividerW + textPadStart
+            trailingTextView!!.layout(
+                textLeft,
+                textTop,
+                textLeft + tw,
+                textTop + th
+            )
+        }
+
         // Layout input
         inputEditText.layout(
             leftOffset,
             inputTop,
-            rightOffset,
+            editRight,
             inputTop + inputHeight
         )
         currentTop += inputHeight

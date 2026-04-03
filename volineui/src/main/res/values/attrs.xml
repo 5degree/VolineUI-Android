@@ -31,6 +31,11 @@
         <attr name="android:enabled" />
         <attr name="readOnly" format="boolean" />
         
+        <!-- Trailing unit / suffix (e.g. Kg/acre): divider + ellipsized text; icon order: text then suffix icon -->
+        <attr name="trailingText" format="string" />
+        <attr name="trailingTextColor" format="color" />
+        <attr name="trailingDividerColor" format="color" />
+
         <!-- Icons -->
         <attr name="prefixIcon" format="reference" />
         <attr name="suffixIcon" format="reference" />

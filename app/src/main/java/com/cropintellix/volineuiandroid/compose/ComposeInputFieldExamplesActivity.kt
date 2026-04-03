@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,6 +39,7 @@ import com.cropintellix.volineui.inputfield.InputFieldDefaults
 import com.cropintellix.volineui.inputfield.InputMaskTransformation
 import com.cropintellix.volineui.inputfield.ValidationType
 import com.cropintellix.volineuiandroid.ui.theme.AppTheme
+import com.cropintellix.volineui.R as VolineR
 
 /**
  * Example activity demonstrating the Compose InputField component.
@@ -113,6 +115,12 @@ private fun InputFieldExamplesScreen(modifier: Modifier = Modifier) {
         // With Icons
         SectionTitle("With Icons")
         IconsExample()
+
+        HorizontalDivider()
+
+        // Trailing unit text (Figma-style)
+        SectionTitle("Trailing text (units)")
+        TrailingTextExamples()
 
         HorizontalDivider()
 
@@ -258,6 +266,42 @@ private fun IconsExample() {
         hint = "Search for something...",
         showClearIcon = true
     )
+}
+
+@Composable
+private fun TrailingTextExamples() {
+    var urea by remember { mutableStateOf("") }
+    var ammonium by remember { mutableStateOf("12") }
+    var longUnit by remember { mutableStateOf("100") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        InputField(
+            value = urea,
+            onValueChange = { urea = it },
+            label = "Total quantity of Urea applied",
+            hint = "0",
+            trailingText = "Kg/acre",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+        InputField(
+            value = ammonium,
+            onValueChange = { ammonium = it },
+            label = "Total quantity of Ammonium Sulphate applied",
+            hint = "0",
+            trailingText = "Kg/acre",
+            showClearIcon = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+        InputField(
+            value = longUnit,
+            onValueChange = { longUnit = it },
+            label = "Trailing text + icon (text first, then icon)",
+            hint = "0",
+            trailingText = "Very long unit label that should ellipsize",
+            trailingIcon = painterResource(VolineR.drawable.ic_warning_filled),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+    }
 }
 
 @Composable
