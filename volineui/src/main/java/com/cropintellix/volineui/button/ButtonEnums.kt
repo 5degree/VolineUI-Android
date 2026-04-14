@@ -22,6 +22,22 @@ enum class ButtonStyle(val value: Int) {
 }
 
 /**
+ * Visual appearance variants for icon-only buttons.
+ */
+enum class IconButtonAppearance(val value: Int) {
+    STANDARD(0),
+    FILLED(1),
+    TONAL(2),
+    OUTLINED(3),
+    ELEVATED(4);
+
+    companion object {
+        fun fromValue(value: Int): IconButtonAppearance =
+            entries.find { it.value == value } ?: STANDARD
+    }
+}
+
+/**
  * Button size presets.
  */
 enum class ButtonSize(val value: Int) {

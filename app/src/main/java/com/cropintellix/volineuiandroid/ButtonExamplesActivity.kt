@@ -23,6 +23,24 @@ class ButtonExamplesActivity : AppCompatActivity() {
     private lateinit var btnTrailingIcon: AdvancedButton
     private lateinit var btnLeadingIcon: AdvancedButton
     private lateinit var btnBothIcons: AdvancedButton
+    private lateinit var btnIconStandard: AdvancedButton
+    private lateinit var btnIconFilled: AdvancedButton
+    private lateinit var btnIconTonal: AdvancedButton
+    private lateinit var btnIconOutlined: AdvancedButton
+    private lateinit var btnIconElevated: AdvancedButton
+    private lateinit var btnIconTrailingOnly: AdvancedButton
+    private lateinit var btnIconXs: AdvancedButton
+    private lateinit var btnIconS: AdvancedButton
+    private lateinit var btnIconM: AdvancedButton
+    private lateinit var btnIconL: AdvancedButton
+    private lateinit var btnIconSharp: AdvancedButton
+    private lateinit var btnIconRounded: AdvancedButton
+    private lateinit var btnIconPill: AdvancedButton
+    private lateinit var btnIconDisabled: AdvancedButton
+    private lateinit var btnIconLoading: AdvancedButton
+    private lateinit var btnIconSuccessError: AdvancedButton
+    private lateinit var btnIconInteraction: AdvancedButton
+    private lateinit var btnIconGradient: AdvancedButton
     private lateinit var btnLoading: AdvancedButton
     private lateinit var btnSuccessError: AdvancedButton
     private lateinit var btnGradient: AdvancedButton
@@ -33,6 +51,7 @@ class ButtonExamplesActivity : AppCompatActivity() {
     private lateinit var btnDisabled: AdvancedButton
     
     private var successToggle = true
+    private var iconSuccessToggle = true
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +80,24 @@ class ButtonExamplesActivity : AppCompatActivity() {
         btnTrailingIcon = findViewById(R.id.btnTrailingIcon)
         btnLeadingIcon = findViewById(R.id.btnLeadingIcon)
         btnBothIcons = findViewById(R.id.btnBothIcons)
+        btnIconStandard = findViewById(R.id.btnIconStandard)
+        btnIconFilled = findViewById(R.id.btnIconFilled)
+        btnIconTonal = findViewById(R.id.btnIconTonal)
+        btnIconOutlined = findViewById(R.id.btnIconOutlined)
+        btnIconElevated = findViewById(R.id.btnIconElevated)
+        btnIconTrailingOnly = findViewById(R.id.btnIconTrailingOnly)
+        btnIconXs = findViewById(R.id.btnIconXs)
+        btnIconS = findViewById(R.id.btnIconS)
+        btnIconM = findViewById(R.id.btnIconM)
+        btnIconL = findViewById(R.id.btnIconL)
+        btnIconSharp = findViewById(R.id.btnIconSharp)
+        btnIconRounded = findViewById(R.id.btnIconRounded)
+        btnIconPill = findViewById(R.id.btnIconPill)
+        btnIconDisabled = findViewById(R.id.btnIconDisabled)
+        btnIconLoading = findViewById(R.id.btnIconLoading)
+        btnIconSuccessError = findViewById(R.id.btnIconSuccessError)
+        btnIconInteraction = findViewById(R.id.btnIconInteraction)
+        btnIconGradient = findViewById(R.id.btnIconGradient)
         btnLoading = findViewById(R.id.btnLoading)
         btnSuccessError = findViewById(R.id.btnSuccessError)
         btnGradient = findViewById(R.id.btnGradient)
@@ -122,6 +159,96 @@ class ButtonExamplesActivity : AppCompatActivity() {
         btnBothIcons.onTrailingIconClickListener {
             updateStatus("Trailing icon (more) clicked!")
             showToast("More icon clicked!")
+        }
+
+        btnIconStandard.onClickListener {
+            updateStatus("Standard icon button clicked")
+        }
+
+        btnIconFilled.onClickListener {
+            updateStatus("Filled icon button clicked")
+        }
+
+        btnIconTonal.onClickListener {
+            updateStatus("Tonal icon button clicked")
+        }
+
+        btnIconOutlined.onClickListener {
+            updateStatus("Outlined icon button clicked")
+        }
+
+        btnIconElevated.onClickListener {
+            updateStatus("Elevated icon button clicked")
+        }
+
+        listOf(
+            btnIconXs to "XS icon button clicked",
+            btnIconS to "Small icon button clicked",
+            btnIconM to "Medium icon button clicked",
+            btnIconL to "Large icon button clicked",
+            btnIconSharp to "Sharp icon button clicked",
+            btnIconRounded to "Rounded icon button clicked",
+            btnIconPill to "Pill icon button clicked",
+            btnIconGradient to "Gradient icon button clicked"
+        ).forEach { (button, message) ->
+            button.onClickListener {
+                updateStatus(message)
+            }
+        }
+
+        btnIconTrailingOnly.onClickListener {
+            updateStatus("Trailing-only icon button clicked")
+        }
+        btnIconTrailingOnly.onTrailingIconClickListener {
+            updateStatus("Trailing icon-only glyph clicked")
+            showToast("Trailing-only icon callback fired")
+        }
+
+        btnIconDisabled.onDisabledClickListener {
+            updateStatus("Tried to click disabled icon button")
+            showToast("Icon button is disabled")
+        }
+
+        btnIconLoading.onClickListener {
+            updateStatus("Icon loading started...")
+            btnIconLoading.setLoading(true)
+            btnIconLoading.postDelayed({
+                btnIconLoading.setLoading(false)
+                updateStatus("Icon loading completed")
+            }, 1800)
+        }
+
+        btnIconSuccessError.onClickListener {
+            if (iconSuccessToggle) {
+                updateStatus("Icon success state")
+                btnIconSuccessError.showSuccessState()
+            } else {
+                updateStatus("Icon error state")
+                btnIconSuccessError.showErrorState()
+            }
+            iconSuccessToggle = !iconSuccessToggle
+            btnIconSuccessError.postDelayed({
+                btnIconSuccessError.setButtonState(AdvancedButton.ButtonState.NORMAL)
+            }, 1600)
+        }
+        btnIconSuccessError.onSuccessListener {
+            updateStatus("Icon success animation completed")
+        }
+        btnIconSuccessError.onErrorListener {
+            updateStatus("Icon error animation completed")
+        }
+
+        btnIconInteraction.onClickListener {
+            updateStatus("Icon single click detected")
+        }
+        btnIconInteraction.onDoubleClickListener {
+            updateStatus("Icon double click detected")
+            showToast("Icon double click!")
+        }
+        btnIconInteraction.onLongClickListener {
+            updateStatus("Icon long press detected")
+            showToast("Icon long press!")
+            true
         }
         
         // Loading button

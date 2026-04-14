@@ -195,6 +195,283 @@
             app:buttonTrailingIcon="@android:drawable/ic_menu_more"
             app:buttonBackgroundColor="#9C27B0" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Icon-only playground"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Variants"
+            android:textColor="#888888"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:orientation="horizontal">
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconStandard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="standard"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_search" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconFilled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_input_add"
+                app:buttonBackgroundColor="#E91E63" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconTonal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:buttonType="icon"
+                app:buttonIconAppearance="tonal"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_info_details"
+                app:buttonBackgroundColor="#009688" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconOutlined"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="outlined"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_edit"
+                app:buttonBorderColor="#3F51B5"
+                app:buttonIconColor="#3F51B5" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconElevated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="elevated"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_send"
+                app:buttonBackgroundColor="#FF9800" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconTrailingOnly"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:buttonType="icon"
+                app:buttonIconAppearance="outlined"
+                app:buttonSizeType="s"
+                app:buttonTrailingIcon="@android:drawable/ic_media_next"
+                app:buttonBorderColor="#607D8B"
+                app:buttonIconColor="#607D8B" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Sizes"
+            android:textColor="#888888"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconXs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonSizeType="xs"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_add"
+                app:buttonBackgroundColor="#795548" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconS"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_call"
+                app:buttonBackgroundColor="#9C27B0" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconM"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonSizeType="m"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_camera"
+                app:buttonBackgroundColor="#3F51B5" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconL"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonSizeType="l"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_compass"
+                app:buttonBackgroundColor="#2196F3" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Corners and states"
+            android:textColor="#888888"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconSharp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonCornerType="sharp"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_crop"
+                app:buttonBackgroundColor="#F44336" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconRounded"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonCornerType="rounded"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_gallery"
+                app:buttonBackgroundColor="#9C27B0" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconPill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonCornerType="pill"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_manage"
+                app:buttonBackgroundColor="#3F51B5" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconDisabled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_lock_idle_lock"
+                app:buttonBackgroundColor="#B0BEC5" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Behaviors and effects"
+            android:textColor="#888888"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:orientation="horizontal">
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconLoading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_popup_sync"
+                app:buttonBackgroundColor="#009688" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconSuccessError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/checkbox_on_background"
+                app:buttonBackgroundColor="#4CAF50" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconInteraction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:buttonType="icon"
+                app:buttonIconAppearance="outlined"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_recent_history"
+                app:buttonBorderColor="#FF5722"
+                app:buttonIconColor="#FF5722" />
+
+            <com.cropintellix.volineui.AdvancedButton
+                android:id="@+id/btnIconGradient"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:buttonType="icon"
+                app:buttonIconAppearance="filled"
+                app:buttonSizeType="s"
+                app:buttonLeadingIcon="@android:drawable/ic_menu_rotate"
+                app:buttonUseGradient="true"
+                app:buttonGradientStartColor="#7C4DFF"
+                app:buttonGradientEndColor="#448AFF" />
+        </LinearLayout>
+
         <!-- Section: Corner Types -->
         <TextView
             android:layout_width="wrap_content"

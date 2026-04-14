@@ -418,6 +418,13 @@
         <!-- Icons -->
         <attr name="buttonLeadingIcon" format="reference" />
         <attr name="buttonTrailingIcon" format="reference" />
+        <attr name="buttonIconAppearance" format="enum">
+            <enum name="standard" value="0" />
+            <enum name="filled" value="1" />
+            <enum name="tonal" value="2" />
+            <enum name="outlined" value="3" />
+            <enum name="elevated" value="4" />
+        </attr>
         <attr name="buttonIconSize" format="dimension" />
         <attr name="buttonIconColor" format="color" />
         <attr name="buttonIconColorPressed" format="color" />

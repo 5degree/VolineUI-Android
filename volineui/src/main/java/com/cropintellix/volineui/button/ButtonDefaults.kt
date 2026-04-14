@@ -182,6 +182,25 @@ object ButtonDefaults {
     )
 
     /**
+     * Creates colors for the standard transparent icon button appearance.
+     */
+    @Composable
+    fun iconColors(
+        iconColor: Color = Color.Black,
+    ): ButtonColors = colors(
+        backgroundColor = Color.Transparent,
+        backgroundColorPressed = Color.Transparent,
+        textColor = iconColor,
+        textColorPressed = darkenColor(iconColor, 0.15f),
+        borderColor = Color.Transparent,
+        borderColorPressed = Color.Transparent,
+        iconColor = iconColor,
+        iconColorPressed = darkenColor(iconColor, 0.15f),
+        rippleColor = Color(0x40000000),
+        loadingColor = iconColor,
+    )
+
+    /**
      * Creates colors for tonal button style.
      */
     @Composable

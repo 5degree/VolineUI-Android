@@ -73,6 +73,11 @@ private fun ButtonExamplesScreen(modifier: Modifier = Modifier) {
         ButtonStylesExample()
         
         HorizontalDivider()
+
+        SectionTitle("Icon-Only Buttons")
+        IconOnlyButtonsExample()
+        
+        HorizontalDivider()
         
         // Size Variants
         SectionTitle("Size Variants")
@@ -135,6 +140,15 @@ private fun SectionTitle(title: String) {
 }
 
 @Composable
+private fun ExampleLabel(title: String) {
+    Text(
+        text = title,
+        fontSize = 12.sp,
+        color = Color(0xFF888888)
+    )
+}
+
+@Composable
 private fun ButtonStylesExample() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         AdvancedButton(
@@ -184,32 +198,6 @@ private fun ButtonStylesExample() {
             style = ButtonStyle.TONAL
         )
         
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AdvancedButton(
-                text = "",
-                onClick = {},
-                colors = ButtonDefaults.colors(backgroundColor = Color(0xFFE91E63)),
-                style = ButtonStyle.ICON,
-                leadingIcon = painterResource(R.drawable.front_hand_24px)
-            )
-            
-            AdvancedButton(
-                text = "",
-                onClick = {},
-                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF9C27B0)),
-                style = ButtonStyle.FAB,
-                leadingIcon = painterResource(R.drawable.circles_ext_24px)
-            )
-            
-            AdvancedButton(
-                text = "",
-                onClick = {},
-                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF00BCD4)),
-                style = ButtonStyle.FAB,
-                leadingIcon = painterResource(R.drawable.explosion_24px)
-            )
-        }
-        
         AdvancedButton(
             text = "Extended FAB - Indigo",
             onClick = {},
@@ -233,6 +221,269 @@ private fun ButtonStylesExample() {
                 style = ButtonStyle.CHIP,
             )
         }
+    }
+}
+
+@Composable
+private fun IconOnlyButtonsExample() {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var iconMessage by remember { mutableStateOf("Try the icon-only playground below.") }
+    var iconLoading by remember { mutableStateOf(false) }
+    var iconSuccess by remember { mutableStateOf(false) }
+    var iconError by remember { mutableStateOf(false) }
+    var nextSuccessState by remember { mutableStateOf(true) }
+    var disabledTapCount by remember { mutableIntStateOf(0) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        ExampleLabel("Variants")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AdvancedButton(
+                onClick = { iconMessage = "Standard icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.STANDARD,
+                colors = ButtonDefaults.iconColors(Color(0xFF252525)),
+                leadingIcon = painterResource(R.drawable.front_hand_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Filled icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFFE91E63)),
+                leadingIcon = painterResource(R.drawable.circles_ext_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Tonal icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.TONAL,
+                colors = ButtonDefaults.tonalColors(Color(0xFF009688)),
+                leadingIcon = painterResource(R.drawable.explosion_24px)
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AdvancedButton(
+                onClick = { iconMessage = "Outlined icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.OUTLINED,
+                colors = ButtonDefaults.outlinedColors(
+                    borderColor = Color(0xFF3F51B5),
+                    textColor = Color(0xFF3F51B5)
+                ),
+                leadingIcon = painterResource(R.drawable.check_box_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Elevated icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.ELEVATED,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFFFF9800)),
+                leadingIcon = painterResource(R.drawable.box_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Trailing-only icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.OUTLINED,
+                colors = ButtonDefaults.outlinedColors(
+                    borderColor = Color(0xFF607D8B),
+                    textColor = Color(0xFF607D8B)
+                ),
+                trailingIcon = painterResource(R.drawable.all_inclusive_24px),
+                onTrailingIconClick = {
+                    iconMessage = "Trailing icon-only callback fired"
+                }
+            )
+        }
+
+        ExampleLabel("Sizes")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AdvancedButton(
+                onClick = { iconMessage = "XS icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                size = ButtonSize.XS,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF795548)),
+                leadingIcon = painterResource(R.drawable.cycle_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Small icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                size = ButtonSize.S,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF9C27B0)),
+                leadingIcon = painterResource(R.drawable.circles_ext_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Medium icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                size = ButtonSize.M,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF3F51B5)),
+                leadingIcon = painterResource(R.drawable.check_box_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Large icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                size = ButtonSize.L,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF2196F3)),
+                leadingIcon = painterResource(R.drawable.box_24px)
+            )
+        }
+
+        ExampleLabel("Corners and states")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AdvancedButton(
+                onClick = { iconMessage = "Sharp icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                cornerType = CornerType.SHARP,
+                size = ButtonSize.S,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFFF44336)),
+                leadingIcon = painterResource(R.drawable.crossword_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Rounded icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                cornerType = CornerType.ROUNDED,
+                size = ButtonSize.S,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF9C27B0)),
+                leadingIcon = painterResource(R.drawable.accessibility_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Pill icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                cornerType = CornerType.PILL,
+                size = ButtonSize.S,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF3F51B5)),
+                leadingIcon = painterResource(R.drawable.front_hand_24px)
+            )
+
+            AdvancedButton(
+                onClick = {},
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                size = ButtonSize.S,
+                enabled = false,
+                onDisabledClick = {
+                    disabledTapCount++
+                    iconMessage = "Disabled icon button tapped $disabledTapCount time(s)"
+                },
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFFB0BEC5)),
+                leadingIcon = painterResource(R.drawable.check_box_24px)
+            )
+        }
+
+        ExampleLabel("Behaviors and effects")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AdvancedButton(
+                onClick = {
+                    iconMessage = "Icon loading started"
+                    iconLoading = true
+                    coroutineScope.launch {
+                        delay(1600)
+                        iconLoading = false
+                        iconMessage = "Icon loading completed"
+                    }
+                },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                size = ButtonSize.S,
+                isLoading = iconLoading,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF009688)),
+                leadingIcon = painterResource(R.drawable.cycle_24px)
+            )
+
+            AdvancedButton(
+                onClick = {
+                    if (nextSuccessState) {
+                        iconSuccess = true
+                        iconError = false
+                        iconMessage = "Icon success state"
+                    } else {
+                        iconSuccess = false
+                        iconError = true
+                        iconMessage = "Icon error state"
+                    }
+                    nextSuccessState = !nextSuccessState
+                    coroutineScope.launch {
+                        delay(1500)
+                        iconSuccess = false
+                        iconError = false
+                    }
+                },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                size = ButtonSize.S,
+                isSuccess = iconSuccess,
+                isError = iconError,
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF4CAF50)),
+                leadingIcon = painterResource(R.drawable.check_box_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Icon single click detected" },
+                onDoubleClick = {
+                    iconMessage = "Icon double click detected"
+                    Toast.makeText(context, "Icon double click!", Toast.LENGTH_SHORT).show()
+                },
+                onLongClick = {
+                    iconMessage = "Icon long press detected"
+                    Toast.makeText(context, "Icon long press!", Toast.LENGTH_SHORT).show()
+                },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.OUTLINED,
+                size = ButtonSize.S,
+                colors = ButtonDefaults.outlinedColors(
+                    borderColor = Color(0xFFFF5722),
+                    textColor = Color(0xFFFF5722)
+                ),
+                leadingIcon = painterResource(R.drawable.crossword_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Gradient icon button clicked" },
+                style = ButtonStyle.ICON,
+                iconAppearance = IconButtonAppearance.FILLED,
+                size = ButtonSize.S,
+                useGradient = true,
+                gradientColors = Color(0xFF7C4DFF) to Color(0xFF448AFF),
+                leadingIcon = painterResource(R.drawable.explosion_24px)
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AdvancedButton(
+                onClick = { iconMessage = "Mini FAB clicked" },
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF9C27B0)),
+                style = ButtonStyle.FAB,
+                leadingIcon = painterResource(R.drawable.circles_ext_24px)
+            )
+
+            AdvancedButton(
+                onClick = { iconMessage = "Accent FAB clicked" },
+                colors = ButtonDefaults.colors(backgroundColor = Color(0xFF00BCD4)),
+                style = ButtonStyle.FAB,
+                leadingIcon = painterResource(R.drawable.explosion_24px)
+            )
+        }
+
+        Text(
+            text = iconMessage,
+            fontSize = 14.sp,
+            color = Color(0xFF666666),
+            modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+        )
     }
 }
 

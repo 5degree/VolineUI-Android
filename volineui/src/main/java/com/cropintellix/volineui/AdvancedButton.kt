@@ -47,6 +47,7 @@ import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
+import com.cropintellix.volineui.button.IconButtonAppearance
 
 /**
  * AdvancedButton - A comprehensive, feature-rich button component
@@ -154,6 +155,7 @@ class AdvancedButton @JvmOverloads constructor(
     // Core properties
     private var buttonText: String = ""
     private var buttonType: ButtonStyle = ButtonStyle.FILLED
+    private var iconAppearance: IconButtonAppearance = IconButtonAppearance.STANDARD
     private var buttonSizeType: ButtonSize = ButtonSize.M
     private var buttonState: ButtonState = ButtonState.NORMAL
     private var cornerType: CornerType = CornerType.ROUNDED
@@ -320,6 +322,12 @@ class AdvancedButton @JvmOverloads constructor(
             buttonType = ButtonStyle.fromValue(
                 typedArray.getInt(R.styleable.AdvancedButton_buttonType, ButtonStyle.FILLED.value)
             )
+            iconAppearance = IconButtonAppearance.fromValue(
+                typedArray.getInt(
+                    R.styleable.AdvancedButton_buttonIconAppearance,
+                    IconButtonAppearance.STANDARD.value
+                )
+            )
             buttonSizeType = ButtonSize.fromValue(
                 typedArray.getInt(R.styleable.AdvancedButton_buttonSizeType, ButtonSize.M.value)
             )
@@ -330,14 +338,20 @@ class AdvancedButton @JvmOverloads constructor(
             // Colors - use style-specific defaults for outlined/text buttons
             val defaultBgColor = getPrimaryColor()
             val outlinedDefaultColor = Color.parseColor("#252525")
+            val effectiveStyle = getEffectiveButtonStyle()
             
             // Text and border defaults depend on button style
             // For TEXT buttons, default text color should be black (outlinedDefaultColor)
-            val defaultTextColor = when (buttonType) {
+            val defaultTextColor = when (effectiveStyle) {
                 ButtonStyle.OUTLINED, ButtonStyle.TEXT -> outlinedDefaultColor
                 else -> Color.WHITE
             }
-            val defaultBorderColor = if (buttonType == ButtonStyle.OUTLINED) outlinedDefaultColor else defaultBgColor
+            val defaultBorderColor =
+                if (effectiveStyle == ButtonStyle.OUTLINED) outlinedDefaultColor else defaultBgColor
+            val defaultRippleColor = when (effectiveStyle) {
+                ButtonStyle.OUTLINED, ButtonStyle.TEXT -> Color.parseColor("#20000000")
+                else -> Color.parseColor("#40FFFFFF")
+            }
             
             backgroundColor = typedArray.getColor(R.styleable.AdvancedButton_buttonBackgroundColor, defaultBgColor)
             backgroundColorPressed = typedArray.getColor(R.styleable.AdvancedButton_buttonBackgroundColorPressed, darkenColor(backgroundColor, 0.15f))
@@ -348,7 +362,7 @@ class AdvancedButton @JvmOverloads constructor(
             borderColor = typedArray.getColor(R.styleable.AdvancedButton_buttonBorderColor, defaultBorderColor)
             borderColorPressed = typedArray.getColor(R.styleable.AdvancedButton_buttonBorderColorPressed, darkenColor(borderColor, 0.15f))
             borderColorDisabled = typedArray.getColor(R.styleable.AdvancedButton_buttonBorderColorDisabled, Color.parseColor("#BDBDBD"))
-            rippleColor = typedArray.getColor(R.styleable.AdvancedButton_buttonRippleColor, Color.parseColor("#40FFFFFF"))
+            rippleColor = typedArray.getColor(R.styleable.AdvancedButton_buttonRippleColor, defaultRippleColor)
             loadingColor = typedArray.getColor(R.styleable.AdvancedButton_buttonLoadingColor, defaultTextColor)
             successColor = typedArray.getColor(R.styleable.AdvancedButton_buttonSuccessColor, Color.parseColor("#4CAF50"))
             errorColor = typedArray.getColor(R.styleable.AdvancedButton_buttonErrorColor, Color.parseColor("#F44336"))
@@ -417,6 +431,37 @@ class AdvancedButton @JvmOverloads constructor(
             iconColor = typedArray.getColor(R.styleable.AdvancedButton_buttonIconColor, textColor)
             iconColorPressed = typedArray.getColor(R.styleable.AdvancedButton_buttonIconColorPressed, darkenColor(iconColor, 0.15f))
             iconColorDisabled = typedArray.getColor(R.styleable.AdvancedButton_buttonIconColorDisabled, textColorDisabled)
+
+            if (buttonType == ButtonStyle.ICON && effectiveStyle == ButtonStyle.OUTLINED) {
+                val hasBorderColor = typedArray.hasValue(R.styleable.AdvancedButton_buttonBorderColor)
+                val hasBorderColorPressed = typedArray.hasValue(R.styleable.AdvancedButton_buttonBorderColorPressed)
+                val hasBorderColorDisabled = typedArray.hasValue(R.styleable.AdvancedButton_buttonBorderColorDisabled)
+                val hasIconColor = typedArray.hasValue(R.styleable.AdvancedButton_buttonIconColor)
+                val hasIconColorPressed = typedArray.hasValue(R.styleable.AdvancedButton_buttonIconColorPressed)
+                val hasIconColorDisabled = typedArray.hasValue(R.styleable.AdvancedButton_buttonIconColorDisabled)
+
+                if (hasBorderColor && !hasIconColor) {
+                    iconColor = borderColor
+                } else if (hasIconColor && !hasBorderColor) {
+                    borderColor = iconColor
+                }
+
+                if (hasBorderColorPressed && !hasIconColorPressed) {
+                    iconColorPressed = borderColorPressed
+                } else if (hasIconColorPressed && !hasBorderColorPressed) {
+                    borderColorPressed = iconColorPressed
+                } else if (hasBorderColor && !hasIconColorPressed) {
+                    iconColorPressed = darkenColor(iconColor, 0.15f)
+                } else if (hasIconColor && !hasBorderColorPressed) {
+                    borderColorPressed = darkenColor(borderColor, 0.15f)
+                }
+
+                if (hasBorderColorDisabled && !hasIconColorDisabled) {
+                    iconColorDisabled = borderColorDisabled
+                } else if (hasIconColorDisabled && !hasBorderColorDisabled) {
+                    borderColorDisabled = iconColorDisabled
+                }
+            }
             showBadge = typedArray.getBoolean(R.styleable.AdvancedButton_buttonShowBadge, false)
             badgeColor = typedArray.getColor(R.styleable.AdvancedButton_buttonBadgeColor, Color.parseColor("#F44336"))
             badgeCount = typedArray.getInt(R.styleable.AdvancedButton_buttonBadgeCount, 0)
@@ -555,6 +600,8 @@ class AdvancedButton @JvmOverloads constructor(
                 }
             }
         }
+
+        updateIconSpacing()
     }
     
     private fun setupRipple() {
@@ -568,8 +615,9 @@ class AdvancedButton @JvmOverloads constructor(
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = getActualCornerRadius()
+            val effectiveStyle = getEffectiveButtonStyle()
             
-            when (buttonType) {
+            when (effectiveStyle) {
                 ButtonStyle.FILLED, ButtonStyle.FAB, ButtonStyle.EXTENDED_FAB -> {
                     if (useGradient) {
                         orientation = getGradientOrientation()
@@ -584,7 +632,7 @@ class AdvancedButton @JvmOverloads constructor(
                 }
                 ButtonStyle.OUTLINED, ButtonStyle.TEXT -> {
                     setColor(Color.TRANSPARENT)
-                    if (buttonType == ButtonStyle.OUTLINED) {
+                    if (effectiveStyle == ButtonStyle.OUTLINED) {
                         setStroke(borderWidth.toInt(), borderColor)
                     }
                 }
@@ -599,12 +647,12 @@ class AdvancedButton @JvmOverloads constructor(
                     // Flat tonal background without 3D effect
                     setColor(ColorUtils.setAlphaComponent(backgroundColor, 40))
                 }
-                ButtonStyle.ICON -> {
-                    setColor(Color.TRANSPARENT)
-                }
                 ButtonStyle.CHIP -> {
                     setColor(ColorUtils.setAlphaComponent(backgroundColor, 25))
                     setStroke(dpToPx(1f).toInt(), borderColor)
+                }
+                ButtonStyle.ICON -> {
+                    setColor(Color.TRANSPARENT)
                 }
             }
         }
@@ -623,7 +671,13 @@ class AdvancedButton @JvmOverloads constructor(
         return when (cornerType) {
             CornerType.SHARP -> 0f
             CornerType.ROUNDED -> cornerRadius
-            CornerType.PILL -> minHeight / 2
+            CornerType.PILL -> {
+                if (isIconOnlyLayoutStyle()) {
+                    getIconOnlyButtonSizePx() / 2f
+                } else {
+                    minHeight / 2
+                }
+            }
         }
     }
     
@@ -703,16 +757,20 @@ class AdvancedButton @JvmOverloads constructor(
         }
         
         // Apply padding
+        val actualHorizontalPadding =
+            if (isIconOnlyLayoutStyle() && !userDefinedHorizontalPadding) 0 else horizontalPadding.toInt()
+        val actualVerticalPadding =
+            if (isIconOnlyLayoutStyle() && !userDefinedVerticalPadding) 0 else verticalPadding.toInt()
         containerLayout.setPadding(
-            horizontalPadding.toInt(),
-            verticalPadding.toInt(),
-            horizontalPadding.toInt(),
-            verticalPadding.toInt()
+            actualHorizontalPadding,
+            actualVerticalPadding,
+            actualHorizontalPadding,
+            actualVerticalPadding
         )
     }
     
     private fun applyStyle() {
-        when (buttonType) {
+        when (getEffectiveButtonStyle()) {
             ButtonStyle.FILLED -> {
                 elevation = 0f
                 textView.setTextColor(textColor)
@@ -738,18 +796,11 @@ class AdvancedButton @JvmOverloads constructor(
                 textView.setTextColor(backgroundColor)
                 iconColor = backgroundColor
             }
-            ButtonStyle.ICON -> {
-                minimumWidth = minHeight.toInt()
-                minimumHeight = minHeight.toInt()
-                textView.visibility = GONE
-                // For ICON style, ensure icon is visible
-                leadingIconView?.visibility = VISIBLE
-            }
             ButtonStyle.FAB -> {
                 elevation = dpToPx(6f)
-                cornerRadius = minHeight / 2
-                minimumWidth = dpToPx(56f).toInt()
-                minimumHeight = dpToPx(56f).toInt()
+                cornerRadius = getIconOnlyButtonSizePx() / 2f
+                minimumWidth = getIconOnlyButtonSizePx()
+                minimumHeight = getIconOnlyButtonSizePx()
                 textView.visibility = GONE
             }
             ButtonStyle.EXTENDED_FAB -> {
@@ -764,11 +815,33 @@ class AdvancedButton @JvmOverloads constructor(
                 iconColor = backgroundColor
                 fullWidth = false
             }
+            ButtonStyle.ICON -> Unit
+        }
+
+        when (buttonType) {
+            ButtonStyle.ICON -> {
+                val iconButtonSize = getIconOnlyButtonSizePx()
+                minimumWidth = iconButtonSize
+                minimumHeight = iconButtonSize
+                textView.visibility = GONE
+                leadingIconView?.visibility = if (leadingIcon != null) VISIBLE else GONE
+                trailingIconView?.visibility = if (trailingIcon != null) VISIBLE else GONE
+            }
+            ButtonStyle.FAB -> {
+                minimumWidth = getIconOnlyButtonSizePx()
+                minimumHeight = getIconOnlyButtonSizePx()
+                textView.visibility = GONE
+            }
+            else -> {
+                textView.visibility = VISIBLE
+                leadingIconView?.visibility = if (leadingIcon != null) VISIBLE else GONE
+                trailingIconView?.visibility = if (trailingIcon != null) VISIBLE else GONE
+            }
         }
         
         // Update icon colors
-        leadingIconView?.setColorFilter(iconColor)
-        trailingIconView?.setColorFilter(iconColor)
+        applyIconTint(iconColor)
+        updateIconSpacing()
         
         // Refresh background
         if (enableRipple) {
@@ -795,7 +868,7 @@ class AdvancedButton @JvmOverloads constructor(
                 if (enableScaleAnimation && scaleOnPress) {
                     animateScale(scaleAmount)
                 }
-                if (enableElevationAnimation && buttonType == ButtonStyle.ELEVATED) {
+                if (enableElevationAnimation && getEffectiveButtonStyle() == ButtonStyle.ELEVATED) {
                     animateElevation(elevationPressed)
                 }
             }
@@ -819,24 +892,23 @@ class AdvancedButton @JvmOverloads constructor(
     }
     
     private fun applyNormalColors() {
-        when (buttonType) {
+        val effectiveStyle = getEffectiveButtonStyle()
+
+        when (effectiveStyle) {
             ButtonStyle.FILLED, ButtonStyle.ELEVATED, ButtonStyle.FAB, ButtonStyle.EXTENDED_FAB -> {
                 textView.setTextColor(textColor)
-                leadingIconView?.setColorFilter(iconColor)
-                trailingIconView?.setColorFilter(iconColor)
+                applyIconTint(iconColor)
             }
             ButtonStyle.OUTLINED -> {
                 textView.setTextColor(textColor)
-                leadingIconView?.setColorFilter(iconColor)
-                trailingIconView?.setColorFilter(iconColor)
+                applyIconTint(iconColor)
             }
             ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> {
-                textView.setTextColor(backgroundColor)
-                leadingIconView?.setColorFilter(backgroundColor)
-                trailingIconView?.setColorFilter(backgroundColor)
+                textView.setTextColor(if (effectiveStyle == ButtonStyle.TEXT) textColor else backgroundColor)
+                applyIconTint(if (effectiveStyle == ButtonStyle.TEXT) iconColor else backgroundColor)
             }
             ButtonStyle.ICON -> {
-                leadingIconView?.setColorFilter(iconColor)
+                applyIconTint(iconColor)
             }
         }
         
@@ -844,45 +916,62 @@ class AdvancedButton @JvmOverloads constructor(
     }
     
     private fun applyPressedColors() {
-        when (buttonType) {
+        val effectiveStyle = getEffectiveButtonStyle()
+
+        when (effectiveStyle) {
             ButtonStyle.FILLED, ButtonStyle.ELEVATED, ButtonStyle.FAB, ButtonStyle.EXTENDED_FAB -> {
                 textView.setTextColor(textColorPressed)
-                leadingIconView?.setColorFilter(iconColorPressed)
-                trailingIconView?.setColorFilter(iconColorPressed)
+                applyIconTint(iconColorPressed)
             }
             ButtonStyle.OUTLINED -> {
                 textView.setTextColor(textColorPressed)
-                leadingIconView?.setColorFilter(iconColorPressed)
-                trailingIconView?.setColorFilter(iconColorPressed)
+                applyIconTint(iconColorPressed)
             }
             ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP -> {
-                textView.setTextColor(backgroundColorPressed)
-                leadingIconView?.setColorFilter(backgroundColorPressed)
-                trailingIconView?.setColorFilter(backgroundColorPressed)
+                textView.setTextColor(
+                    if (effectiveStyle == ButtonStyle.TEXT) textColorPressed else backgroundColorPressed
+                )
+                applyIconTint(
+                    if (effectiveStyle == ButtonStyle.TEXT) iconColorPressed else backgroundColorPressed
+                )
             }
             ButtonStyle.ICON -> {
-                leadingIconView?.setColorFilter(iconColorPressed)
+                applyIconTint(iconColorPressed)
             }
         }
     }
     
     private fun applyDisabledColors() {
         textView.setTextColor(textColorDisabled)
-        leadingIconView?.setColorFilter(iconColorDisabled)
-        trailingIconView?.setColorFilter(iconColorDisabled)
+        applyIconTint(iconColorDisabled)
         
         // Update background for disabled state
         val disabledBg = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = getActualCornerRadius()
-            setColor(backgroundColorDisabled)
-            if (buttonType == ButtonStyle.OUTLINED) {
-                setStroke(borderWidth.toInt(), borderColorDisabled)
+            when (getEffectiveButtonStyle()) {
+                ButtonStyle.OUTLINED -> {
+                    setColor(Color.TRANSPARENT)
+                    setStroke(borderWidth.toInt(), borderColorDisabled)
+                }
+                ButtonStyle.TEXT -> {
+                    setColor(Color.TRANSPARENT)
+                }
+                ButtonStyle.TONAL -> {
+                    setColor(ColorUtils.setAlphaComponent(backgroundColorDisabled, 40))
+                }
+                ButtonStyle.CHIP -> {
+                    setColor(ColorUtils.setAlphaComponent(backgroundColorDisabled, 25))
+                    setStroke(dpToPx(1f).toInt(), borderColorDisabled)
+                }
+                else -> {
+                    setColor(backgroundColorDisabled)
+                }
             }
         }
         background = disabledBg
         
-        if (buttonType == ButtonStyle.ELEVATED) {
+        if (getEffectiveButtonStyle() == ButtonStyle.ELEVATED) {
             elevation = 0f
         }
     }
@@ -926,13 +1015,21 @@ class AdvancedButton @JvmOverloads constructor(
         val flatBg = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = getActualCornerRadius()
+            val effectiveStyle = getEffectiveButtonStyle()
             
-            when (buttonType) {
+            when (effectiveStyle) {
                 ButtonStyle.OUTLINED, ButtonStyle.TEXT -> {
                     setColor(Color.TRANSPARENT)
-                    if (buttonType == ButtonStyle.OUTLINED) {
+                    if (effectiveStyle == ButtonStyle.OUTLINED) {
                         setStroke(borderWidth.toInt(), borderColor)
                     }
+                }
+                ButtonStyle.TONAL -> {
+                    setColor(ColorUtils.setAlphaComponent(backgroundColor, 40))
+                }
+                ButtonStyle.CHIP -> {
+                    setColor(ColorUtils.setAlphaComponent(backgroundColor, 25))
+                    setStroke(dpToPx(1f).toInt(), borderColor)
                 }
                 else -> {
                     setColor(backgroundColor)
@@ -1225,7 +1322,7 @@ class AdvancedButton @JvmOverloads constructor(
                         animateScale(scaleAmount)
                     }
                     // Start elevation animation for elevated buttons
-                    if (enableElevationAnimation && buttonType == ButtonStyle.ELEVATED) {
+                    if (enableElevationAnimation && getEffectiveButtonStyle() == ButtonStyle.ELEVATED) {
                         animateElevation(elevationPressed)
                     }
                     performHapticFeedback()
@@ -1254,7 +1351,7 @@ class AdvancedButton @JvmOverloads constructor(
                     animateScale(1f)
                 }
                 // Animate elevation back for elevated buttons
-                if (enableElevationAnimation && buttonType == ButtonStyle.ELEVATED) {
+                if (enableElevationAnimation && getEffectiveButtonStyle() == ButtonStyle.ELEVATED) {
                     animateElevation(elevationNormal)
                 }
                 
@@ -1396,10 +1493,32 @@ class AdvancedButton @JvmOverloads constructor(
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
-        MeasureSpec.getMode(heightMeasureSpec)
+        val heightMode = MeasureSpec.getMode(heightMeasureSpec)
         
         var measuredWidth = measuredWidth
         var measuredHeight = measuredHeight
+
+        if (isIconOnlyLayoutStyle()) {
+            val desiredSize = getIconOnlyButtonSizePx()
+            val resolvedWidth = if (widthMode == MeasureSpec.EXACTLY) {
+                MeasureSpec.getSize(widthMeasureSpec)
+            } else {
+                maxOf(measuredWidth, desiredSize)
+            }
+            val resolvedHeight = if (heightMode == MeasureSpec.EXACTLY) {
+                MeasureSpec.getSize(heightMeasureSpec)
+            } else {
+                maxOf(measuredHeight, desiredSize)
+            }
+
+            if (widthMode == MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY) {
+                setMeasuredDimension(resolvedWidth, resolvedHeight)
+            } else {
+                val squareSize = maxOf(resolvedWidth, resolvedHeight)
+                setMeasuredDimension(squareSize, squareSize)
+            }
+            return
+        }
         
         // Apply minimum dimensions
         if (measuredWidth < minWidth.toInt()) {
@@ -1438,6 +1557,7 @@ class AdvancedButton @JvmOverloads constructor(
         // Apply style-specific default colors when style changes
         applyStyleDefaults()
         applyStyle()
+        requestLayout()
     }
     
     /**
@@ -1447,7 +1567,7 @@ class AdvancedButton @JvmOverloads constructor(
     private fun applyStyleDefaults() {
         val outlinedDefaultColor = Color.parseColor("#252525")
         
-        when (buttonType) {
+        when (getEffectiveButtonStyle()) {
             ButtonStyle.OUTLINED -> {
                 // For outlined buttons, default to dark text and border
                 textColor = outlinedDefaultColor
@@ -1489,16 +1609,28 @@ class AdvancedButton @JvmOverloads constructor(
         
         // Update views with new colors
         textView.setTextColor(textColor)
-        leadingIconView?.setColorFilter(iconColor)
-        trailingIconView?.setColorFilter(iconColor)
+        applyIconTint(iconColor)
     }
     
     fun getButtonStyle(): ButtonStyle = buttonType
+
+    fun setIconAppearance(appearance: IconButtonAppearance) {
+        iconAppearance = appearance
+        if (buttonType == ButtonStyle.ICON) {
+            applyStyleDefaults()
+            applyStyle()
+            requestLayout()
+        }
+    }
+
+    fun getIconAppearance(): IconButtonAppearance = iconAppearance
     
     // Size
     fun setButtonSize(size: ButtonSize) {
         buttonSizeType = size
         applySizePreset()
+        applyStyle()
+        requestLayout()
     }
     
     fun getButtonSize(): ButtonSize = buttonSizeType
@@ -1542,27 +1674,30 @@ class AdvancedButton @JvmOverloads constructor(
     fun setLeadingIcon(@DrawableRes resId: Int) {
         leadingIcon = ContextCompat.getDrawable(context, resId)
         rebuildViews()
+        requestLayout()
     }
     
     fun setLeadingIcon(drawable: Drawable?) {
         leadingIcon = drawable
         rebuildViews()
+        requestLayout()
     }
     
     fun setTrailingIcon(@DrawableRes resId: Int) {
         trailingIcon = ContextCompat.getDrawable(context, resId)
         rebuildViews()
+        requestLayout()
     }
     
     fun setTrailingIcon(drawable: Drawable?) {
         trailingIcon = drawable
         rebuildViews()
+        requestLayout()
     }
     
     fun setIconColor(@ColorInt color: Int) {
         iconColor = color
-        leadingIconView?.setColorFilter(color)
-        trailingIconView?.setColorFilter(color)
+        applyIconTint(color)
     }
     
     // Badge
@@ -1704,6 +1839,43 @@ class AdvancedButton @JvmOverloads constructor(
             TextTransform.CAPITALIZE -> text.split(" ").joinToString(" ") { 
                 it.replaceFirstChar { c -> c.uppercase() } 
             }
+        }
+    }
+
+    private fun getEffectiveButtonStyle(): ButtonStyle {
+        if (buttonType != ButtonStyle.ICON) return buttonType
+
+        return when (iconAppearance) {
+            IconButtonAppearance.STANDARD -> ButtonStyle.TEXT
+            IconButtonAppearance.FILLED -> ButtonStyle.FILLED
+            IconButtonAppearance.TONAL -> ButtonStyle.TONAL
+            IconButtonAppearance.OUTLINED -> ButtonStyle.OUTLINED
+            IconButtonAppearance.ELEVATED -> ButtonStyle.ELEVATED
+        }
+    }
+
+    private fun applyIconTint(@ColorInt color: Int) {
+        leadingIconView?.setColorFilter(color)
+        trailingIconView?.setColorFilter(color)
+    }
+
+    private fun updateIconSpacing() {
+        val iconOnly = buttonType == ButtonStyle.ICON || buttonType == ButtonStyle.FAB
+        (leadingIconView?.layoutParams as? LinearLayout.LayoutParams)?.marginEnd =
+            if (iconOnly || textView.visibility == GONE) 0 else iconSpacing.toInt()
+        (trailingIconView?.layoutParams as? LinearLayout.LayoutParams)?.marginStart =
+            if (iconOnly || textView.visibility == GONE) 0 else iconSpacing.toInt()
+    }
+
+    private fun isIconOnlyLayoutStyle(): Boolean {
+        return buttonType == ButtonStyle.ICON || buttonType == ButtonStyle.FAB
+    }
+
+    private fun getIconOnlyButtonSizePx(): Int {
+        return when (buttonType) {
+            ButtonStyle.FAB -> maxOf(dpToPx(56f).toInt(), minHeight.toInt())
+            ButtonStyle.ICON -> maxOf(minHeight.toInt(), (iconSize + dpToPx(20f)).toInt())
+            else -> minHeight.toInt()
         }
     }
     

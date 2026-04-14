@@ -100,10 +100,11 @@ import kotlin.math.sin
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AdvancedButton(
-    text: String,
+    text: String = "",
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     style: ButtonStyle = ButtonStyle.FILLED,
+    iconAppearance: IconButtonAppearance = IconButtonAppearance.STANDARD,
     size: ButtonSize = ButtonSize.M,
     enabled: Boolean = true,
     cornerType: CornerType = CornerType.ROUNDED,
@@ -138,20 +139,43 @@ fun AdvancedButton(
     customCornerRadius: Dp? = null,
     customBorderWidth: Dp? = null,
     customElevation: Dp? = null,
-    customHorizontalPadding: Dp = 12.dp,
-    customVerticalPadding: Dp = 16.dp,
-    customMinHeight: Dp = 24.dp,
+    customHorizontalPadding: Dp? = null,
+    customVerticalPadding: Dp? = null,
+    customMinHeight: Dp? = null,
 ) {
     val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
 
     // Size preset with customizable overrides
     val sizePreset = ButtonDefaults.getSizePreset(size)
-    val actualHorizontalPadding =
-        customHorizontalPadding.takeIf { it != 12.dp } ?: sizePreset.horizontalPadding
-    val actualVerticalPadding =
-        customVerticalPadding.takeIf { it != 16.dp } ?: sizePreset.verticalPadding
-    val actualMinHeight = customMinHeight.takeIf { it != 32.dp } ?: sizePreset.minHeight
+    val effectiveStyle = if (style == ButtonStyle.ICON) {
+        when (iconAppearance) {
+            IconButtonAppearance.STANDARD -> ButtonStyle.TEXT
+            IconButtonAppearance.FILLED -> ButtonStyle.FILLED
+            IconButtonAppearance.TONAL -> ButtonStyle.TONAL
+            IconButtonAppearance.OUTLINED -> ButtonStyle.OUTLINED
+            IconButtonAppearance.ELEVATED -> ButtonStyle.ELEVATED
+        }
+    } else {
+        style
+    }
+    val isIconOnlyButton = style == ButtonStyle.ICON || style == ButtonStyle.FAB
+    val actualHorizontalPadding = when {
+        customHorizontalPadding != null -> customHorizontalPadding
+        isIconOnlyButton -> 0.dp
+        else -> sizePreset.horizontalPadding
+    }
+    val actualVerticalPadding = when {
+        customVerticalPadding != null -> customVerticalPadding
+        isIconOnlyButton -> 0.dp
+        else -> sizePreset.verticalPadding
+    }
+    val actualMinHeight = customMinHeight ?: sizePreset.minHeight
+    val iconButtonSize = when (style) {
+        ButtonStyle.ICON -> maxOf(actualMinHeight, sizePreset.iconSize + 20.dp)
+        ButtonStyle.FAB -> maxOf(56.dp, actualMinHeight)
+        else -> actualMinHeight
+    }
 
     // Interaction state
     val interactionSource = remember { MutableInteractionSource() }
@@ -209,7 +233,7 @@ fun AdvancedButton(
     val cornerRadius = customCornerRadius ?: when (cornerType) {
         CornerType.SHARP -> 0.dp
         CornerType.ROUNDED -> ButtonDefaults.CornerRadius
-        CornerType.PILL -> sizePreset.minHeight / 2
+        CornerType.PILL -> (if (isIconOnlyButton) iconButtonSize else actualMinHeight) / 2
     }
 
     // Border width
@@ -218,8 +242,8 @@ fun AdvancedButton(
     // Elevation - flat when disabled (matches tonal/disabled behavior from View)
     val elevation = customElevation ?: when {
         currentState == ButtonState.DISABLED -> 0.dp
-        style == ButtonStyle.ELEVATED -> if (isPressed) ButtonDefaults.ElevationPressed else ButtonDefaults.ElevationNormal
-        style == ButtonStyle.FAB || style == ButtonStyle.EXTENDED_FAB -> 6.dp
+        effectiveStyle == ButtonStyle.ELEVATED -> if (isPressed) ButtonDefaults.ElevationPressed else ButtonDefaults.ElevationNormal
+        effectiveStyle == ButtonStyle.FAB || effectiveStyle == ButtonStyle.EXTENDED_FAB -> 6.dp
         else -> 0.dp
     }
 
@@ -228,7 +252,7 @@ fun AdvancedButton(
         // Disabled buttons should be flat (no 3D gradient), similar to tonal style
         currentState == ButtonState.DISABLED -> null
         // Custom gradient
-        useGradient && gradientColors != null && style in listOf(
+        useGradient && gradientColors != null && effectiveStyle in listOf(
             ButtonStyle.FILLED,
             ButtonStyle.ELEVATED,
             ButtonStyle.FAB,
@@ -255,7 +279,7 @@ fun AdvancedButton(
             }
         }
         // 3D gradient effect for filled/elevated/FAB buttons (matching View component)
-        style in listOf(
+        effectiveStyle in listOf(
             ButtonStyle.FILLED,
             ButtonStyle.ELEVATED,
             ButtonStyle.FAB,
@@ -272,8 +296,8 @@ fun AdvancedButton(
     }
 
     // Adjust styling based on button style
-    val actualBackgroundColor = when (style) {
-        ButtonStyle.OUTLINED, ButtonStyle.TEXT, ButtonStyle.ICON -> Color.Transparent
+    val actualBackgroundColor = when (effectiveStyle) {
+        ButtonStyle.OUTLINED, ButtonStyle.TEXT -> Color.Transparent
         ButtonStyle.TONAL -> backgroundColor.copy(alpha = 0.15f)
         ButtonStyle.CHIP -> backgroundColor.copy(alpha = 0.098f)  // Matches View: 25/255
         else -> backgroundColor
@@ -282,7 +306,7 @@ fun AdvancedButton(
     // For OUTLINED style: use black as default if textColor is white (the default from colors())
     // For TEXT/TONAL/CHIP: use the textColor from colors (user can set via textColors())
     // If user used default colors(), textColor will be white - use theme primary instead
-    val actualTextColor = when (style) {
+    val actualTextColor = when (effectiveStyle) {
         ButtonStyle.OUTLINED -> if (textColor == Color.White) Color.Black else textColor
         ButtonStyle.TEXT -> if (textColor == Color.White) Color.Black else textColor
         ButtonStyle.TONAL, ButtonStyle.CHIP ->
@@ -290,7 +314,7 @@ fun AdvancedButton(
         else -> textColor
     }
 
-    val actualIconColor = when (style) {
+    val actualIconColor = when (effectiveStyle) {
         ButtonStyle.OUTLINED -> if (iconColor == Color.White) Color.Black else iconColor
         ButtonStyle.TEXT -> if (iconColor == Color.White) Color.Black else iconColor
         ButtonStyle.TONAL, ButtonStyle.CHIP ->
@@ -301,13 +325,13 @@ fun AdvancedButton(
     // For OUTLINED style: use black as default if borderColor uses default primary/pressed colors
     // This checks the NORMAL state borderColor to detect if default was used, then applies black consistently
     val normalStateBorderColor = colors.borderColor(ButtonState.NORMAL)
-    val actualBorderColor = when (style) {
+    val actualBorderColor = when (effectiveStyle) {
         ButtonStyle.OUTLINED -> if (normalStateBorderColor == colors.backgroundColor ||
             normalStateBorderColor == Color.Black) Color.Black else borderColor
         else -> borderColor
     }
 
-    val border = when (style) {
+    val border = when (effectiveStyle) {
         ButtonStyle.OUTLINED -> BorderStroke(borderWidth, actualBorderColor)
         ButtonStyle.CHIP -> BorderStroke(1.dp, borderColor)
         else -> null
@@ -397,8 +421,8 @@ fun AdvancedButton(
     // Modifier based on style and fullWidth
     val widthModifier = when {
         style == ButtonStyle.CHIP -> Modifier.wrapContentWidth() // Chips always wrap content
-        style == ButtonStyle.ICON -> Modifier.size(sizePreset.minHeight)
-        style == ButtonStyle.FAB -> Modifier.size(56.dp)
+        style == ButtonStyle.ICON -> Modifier.size(iconButtonSize)
+        style == ButtonStyle.FAB -> Modifier.size(iconButtonSize)
         fullWidth -> Modifier.fillMaxWidth()
         else -> Modifier.widthIn(min = ButtonDefaults.MinWidth)
     }
@@ -424,7 +448,7 @@ fun AdvancedButton(
                 // Use dark ripple for outlined/text buttons when default white ripple is detected
                 .let { mod ->
                     val actualRippleColor = when {
-                        style in listOf(ButtonStyle.OUTLINED, ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP)
+                        effectiveStyle in listOf(ButtonStyle.OUTLINED, ButtonStyle.TEXT, ButtonStyle.TONAL, ButtonStyle.CHIP)
                                 && colors.rippleColor == Color(0x40FFFFFF) -> Color(0x40000000)
                         else -> colors.rippleColor
                     }
@@ -448,7 +472,7 @@ fun AdvancedButton(
                     horizontal = actualHorizontalPadding,
                     vertical = actualVerticalPadding
                 )
-                .heightIn(min = actualMinHeight),
+                .heightIn(min = if (isIconOnlyButton) iconButtonSize else actualMinHeight),
             contentAlignment = Alignment.Center
         ) {
             when {
