@@ -130,6 +130,12 @@ private fun InputFieldExamplesScreen(modifier: Modifier = Modifier) {
 
         HorizontalDivider()
 
+        // Allowed characters only
+        SectionTitle("Allowed Characters")
+        AllowedCharactersExample()
+
+        HorizontalDivider()
+
         // Phone Mask
         SectionTitle("Phone Number Mask")
         PhoneMaskExample()
@@ -317,6 +323,20 @@ private fun CharacterCounterExample() {
         showCharacterCounter = true,
         singleLine = false,
         maxLines = 4
+    )
+}
+
+@Composable
+private fun AllowedCharactersExample() {
+    var text by remember { mutableStateOf("") }
+
+    InputField(
+        value = text,
+        onValueChange = { text = it },
+        label = "Allowed Characters Only",
+        hint = "Only a, b, c, 1, 2, 3 and @",
+        allowedChars = listOf("a", "b", "c", "1", "2", "3", "@"),
+        showClearIcon = true
     )
 }
 

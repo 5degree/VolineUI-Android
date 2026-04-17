@@ -109,6 +109,7 @@ import kotlin.math.roundToInt
  * @param customValidationPattern Custom regex pattern for validation
  * @param inputMask Input mask pattern (e.g., "(###) ###-####")
  * @param maskCharacter Character used as placeholder in mask
+ * @param allowedChars Optional whitelist of allowed characters. When provided, any other character is ignored.
  * @param onValidationResult Callback for validation result
  * @param textOverflow How visual overflow is handled for label, hint, and error text (default end ellipsis).
  */
@@ -144,11 +145,13 @@ fun InputField(
     customValidationPattern: String = "",
     inputMask: String = "",
     maskCharacter: Char = '#',
+    allowedChars: List<String> = emptyList(),
     onValidationResult: ((Boolean) -> Unit)? = null,
     textOverflow: TextOverflow = TextOverflow.Ellipsis,
 ) {
     val effectiveHint = hint ?: label?.takeIf { it.isNotBlank() }?.let { "Enter $it" }
     val showTrailingSlot = !trailingText.isNullOrBlank()
+    val allowedCharacterSet = remember(allowedChars) { allowedChars.flatMap { it.asIterable() }.toSet() }
 
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -234,10 +237,15 @@ fun InputField(
     // Handle text change with max length
     val handleValueChange: (String) -> Unit = { newValue ->
         // For masked input, extract only the input characters
-        val actualValue = if (inputMask.isNotEmpty()) {
+        val unmaskedValue = if (inputMask.isNotEmpty()) {
             newValue.filter { it.isLetterOrDigit() }
         } else {
             newValue
+        }
+        val actualValue = if (allowedCharacterSet.isEmpty()) {
+            unmaskedValue
+        } else {
+            unmaskedValue.filter { it in allowedCharacterSet }
         }
 
         if (actualValue.length <= maxLength) {

@@ -8,6 +8,7 @@
         <attr name="android:inputType" />
         <attr name="android:maxLength" />
         <attr name="android:ellipsize" />
+        <attr name="allowedChars" format="string" />
         
         <!-- Visual Customization -->
         <attr name="cornerRadius" format="dimension" />

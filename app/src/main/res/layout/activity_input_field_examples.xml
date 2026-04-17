@@ -108,6 +108,18 @@
             app:cornerRadius="12dp"
             android:layout_marginBottom="16dp" />
 
+        <!-- Allowed characters only -->
+        <com.cropintellix.volineui.InputField
+            android:id="@+id/allowedCharsInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Allowed Characters Only"
+            android:hint="Only abcdeABCDE12345@"
+            app:allowedChars="abcdeABCDE12345@"
+            app:showClearIcon="true"
+            app:cornerRadius="12dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- Trailing unit text (divider + Kg/acre) -->
         <com.cropintellix.volineui.InputField
             android:id="@+id/ureaInput"

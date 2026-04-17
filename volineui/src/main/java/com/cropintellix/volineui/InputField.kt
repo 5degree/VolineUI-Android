@@ -12,6 +12,7 @@ import android.os.Parcelable
 import android.text.Editable
 import android.text.InputFilter
 import android.text.InputType
+import android.text.Spanned
 import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.AttributeSet
@@ -121,6 +122,8 @@ class InputField @JvmOverloads constructor(
 
     // Max length
     private var maxLength: Int = -1
+    private var allowedChars: String = ""
+    private var allowedCharSet: Set<Char> = emptySet()
 
     // Password visibility
     private var isPasswordVisible: Boolean = false
@@ -245,9 +248,8 @@ class InputField @JvmOverloads constructor(
 
             // Max length
             maxLength = typedArray.getInt(R.styleable.InputField_android_maxLength, -1)
-            if (maxLength > 0) {
-                inputEditText.filters = arrayOf(InputFilter.LengthFilter(maxLength))
-            }
+            setAllowedChars(typedArray.getString(R.styleable.InputField_allowedChars))
+            updateInputFilters()
 
             // Visual customization
             cornerRadius = typedArray.getDimension(
@@ -461,6 +463,12 @@ class InputField @JvmOverloads constructor(
             updateCharacterCounter()
         }
 
+        val sanitizedText = sanitizeToAllowedChars(inputEditText.text?.toString().orEmpty())
+        if (sanitizedText != inputEditText.text?.toString().orEmpty()) {
+            inputEditText.setText(sanitizedText)
+            inputEditText.setSelection(inputEditText.text?.length ?: 0)
+        }
+
         currentBorderColor = borderColor
         currentBorderWidth = borderWidth
     }
@@ -608,11 +616,29 @@ class InputField @JvmOverloads constructor(
      */
     fun setMaxLength(length: Int) {
         this.maxLength = length
-        if (length > 0) {
-            inputEditText.filters = arrayOf(InputFilter.LengthFilter(length))
-        } else {
-            inputEditText.filters = arrayOf()
+        updateInputFilters()
+        if (showCharacterCounter) {
+            updateCharacterCounter()
         }
+    }
+
+    /**
+     * Restrict user input to the supplied characters only.
+     *
+     * @param chars String containing every allowed character. Pass null or blank to disable filtering.
+     */
+    fun setAllowedChars(chars: String?) {
+        allowedChars = chars.orEmpty()
+        allowedCharSet = allowedChars.toSet()
+        updateInputFilters()
+
+        val currentText = inputEditText.text?.toString().orEmpty()
+        val sanitizedText = sanitizeToAllowedChars(currentText)
+        if (sanitizedText != currentText) {
+            inputEditText.setText(sanitizedText)
+            inputEditText.setSelection(inputEditText.text?.length ?: 0)
+        }
+
         if (showCharacterCounter) {
             updateCharacterCounter()
         }
@@ -676,7 +702,7 @@ class InputField @JvmOverloads constructor(
         get() = inputEditText.text?.toString() ?: ""
         @JvmName("setTextValue")
         set(value) {
-            inputEditText.setText(value)
+            inputEditText.setText(sanitizeToAllowedChars(value))
         }
     
     /**
@@ -692,7 +718,7 @@ class InputField @JvmOverloads constructor(
      * For Java compatibility - Kotlin users should use text property
      */
     fun setText(newText: String) {
-        inputEditText.setText(newText)
+        inputEditText.setText(sanitizeToAllowedChars(newText))
     }
 
     /**
@@ -1125,7 +1151,7 @@ class InputField @JvmOverloads constructor(
     override fun onRestoreInstanceState(state: Parcelable?) {
         if (state is SavedState) {
             super.onRestoreInstanceState(state.superState)
-            inputEditText.setText(state.text)
+            inputEditText.setText(sanitizeToAllowedChars(state.text))
             if (state.errorText.isNotEmpty()) {
                 showError(state.errorText)
             }
@@ -1167,6 +1193,22 @@ class InputField @JvmOverloads constructor(
             dp,
             resources.displayMetrics
         )
+    }
+
+    private fun updateInputFilters() {
+        val filters = mutableListOf<InputFilter>()
+        if (maxLength > 0) {
+            filters += InputFilter.LengthFilter(maxLength)
+        }
+        if (allowedCharSet.isNotEmpty()) {
+            filters += AllowedCharsInputFilter(allowedCharSet)
+        }
+        inputEditText.filters = filters.toTypedArray()
+    }
+
+    private fun sanitizeToAllowedChars(text: String): String {
+        if (allowedCharSet.isEmpty()) return text
+        return text.filter { it in allowedCharSet }
     }
 
     private fun createClearIconDrawable(): Drawable {
@@ -1251,6 +1293,36 @@ class InputField @JvmOverloads constructor(
             // Required for proper text rendering - some Android components use toString()
             override fun toString(): String {
                 return CharArray(source.length) { DOT }.concatToString()
+            }
+        }
+    }
+
+    private class AllowedCharsInputFilter(
+        private val allowedChars: Set<Char>
+    ) : InputFilter {
+        override fun filter(
+            source: CharSequence?,
+            start: Int,
+            end: Int,
+            dest: Spanned?,
+            dstart: Int,
+            dend: Int
+        ): CharSequence? {
+            if (source.isNullOrEmpty()) return null
+
+            val filtered = buildString {
+                for (index in start until end) {
+                    val character = source[index]
+                    if (character in allowedChars) {
+                        append(character)
+                    }
+                }
+            }
+
+            return when {
+                filtered.length == end - start -> null
+                filtered.isEmpty() -> ""
+                else -> filtered
             }
         }
     }
