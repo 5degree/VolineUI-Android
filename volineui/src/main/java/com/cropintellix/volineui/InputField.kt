@@ -1203,6 +1203,11 @@ class InputField @JvmOverloads constructor(
         if (allowedCharSet.isNotEmpty()) {
             filters += AllowedCharsInputFilter(allowedCharSet)
         }
+        // Prevent invalid decimal sequences (e.g. "3...", ".3.", "4.4.") when the
+        // input type is decimal. In-progress values like ".3" or "3." are still allowed.
+        if ((inputEditText.inputType and InputType.TYPE_NUMBER_FLAG_DECIMAL) != 0) {
+            filters += DecimalInputFilter()
+        }
         inputEditText.filters = filters.toTypedArray()
     }
 
@@ -1324,6 +1329,38 @@ class InputField @JvmOverloads constructor(
                 filtered.isEmpty() -> ""
                 else -> filtered
             }
+        }
+    }
+
+    /**
+     * InputFilter that enforces valid decimal number format.
+     *
+     * Allows: "", "3", ".3", "3.", "3.14"
+     * Rejects: "3...", ".3.", "4.4.", "..."
+     *
+     * The regex `^[0-9]*\.?[0-9]*$` is intentionally permissive for in-progress
+     * editing (e.g. a trailing dot is valid while the user continues typing).
+     */
+    private class DecimalInputFilter : InputFilter {
+        private val decimalRegex = Regex("^[0-9]*\\.?[0-9]*$")
+
+        override fun filter(
+            source: CharSequence?,
+            start: Int,
+            end: Int,
+            dest: Spanned?,
+            dstart: Int,
+            dend: Int
+        ): CharSequence? {
+            val resultingText = buildString {
+                append(dest, 0, dstart)
+                append(source, start, end)
+                append(dest, dend, dest?.length ?: 0)
+            }
+            // Empty string is always valid (field cleared)
+            if (resultingText.isEmpty()) return null
+            // Reject if the resulting string is not a valid decimal token
+            return if (!decimalRegex.matches(resultingText)) "" else null
         }
     }
 }

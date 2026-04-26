@@ -67,6 +67,9 @@ import com.cropintellix.volineui.inputfield.InputValidator
 import com.cropintellix.volineui.inputfield.ValidationType
 import kotlin.math.roundToInt
 
+/** Regex that allows valid in-progress decimal input: "", "3", ".3", "3.", "3.14" etc. */
+private val decimalInputRegex = Regex("^[0-9]*\\.?[0-9]*$")
+
 /**
  * A comprehensive input field composable with extensive features matching the View-based InputField.
  *
@@ -248,7 +251,14 @@ fun InputField(
             unmaskedValue.filter { it in allowedCharacterSet }
         }
 
-        if (actualValue.length <= maxLength) {
+        // Decimal validation guard: silently reject input that would produce an
+        // invalid decimal token (e.g. "3...", ".3.", "4.4.", "...").
+        // In-progress values like ".3" or "3." are still allowed.
+        val isValidDecimal = keyboardOptions.keyboardType != KeyboardType.Decimal ||
+            actualValue.isEmpty() ||
+            decimalInputRegex.matches(actualValue)
+
+        if (isValidDecimal && actualValue.length <= maxLength) {
             onValueChange(actualValue)
             if (actualValue.length == maxLength) {
                 focusManager.clearFocus()
