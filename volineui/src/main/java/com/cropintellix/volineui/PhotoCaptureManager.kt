@@ -650,7 +650,7 @@ class PhotoCaptureManager private constructor(
 
         // Create watermark lines
         val lines = mutableListOf<String>()
-        lines.add(watermarkText)
+        lines.addAll(watermarkText.split("\n"))
         lines.add(timestampStr)
         if (location != null) {
             lines.add("Lat: ${String.format("%.5f", location.latitude)}, Lng: ${String.format("%.5f", location.longitude)}")
