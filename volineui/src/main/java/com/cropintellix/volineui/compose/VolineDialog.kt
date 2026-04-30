@@ -327,7 +327,7 @@ private fun DialogContent(
     colors: DialogColors = DialogDefaults.colors(),
 ) {
     val shape = RoundedCornerShape(DialogDefaults.CornerRadius)
-    val accentColor = colors.accentColor(type)
+    colors.accentColor(type)
     val iconTint = colors.iconTint(type)
 
     // Determine icon to display

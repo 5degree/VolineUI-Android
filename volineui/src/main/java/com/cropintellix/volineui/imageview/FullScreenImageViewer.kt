@@ -717,11 +717,9 @@ class ComposeCarouselViewer(
 
     private fun loadImage(index: Int) {
         loadingIndicator.visibility = View.VISIBLE
-        val source = sources[index]
-        
-        val glideRequest = when (source) {
+        val glideRequest = when (val source = sources[index]) {
             is ImageSource.File -> Glide.with(context).load(source.file)
-            is ImageSource.FilePath -> Glide.with(context).load(java.io.File(source.path))
+            is ImageSource.FilePath -> Glide.with(context).load(File(source.path))
             is ImageSource.Url -> Glide.with(context).load(source.url)
             is ImageSource.Uri -> Glide.with(context).load(source.uri)
             is ImageSource.DrawableRes -> Glide.with(context).load(source.resId)

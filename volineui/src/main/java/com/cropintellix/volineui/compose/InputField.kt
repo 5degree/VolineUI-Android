@@ -159,7 +159,7 @@ fun InputField(
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     val focusRequester = remember { FocusRequester() }
-    val scope = rememberCoroutineScope()
+    rememberCoroutineScope()
 
     // Password visibility state
     var passwordVisible by remember { mutableStateOf(false) }

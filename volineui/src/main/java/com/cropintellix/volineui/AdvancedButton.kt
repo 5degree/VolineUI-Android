@@ -615,9 +615,7 @@ class AdvancedButton @JvmOverloads constructor(
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = getActualCornerRadius()
-            val effectiveStyle = getEffectiveButtonStyle()
-            
-            when (effectiveStyle) {
+            when (val effectiveStyle = getEffectiveButtonStyle()) {
                 ButtonStyle.FILLED, ButtonStyle.FAB, ButtonStyle.EXTENDED_FAB -> {
                     if (useGradient) {
                         orientation = getGradientOrientation()
@@ -892,9 +890,7 @@ class AdvancedButton @JvmOverloads constructor(
     }
     
     private fun applyNormalColors() {
-        val effectiveStyle = getEffectiveButtonStyle()
-
-        when (effectiveStyle) {
+        when (val effectiveStyle = getEffectiveButtonStyle()) {
             ButtonStyle.FILLED, ButtonStyle.ELEVATED, ButtonStyle.FAB, ButtonStyle.EXTENDED_FAB -> {
                 textView.setTextColor(textColor)
                 applyIconTint(iconColor)
@@ -916,9 +912,7 @@ class AdvancedButton @JvmOverloads constructor(
     }
     
     private fun applyPressedColors() {
-        val effectiveStyle = getEffectiveButtonStyle()
-
-        when (effectiveStyle) {
+        when (val effectiveStyle = getEffectiveButtonStyle()) {
             ButtonStyle.FILLED, ButtonStyle.ELEVATED, ButtonStyle.FAB, ButtonStyle.EXTENDED_FAB -> {
                 textView.setTextColor(textColorPressed)
                 applyIconTint(iconColorPressed)
@@ -1015,9 +1009,7 @@ class AdvancedButton @JvmOverloads constructor(
         val flatBg = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = getActualCornerRadius()
-            val effectiveStyle = getEffectiveButtonStyle()
-            
-            when (effectiveStyle) {
+            when (val effectiveStyle = getEffectiveButtonStyle()) {
                 ButtonStyle.OUTLINED, ButtonStyle.TEXT -> {
                     setColor(Color.TRANSPARENT)
                     if (effectiveStyle == ButtonStyle.OUTLINED) {

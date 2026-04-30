@@ -146,11 +146,11 @@ fun Radio(
     }
     
     // Convert dimensions to pixels
-    val heightPx = with(density) { height.toPx() }
+    with(density) { height.toPx() }
     val gapPx = with(density) { gap.toPx() }
     val optionSpacingPx = with(density) { optionSpacing.toPx() }
     val cornerRadiusPx = with(density) { cornerRadius.toPx() }
-    val textSizePx = with(density) { textSize.toPx() }
+    with(density) { textSize.toPx() }
     
     Column(
         modifier = modifier
@@ -260,7 +260,7 @@ fun Radio(
                 // Draw sliding pill with 3D gradient effect
                 val pillLeft = gapPx + currentPillPosition * (optionWidth + optionSpacingPx)
                 val pillTop = gapPx
-                val pillRight = pillLeft + optionWidth
+                pillLeft + optionWidth
                 val pillBottom = canvasHeight - gapPx
                 val pillHeight = pillBottom - pillTop
                 val pillCornerRadius = cornerRadiusPx - gapPx
