@@ -28,10 +28,10 @@ object InputFieldDefaults {
     val TrailingDividerVerticalInset: Dp = 8.dp
     val TrailingDividerWidth: Dp = 1.dp
     /**
-     * Trailing vertical divider height — matches View [InputField] (`minRowHeight - 2 * inset`), not the
-     * smaller inner padded band (`MinHeight - 2 * VerticalPadding`).
+     * Trailing vertical divider height — fits within the inner padded content area so the divider
+     * does not inflate the row height beyond [MinHeight].
      */
-    val TrailingDividerHeight: Dp = MinHeight - TrailingDividerVerticalInset * 2
+    val TrailingDividerHeight: Dp = MinHeight - VerticalPadding * 2
     /** Space between the editable text and the trailing divider (View + Compose). */
     val TrailingInputToDividerGap: Dp = 8.dp
     /** Space between divider and trailing text, and before optional trailing icon. */
