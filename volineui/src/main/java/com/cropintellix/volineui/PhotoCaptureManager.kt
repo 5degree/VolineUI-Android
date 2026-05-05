@@ -361,31 +361,6 @@ class PhotoCaptureManager private constructor(
         val activity = currentActivityRef?.get()
             ?: throw PhotoCaptureException(PhotoCaptureException.ERROR_ACTIVITY_DESTROYED)
         
-        // Check storage permission
-        if (!PermissionManager.instance.isStoragePermissionGranted) {
-            PermissionManager.instance.requestStoragePermission { results ->
-                if (results.values.any { it.isGranted }) {
-                    launchGalleryPicker(config, callback)
-                } else if (results.values.any { it.isPermanentlyDenied }) {
-                    showPermissionPermanentlyDeniedDialog(activity, "Storage")
-                    callback(
-                        PhotoCaptureResult.Error(
-                            PhotoCaptureException(PhotoCaptureException.ERROR_PERMISSION_DENIED),
-                            "Storage permission is permanently denied. Please enable it in settings."
-                        )
-                    )
-                } else {
-                    callback(
-                        PhotoCaptureResult.Error(
-                            PhotoCaptureException(PhotoCaptureException.ERROR_PERMISSION_DENIED),
-                            "Storage permission is required to pick photos"
-                        )
-                    )
-                }
-            }
-            return
-        }
-        
         launchGalleryPicker(config, callback)
     }
     

@@ -7,7 +7,6 @@ import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -332,21 +331,7 @@ class PermissionManager private constructor(
     val isCameraPermissionGranted: Boolean
         get() = checkPermission(android.Manifest.permission.CAMERA) == PermissionStatus.GRANTED
     
-    /**
-     * Check if storage permissions are granted
-     * Handles version-specific permissions automatically (READ_EXTERNAL_STORAGE for older, READ_MEDIA_* for newer)
-     */
-    val isStoragePermissionGranted: Boolean
-        get() {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // Android 13+ needs specific media permissions
-                checkPermission(android.Manifest.permission.READ_MEDIA_IMAGES) == PermissionStatus.GRANTED ||
-                checkPermission(android.Manifest.permission.READ_MEDIA_VIDEO) == PermissionStatus.GRANTED ||
-                checkPermission(android.Manifest.permission.READ_MEDIA_AUDIO) == PermissionStatus.GRANTED
-            } else {
-                checkPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PermissionStatus.GRANTED
-            }
-        }
+
     
     /**
      * Check if location permissions are granted (either fine or coarse)
@@ -361,20 +346,7 @@ class PermissionManager private constructor(
         requestPermission(android.Manifest.permission.CAMERA, callback)
     }
     
-    /**
-     * Request storage permissions (version-appropriate)
-     */
-    fun requestStoragePermission(callback: (Map<String, PermissionResult>) -> Unit) {
-        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(
-                android.Manifest.permission.READ_MEDIA_IMAGES,
-                android.Manifest.permission.READ_MEDIA_VIDEO
-            )
-        } else {
-            arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-        requestPermissions(*permissions, callback = callback)
-    }
+
     
     /**
      * Request location permissions (fine location)
@@ -391,30 +363,17 @@ class PermissionManager private constructor(
         private var INSTANCE: PermissionManager? = null
         
         // Common permissions that are automatically included
-        private val COMMON_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            listOf(
-                android.Manifest.permission.CAMERA,
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                android.Manifest.permission.READ_MEDIA_IMAGES,
-                android.Manifest.permission.READ_MEDIA_VIDEO,
-                android.Manifest.permission.READ_MEDIA_AUDIO
-            )
-        } else {
-            listOf(
-                android.Manifest.permission.CAMERA,
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        }
+        private val COMMON_PERMISSIONS = listOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
         
         /**
          * Initialize the PermissionManager
          * 
          * Call this once in your Application class's onCreate()
-         * The manager automatically handles common permissions (camera, storage, location).
+         * The manager automatically handles common permissions (camera, location).
          * You can optionally provide additional permissions your app needs.
          * Duplicates are automatically removed.
          * 
