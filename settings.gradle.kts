@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "VolineUI Android"
 include(":app")
 include(":volineui")
+include(":volinecore")
