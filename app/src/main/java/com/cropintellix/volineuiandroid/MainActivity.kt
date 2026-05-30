@@ -15,6 +15,7 @@ import com.cropintellix.volineuiandroid.compose.ComposeRadioExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeToastExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeDateTimePickerExamplesActivity
 import com.cropintellix.volineuiandroid.compose.ComposeDialogExamplesActivity
+import com.cropintellix.volineuiandroid.compose.RemoteLoggerTestActivity
 import com.cropintellix.volineuiandroid.databinding.ActivityMainBinding
 import kotlin.jvm.java
 
@@ -93,6 +94,9 @@ class MainActivity : AppCompatActivity() {
         }
         b.btnOpenComposeDateTimePickerExamples.setOnClickListener {
             startActivity(Intent(this, ComposeDateTimePickerExamplesActivity::class.java))
+        }
+        b.btnOpenRemoteLoggerTest.setOnClickListener {
+            startActivity(Intent(this, RemoteLoggerTestActivity::class.java))
         }
     }
 }

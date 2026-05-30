@@ -1,5 +1,8 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
 	alias(libs.plugins.android.library)
+	alias(libs.plugins.ksp)
 }
 
 android {
@@ -15,10 +18,16 @@ android {
 		consumerProguardFiles("consumer-rules.pro")
 	}
 	compileOptions {
-		sourceCompatibility = JavaVersion.VERSION_11
-		targetCompatibility = JavaVersion.VERSION_11
+		sourceCompatibility = JavaVersion.VERSION_17
+		targetCompatibility = JavaVersion.VERSION_17
 	}
 
+}
+
+kotlin {
+	compilerOptions {
+		jvmTarget = JvmTarget.JVM_17
+	}
 }
 
 dependencies {
@@ -28,4 +37,19 @@ dependencies {
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
 	androidTestImplementation(libs.androidx.junit)
+
+	// Firebase
+	api(platform(libs.firebase.bom))
+	api(libs.firebase.database.ktx)
+
+	// Room (offline log queue)
+	implementation(libs.room.runtime)
+	implementation(libs.room.ktx)
+	ksp(libs.room.compiler)
+
+	// Gson (JSON serialization)
+	implementation(libs.gson)
+
+	// Coroutines
+	implementation(libs.coroutines.android)
 }
