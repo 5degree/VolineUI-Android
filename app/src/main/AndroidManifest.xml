@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
-        android:name=".MyApplication"
+        android:name="in.fivedegree.volineuiandroid.MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -21,72 +21,72 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VolineUIAndroid">
         <activity
-            android:name=".ButtonExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.ButtonExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.ComposeButtonExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeButtonExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.ComposeInputFieldExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeInputFieldExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".RadioExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.RadioExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.ComposeRadioExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeRadioExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".InputFieldExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.InputFieldExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".DropdownExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.DropdownExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.ComposeDropdownExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeDropdownExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".SignaturePadExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.SignaturePadExamplesActivity"
             android:exported="false"
             android:screenOrientation="landscape"
             tools:ignore="DiscouragedApi" />
         <activity
-            android:name=".PermissionExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.PermissionExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".LocationExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.LocationExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".PhotoCaptureExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.PhotoCaptureExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".ImageViewExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.ImageViewExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.ComposeImageViewExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeImageViewExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.ComposeImageCarouselExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeImageCarouselExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".ToastExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.ToastExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.ComposeToastExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeToastExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".DialogExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.DialogExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.ComposeDialogExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeDialogExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.ComposeDateTimePickerExamplesActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeDateTimePickerExamplesActivity"
             android:exported="false" />
         <activity
-            android:name=".compose.RemoteLoggerTestActivity"
+            android:name="in.fivedegree.volineuiandroid.compose.RemoteLoggerTestActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name="in.fivedegree.volineuiandroid.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -23,7 +23,7 @@
             android:layout_marginBottom="24dp" />
 
         <!-- Basic Radio with Label -->
-        <com.cropintellix.volineui.Radio
+        <in.fivedegree.volineui.Radio
             android:id="@+id/roleRadio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,7 +34,7 @@
             android:layout_marginBottom="24dp" />
 
         <!-- Custom Colors with Label -->
-        <com.cropintellix.volineui.Radio
+        <in.fivedegree.volineui.Radio
             android:id="@+id/timePeriodRadio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -52,7 +52,7 @@
             android:layout_marginBottom="24dp" />
 
         <!-- Compact Size -->
-        <com.cropintellix.volineui.Radio
+        <in.fivedegree.volineui.Radio
             android:id="@+id/sizeRadio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -67,7 +67,7 @@
             android:layout_marginBottom="24dp" />
 
         <!-- Two Options -->
-        <com.cropintellix.volineui.Radio
+        <in.fivedegree.volineui.Radio
             android:id="@+id/planRadio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -83,7 +83,7 @@
             android:layout_marginBottom="24dp" />
 
         <!-- Without Dividers -->
-        <com.cropintellix.volineui.Radio
+        <in.fivedegree.volineui.Radio
             android:id="@+id/difficultyRadio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -99,7 +99,7 @@
             android:layout_marginBottom="24dp" />
 
         <!-- Custom Label Gap and Style -->
-        <com.cropintellix.volineui.Radio
+        <in.fivedegree.volineui.Radio
             android:id="@+id/customRadio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -121,7 +121,7 @@
             android:layout_marginBottom="24dp" />
 
         <!-- Disabled Radio -->
-        <com.cropintellix.volineui.Radio
+        <in.fivedegree.volineui.Radio
             android:id="@+id/disabledRadio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

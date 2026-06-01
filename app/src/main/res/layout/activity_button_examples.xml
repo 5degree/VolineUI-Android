@@ -35,7 +35,7 @@
             android:textStyle="bold" />
 
         <!-- Filled Button -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnFilled"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
             app:buttonText="Filled Button"/>
 
         <!-- Outlined Button -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnOutlined"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -52,7 +52,7 @@
             app:buttonType="outlined" />
 
         <!-- Text Button -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -62,7 +62,7 @@
             app:buttonBackgroundColor="#6200EE" />
 
         <!-- Elevated Button -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnElevated"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -74,7 +74,7 @@
             app:buttonElevation="4dp" />
 
         <!-- Tonal Button -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnTonal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -84,7 +84,7 @@
             app:buttonBackgroundColor="#6200EE" />
 
         <!-- Chip Button -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnChip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -112,7 +112,7 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="16dp">
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnXS"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -122,7 +122,7 @@
                 app:buttonFullWidth="false"
                 app:buttonBackgroundColor="#FF5722" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnS"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -132,7 +132,7 @@
                 app:buttonFullWidth="false"
                 app:buttonBackgroundColor="#FF9800" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnM"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -142,7 +142,7 @@
                 app:buttonFullWidth="false"
                 app:buttonBackgroundColor="#4CAF50" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnL"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -165,7 +165,7 @@
             android:textStyle="bold" />
 
         <!-- Leading Icon -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnLeadingIcon"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -175,7 +175,7 @@
             app:buttonBackgroundColor="#4CAF50" />
 
         <!-- Trailing Icon (Clickable) -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnTrailingIcon"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -185,7 +185,7 @@
             app:buttonBackgroundColor="#2196F3" />
 
         <!-- Both Icons -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnBothIcons"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -218,7 +218,7 @@
             android:layout_marginBottom="8dp"
             android:orientation="horizontal">
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconStandard"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -228,7 +228,7 @@
                 app:buttonSizeType="s"
                 app:buttonLeadingIcon="@android:drawable/ic_menu_search" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconFilled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -239,7 +239,7 @@
                 app:buttonLeadingIcon="@android:drawable/ic_input_add"
                 app:buttonBackgroundColor="#E91E63" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconTonal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -256,7 +256,7 @@
             android:layout_marginBottom="12dp"
             android:orientation="horizontal">
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconOutlined"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -268,7 +268,7 @@
                 app:buttonBorderColor="#3F51B5"
                 app:buttonIconColor="#3F51B5" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconElevated"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -279,7 +279,7 @@
                 app:buttonLeadingIcon="@android:drawable/ic_menu_send"
                 app:buttonBackgroundColor="#FF9800" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconTrailingOnly"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -305,7 +305,7 @@
             android:layout_marginBottom="12dp"
             android:orientation="horizontal">
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconXs"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -316,7 +316,7 @@
                 app:buttonLeadingIcon="@android:drawable/ic_menu_add"
                 app:buttonBackgroundColor="#795548" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconS"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -327,7 +327,7 @@
                 app:buttonLeadingIcon="@android:drawable/ic_menu_call"
                 app:buttonBackgroundColor="#9C27B0" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconM"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -338,7 +338,7 @@
                 app:buttonLeadingIcon="@android:drawable/ic_menu_camera"
                 app:buttonBackgroundColor="#3F51B5" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconL"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -363,7 +363,7 @@
             android:layout_marginBottom="12dp"
             android:orientation="horizontal">
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconSharp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -375,7 +375,7 @@
                 app:buttonLeadingIcon="@android:drawable/ic_menu_crop"
                 app:buttonBackgroundColor="#F44336" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconRounded"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -387,7 +387,7 @@
                 app:buttonLeadingIcon="@android:drawable/ic_menu_gallery"
                 app:buttonBackgroundColor="#9C27B0" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconPill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -399,7 +399,7 @@
                 app:buttonLeadingIcon="@android:drawable/ic_menu_manage"
                 app:buttonBackgroundColor="#3F51B5" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconDisabled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -425,7 +425,7 @@
             android:layout_marginBottom="16dp"
             android:orientation="horizontal">
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconLoading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -436,7 +436,7 @@
                 app:buttonLeadingIcon="@android:drawable/ic_popup_sync"
                 app:buttonBackgroundColor="#009688" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconSuccessError"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -447,7 +447,7 @@
                 app:buttonLeadingIcon="@android:drawable/checkbox_on_background"
                 app:buttonBackgroundColor="#4CAF50" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconInteraction"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -459,7 +459,7 @@
                 app:buttonBorderColor="#FF5722"
                 app:buttonIconColor="#FF5722" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnIconGradient"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -489,7 +489,7 @@
             android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnSharp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -499,7 +499,7 @@
                 app:buttonCornerType="sharp"
                 app:buttonBackgroundColor="#E91E63" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnRounded"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -509,7 +509,7 @@
                 app:buttonCornerType="rounded"
                 app:buttonBackgroundColor="#9C27B0" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnPill"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -533,7 +533,7 @@
             android:textStyle="bold" />
 
         <!-- Disabled Button -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnDisabled"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -542,7 +542,7 @@
             app:buttonText="Disabled Button" />
 
         <!-- Loading Button -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnLoading"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -551,7 +551,7 @@
             app:buttonBackgroundColor="#FF5722" />
 
         <!-- Success/Error Button -->
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnSuccessError"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -570,7 +570,7 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnGradient"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -598,7 +598,7 @@
             android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnLoadingSpinner"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -608,7 +608,7 @@
                 app:buttonLoadingType="spinner"
                 app:buttonBackgroundColor="#009688" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnLoadingDots"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -618,7 +618,7 @@
                 app:buttonLoadingType="dots"
                 app:buttonBackgroundColor="#00BCD4" />
 
-            <com.cropintellix.volineui.AdvancedButton
+            <in.fivedegree.volineui.AdvancedButton
                 android:id="@+id/btnLoadingShimmer"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -641,7 +641,7 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <com.cropintellix.volineui.AdvancedButton
+        <in.fivedegree.volineui.AdvancedButton
             android:id="@+id/btnInteractions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

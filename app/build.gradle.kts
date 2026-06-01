@@ -7,13 +7,13 @@ plugins {
 }
 
 android {
-    namespace = "com.cropintellix.volineuiandroid"
+    namespace = "in.fivedegree.volineuiandroid"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.cropintellix.volineuiandroid"
+        applicationId = "in.fivedegree.volineuiandroid"
         minSdk = 24
         targetSdk = 37
         versionCode = 1

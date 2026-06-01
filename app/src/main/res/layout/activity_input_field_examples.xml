@@ -23,7 +23,7 @@
             android:layout_marginBottom="24dp" />
 
         <!-- Basic Text Input -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/basicInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
         <!-- Email Input with Validation -->
 
         <!-- Phone Input with Masking -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/emailInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -46,7 +46,7 @@
             app:cornerRadius="12dp"
             app:label="Email Address" />
 
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/phoneInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -59,7 +59,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Password Input with Toggle -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/passwordInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -72,7 +72,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Input with Character Counter -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/messageInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -85,7 +85,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Multi-line Text Area -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/bioInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -98,7 +98,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Number Input -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/ageInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -109,7 +109,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Allowed characters only -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/allowedCharsInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -121,7 +121,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Trailing unit text (divider + Kg/acre) -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/ureaInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -133,7 +133,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Trailing text + suffix icon (text left of icon) -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/fertilizerInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -147,7 +147,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Disabled Input -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/disabledInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -158,7 +158,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Read-only Input -->
-        <com.cropintellix.volineui.InputField
+        <in.fivedegree.volineui.InputField
             android:id="@+id/readonlyInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

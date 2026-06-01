@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.cropintellix.volinecore"
+    namespace = "in.fivedegree.volinecore"
     compileSdk {
         version = release(36)
     }

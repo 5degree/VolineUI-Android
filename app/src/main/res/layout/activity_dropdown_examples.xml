@@ -33,7 +33,7 @@
             android:layout_marginBottom="12dp" />
 
         <!-- 1. Basic XML array -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:label="1. Countries (XML Array)"
@@ -42,7 +42,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 2. XML array with clear button -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:id="@+id/dropdown2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -52,7 +52,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 3. XML array with custom colors -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/priorities"
@@ -63,7 +63,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 4. XML array with padding -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/status_options"
@@ -74,7 +74,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 5. XML array with rounded corners -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/categories"
@@ -86,7 +86,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 6. XML array filled style -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/colors"
@@ -96,7 +96,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 7. XML array ghost style -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/sizes"
@@ -108,7 +108,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 8. XML array with searchable -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/languages"
@@ -118,7 +118,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 9. XML array disabled -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/time_zones"
@@ -127,7 +127,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 10. XML array multi-select -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/departments"
@@ -147,7 +147,7 @@
             android:layout_marginBottom="12dp" />
 
         <!-- 11. Custom trailing icon color -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/countries"
@@ -156,7 +156,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 12. No icon animation -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/difficulty_levels"
@@ -165,7 +165,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 13. Clear button with custom icon color -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/priorities"
@@ -175,7 +175,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 14. Leading icon (requires programmatic setup) -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:id="@+id/dropdown14"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -184,7 +184,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 15. Both icons custom colors -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/categories"
@@ -195,7 +195,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 16-20: More icon variations -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/colors"
@@ -203,7 +203,7 @@
             app:trailingIconTint="#9C27B0"
             android:layout_marginBottom="16dp" />
 
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/sizes"
@@ -212,7 +212,7 @@
             app:showClearButton="true"
             android:layout_marginBottom="16dp" />
 
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/languages"
@@ -220,7 +220,7 @@
             app:trailingIconTint="#009688"
             android:layout_marginBottom="16dp" />
 
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/time_zones"
@@ -228,7 +228,7 @@
             app:trailingIconTint="#3F51B5"
             android:layout_marginBottom="16dp" />
 
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/departments"
@@ -249,7 +249,7 @@
             android:layout_marginBottom="12dp" />
 
         <!-- 21. Large horizontal padding -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/countries"
@@ -258,7 +258,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 22. Small horizontal padding -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/difficulty_levels"
@@ -267,7 +267,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 23. Large vertical padding -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/priorities"
@@ -276,7 +276,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 24. Small vertical padding -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/status_options"
@@ -285,7 +285,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 25. Both large -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/categories"
@@ -295,7 +295,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 26. Both small -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/colors"
@@ -305,7 +305,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 27. Asymmetric padding -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/sizes"
@@ -315,7 +315,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 28. Label gap -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/languages"
@@ -324,7 +324,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 29. Compact -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/time_zones"
@@ -335,7 +335,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 30. Spacious -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/departments"
@@ -356,7 +356,7 @@
             android:layout_marginBottom="12dp" />
 
         <!-- 31. Thick border -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/countries"
@@ -366,7 +366,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 32. Thin border -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/difficulty_levels"
@@ -376,7 +376,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 33. Sharp corners -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/priorities"
@@ -385,7 +385,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 34. Very rounded -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/status_options"
@@ -394,7 +394,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 35. Outlined style (default) -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/categories"
@@ -405,7 +405,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 36. Filled style -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/colors"
@@ -415,7 +415,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 37. Ghost style -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/sizes"
@@ -424,7 +424,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 38. Custom background color -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/languages"
@@ -435,7 +435,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 39. Focused border color -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/time_zones"
@@ -445,7 +445,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 40. All custom colors -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/departments"
@@ -468,7 +468,7 @@
             android:layout_marginBottom="12dp" />
 
         <!-- 41. Multi-select with chips -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:id="@+id/dropdown41"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -479,7 +479,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 42. Multi-select with max -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/difficulty_levels"
@@ -489,7 +489,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 43. Searchable with highlight -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/priorities"
@@ -499,7 +499,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 44. Custom search hint -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/status_options"
@@ -509,7 +509,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 45. No checkmarks -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/categories"
@@ -518,7 +518,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 46. With dividers -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/colors"
@@ -527,7 +527,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 47. Custom option colors -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/sizes"
@@ -537,7 +537,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 48. Tall options -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/languages"
@@ -546,7 +546,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 49. Compact options -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/time_zones"
@@ -555,7 +555,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- 50. Everything combined -->
-        <com.cropintellix.volineui.Dropdown
+        <in.fivedegree.volineui.Dropdown
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:options="@array/departments"

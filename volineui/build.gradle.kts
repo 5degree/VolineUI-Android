@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.cropintellix.volineui"
+    namespace = "in.fivedegree.volineui"
     compileSdk {
         version = release(36)
     }

@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp">
 
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/aiv1"
             android:layout_width="0dp"
             android:layout_height="200dp"
@@ -32,7 +32,7 @@
                 android:layout_width="10dp"
                 android:layout_height="0dp" />
 
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/aiv2"
             android:layout_width="0dp"
             android:layout_height="200dp"
@@ -44,7 +44,7 @@
 
         </LinearLayout>
 
-        <com.cropintellix.volineui.ImageCarousel
+        <in.fivedegree.volineui.ImageCarousel
             android:id="@+id/ic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -70,7 +70,7 @@
             android:textColor="#666666"
             android:layout_marginBottom="4dp" />
 
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/imageFromXml"
             android:layout_width="match_parent"
             android:layout_height="150dp"
@@ -81,7 +81,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 2: With Label -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/imageWithLabel"
             android:layout_width="match_parent"
             android:layout_height="180dp"
@@ -101,7 +101,7 @@
             android:textColor="#666666"
             android:layout_marginBottom="4dp" />
 
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/circularImage"
             android:layout_width="120dp"
             android:layout_height="120dp"
@@ -113,7 +113,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 4: Aspect Ratio 16:9 -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/aspect16_9"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -124,7 +124,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 5: Square with no border -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/squareNoBorder"
             android:layout_width="150dp"
             android:layout_height="150dp"
@@ -135,7 +135,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 6: URL Loading -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/imageFromUrl"
             android:layout_width="match_parent"
             android:layout_height="200dp"
@@ -152,7 +152,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 7: Custom Placeholder -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/customPlaceholder"
             android:layout_width="match_parent"
             android:layout_height="160dp"
@@ -164,7 +164,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 8: Scale Type FIT -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/scaleFit"
             android:layout_width="match_parent"
             android:layout_height="120dp"
@@ -175,7 +175,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 9: Scale Type CENTER -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/scaleCenter"
             android:layout_width="match_parent"
             android:layout_height="120dp"
@@ -186,7 +186,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 10: Thick Border -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/thickBorder"
             android:layout_width="match_parent"
             android:layout_height="150dp"
@@ -209,7 +209,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 11: Basic Carousel -->
-        <com.cropintellix.volineui.ImageCarousel
+        <in.fivedegree.volineui.ImageCarousel
             android:id="@+id/carousel1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -229,7 +229,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 12: Large Items Carousel -->
-        <com.cropintellix.volineui.ImageCarousel
+        <in.fivedegree.volineui.ImageCarousel
             android:id="@+id/carousel2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -242,7 +242,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 13: Small Thumbnails -->
-        <com.cropintellix.volineui.ImageCarousel
+        <in.fivedegree.volineui.ImageCarousel
             android:id="@+id/carousel3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -254,7 +254,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 14: Circular Carousel Items -->
-        <com.cropintellix.volineui.ImageCarousel
+        <in.fivedegree.volineui.ImageCarousel
             android:id="@+id/carousel4"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -266,7 +266,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 15: No Delete Icons -->
-        <com.cropintellix.volineui.ImageCarousel
+        <in.fivedegree.volineui.ImageCarousel
             android:id="@+id/carousel5"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -288,7 +288,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 16: Camera Capture with Gallery -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/cameraCapture"
             android:layout_width="match_parent"
             android:layout_height="200dp"
@@ -321,7 +321,7 @@
         </LinearLayout>
 
         <!-- Example 17: With Loading Indicator Off -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/noLoading"
             android:layout_width="match_parent"
             android:layout_height="150dp"
@@ -332,7 +332,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 18: Colored Background -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/coloredBg"
             android:layout_width="match_parent"
             android:layout_height="150dp"
@@ -344,7 +344,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 19: Full Screen Preview Off -->
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/noFullscreen"
             android:layout_width="match_parent"
             android:layout_height="150dp"
@@ -363,7 +363,7 @@
             android:textColor="#666666"
             android:layout_marginBottom="4dp" />
 
-        <com.cropintellix.volineui.AdvancedImageView
+        <in.fivedegree.volineui.AdvancedImageView
             android:id="@+id/actionButtonsDemo"
             android:layout_width="match_parent"
             android:layout_height="160dp"
@@ -374,7 +374,7 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Example 21: Picture Gallery Demo -->
-        <com.cropintellix.volineui.ImageCarousel
+        <in.fivedegree.volineui.ImageCarousel
             android:id="@+id/galleryDemo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
