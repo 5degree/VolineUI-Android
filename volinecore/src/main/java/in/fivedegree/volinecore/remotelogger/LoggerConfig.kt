@@ -44,6 +44,7 @@ data class LoggerConfig(
     val enableCrashLogging: Boolean = false,
     val enableOfflineQueue: Boolean = true,
     val databaseReference: String = "logs",
+    val databaseUrl: String? = null,
     val maxOfflineQueueSize: Int = 1000,
     val sensitiveHeaders: Set<String> = setOf(
         "Authorization",

@@ -161,8 +161,11 @@ internal class LogDispatcher(
         logType: String
     ): Boolean = suspendCoroutine { continuation ->
         try {
-            val ref = FirebaseDatabase.getInstance()
-                .getReference(config.databaseReference)
+            val db = config.databaseUrl
+                ?.takeIf { it.isNotBlank() }
+                ?.let { FirebaseDatabase.getInstance(it) }
+                ?: FirebaseDatabase.getInstance()
+            val ref = db.getReference(config.databaseReference)
                 .child(appId)
                 .child(logType)
                 .push()
