@@ -7,6 +7,56 @@ VolineUI is an Android UI component library by **5Degree**. It provides producti
 
 The companion `:app` module in this repository is a demo app with side-by-side View and Compose examples for every component.
 
+## Installation
+
+VolineUI is published on **Maven Central** as `io.github.5degree:volineui`. The transitive `:volinecore` module (Firebase, Room, offline queue, etc.) is pulled in automatically — you do not need to add it separately.
+
+### Gradle (Kotlin DSL)
+
+```kotlin
+// app/build.gradle.kts
+dependencies {
+    implementation("io.github.5degree:volineui:1.0.0")
+}
+```
+
+Maven Central is included by default in modern Android projects (AGP 7+), so no `repositories {}` changes are required.
+
+### Gradle (Groovy)
+
+```groovy
+// app/build.gradle
+dependencies {
+    implementation 'io.github.5degree:volineui:1.0.0'
+}
+```
+
+### Version catalog (`gradle/libs.versions.toml`)
+
+```toml
+[versions]
+volineui = "1.0.0"
+
+[libraries]
+volineui = { module = "io.github.5degree:volineui", version.ref = "volineui" }
+```
+
+```kotlin
+// app/build.gradle.kts
+dependencies {
+    implementation(libs.volineui)
+}
+```
+
+### Requirements
+
+| | |
+|---|---|
+| Min SDK | 24 |
+| Compile SDK | 36 |
+| JVM target | 17 |
+| Kotlin | 2.0+ (Compose-enabled) |
+
 ## Screenshots
 
 <table>
@@ -52,31 +102,7 @@ The companion `:app` module in this repository is a demo app with side-by-side V
   </tr>
 </table>
 
-## Requirements
-
-| | |
-|---|---|
-| Min SDK | 24 |
-| Compile SDK | 36 |
-| JVM target | 17 |
-| Kotlin | Compose-enabled |
-
-## Installation
-
-Add the module to your project (or publish/consume as an AAR), then depend on it from your app module:
-
-```kotlin
-// settings.gradle.kts
-include(":volineui")
-
-// app/build.gradle.kts
-dependencies {
-    implementation(project(":volineui"))
-}
-```
-
 ## Quick start
-
 ### Initialize managers (Application)
 
 `PermissionManager`, `LocationManager`, and `PhotoCaptureManager` are singletons that should be initialized once in your `Application` class:
