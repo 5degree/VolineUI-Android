@@ -1,8 +1,9 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.library")
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.maven.publish)
 }
 
 android {
@@ -13,15 +14,14 @@ android {
 
     defaultConfig {
         minSdk = 24
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
 }
 
 kotlin {
@@ -30,8 +30,48 @@ kotlin {
     }
 }
 
+// ── Maven Central Publishing ────────────────────────────────────────────
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+
+    coordinates(
+        groupId = property("GROUP").toString(),
+        artifactId = "volinecore",
+        version = property("LIBRARY_VERSION").toString(),
+    )
+
+    pom {
+        name.set("VolineCore")
+        description.set("Core utilities and data layer for VolineUI Android library — Firebase integration, offline queue, and shared infrastructure.")
+        url.set("https://github.com/5degree/VolineUI-Android")
+        inceptionYear.set("2025")
+
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("5degree")
+                name.set("5Degree")
+                url.set("https://github.com/5degree")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/5degree/VolineUI-Android")
+            connection.set("scm:git:git://github.com/5degree/VolineUI-Android.git")
+            developerConnection.set("scm:git:ssh://git@github.com/5degree/VolineUI-Android.git")
+        }
+    }
+}
+
 dependencies {
-    //noinspection UseTomlInstead
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.core:core-ktx:1.18.0")
     implementation("com.google.android.material:material:1.14.0")
