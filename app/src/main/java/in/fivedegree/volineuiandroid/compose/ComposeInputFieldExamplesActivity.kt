@@ -1,6 +1,7 @@
 package `in`.fivedegree.volineuiandroid.compose
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -38,6 +40,7 @@ import `in`.fivedegree.volineui.compose.InputField
 import `in`.fivedegree.volineui.inputfield.InputFieldDefaults
 import `in`.fivedegree.volineui.inputfield.InputMaskTransformation
 import `in`.fivedegree.volineui.inputfield.ValidationType
+import `in`.fivedegree.volineuiandroid.R
 import `in`.fivedegree.volineuiandroid.ui.theme.AppTheme
 
 /**
@@ -114,6 +117,12 @@ private fun InputFieldExamplesScreen(modifier: Modifier = Modifier) {
         // With Icons
         SectionTitle("With Icons")
         IconsExample()
+
+        HorizontalDivider()
+
+        // Clickable leading/trailing icons & trailing text
+        SectionTitle("Clickable Icons & Trailing Text")
+        ClickableAccessoriesExample()
 
         HorizontalDivider()
 
@@ -269,8 +278,60 @@ private fun IconsExample() {
         onValueChange = { searchText = it },
         label = "Search",
         hint = "Search for something...",
+        leadingIcon = painterResource(R.drawable.browse_24px),
+        trailingIcon = painterResource(volineR.drawable.ic_info_filled),
         showClearIcon = true
     )
+}
+
+@Composable
+private fun ClickableAccessoriesExample() {
+    val context = LocalContext.current
+    var searchText by remember { mutableStateOf("") }
+    var quantity by remember { mutableStateOf("25") }
+
+    fun toast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        InputField(
+            value = searchText,
+            onValueChange = { searchText = it },
+            label = "Search with clickable icons",
+            hint = "Tap leading or trailing icon",
+            leadingIcon = painterResource(R.drawable.browse_24px),
+            trailingIcon = painterResource(volineR.drawable.ic_info_filled),
+            onLeadingIconClick = { toast("Leading icon clicked") },
+            onTrailingIconClick = { toast("Trailing icon clicked") },
+            showClearIcon = true
+        )
+
+        InputField(
+            value = quantity,
+            onValueChange = { quantity = it },
+            label = "Quantity — click unit or info icon",
+            hint = "0",
+            trailingText = "Kg/acre",
+            trailingIcon = painterResource(volineR.drawable.ic_info_filled),
+            onTrailingTextClick = { toast("Trailing text clicked") },
+            onTrailingIconClick = { toast("Trailing icon clicked") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+
+        InputField(
+            value = "Icons still clickable when disabled",
+            onValueChange = { },
+            label = "Disabled + clickable accessories",
+            enabled = false,
+            leadingIcon = painterResource(R.drawable.account_balance_24px),
+            trailingIcon = painterResource(volineR.drawable.ic_warning_filled),
+            trailingText = "Locked",
+            onLeadingIconClick = { toast("Leading icon clicked (disabled field)") },
+            onTrailingIconClick = { toast("Trailing icon clicked (disabled field)") },
+            onTrailingTextClick = { toast("Trailing text clicked (disabled field)") }
+        )
+    }
 }
 
 @Composable

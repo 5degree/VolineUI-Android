@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -34,6 +35,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,8 +48,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -55,6 +59,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -100,6 +105,10 @@ private val decimalInputRegex = Regex("^[0-9]*\\.?[0-9]*$")
  * @param leadingIcon Optional icon at the start of the field
  * @param trailingText Optional suffix text (e.g. "Kg/acre") shown in a trailing slot
  * @param trailingIcon Optional icon at the end of the field
+ * @param onLeadingIconClick Optional click callback for the leading icon
+ * @param onTrailingIconClick Optional click callback for the trailing icon
+ * @param onTrailingTextClick Optional click callback for the trailing text
+ * @param iconClickCornerRadius Corner radius for clickable icon / trailing-text ripples
  * @param showClearIcon Whether to show a clear button when text is present
  * @param keyboardOptions Keyboard configuration
  * @param keyboardActions Keyboard action handlers
@@ -136,6 +145,10 @@ fun InputField(
     leadingIcon: Painter? = null,
     trailingText: String? = null,
     trailingIcon: Painter? = null,
+    onLeadingIconClick: (() -> Unit)? = null,
+    onTrailingIconClick: (() -> Unit)? = null,
+    onTrailingTextClick: (() -> Unit)? = null,
+    iconClickCornerRadius: Dp = InputFieldDefaults.IconClickCornerRadius,
     showClearIcon: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
@@ -315,11 +328,11 @@ fun InputField(
                 ) {
                     // Leading icon
                     if (leadingIcon != null) {
-                        Icon(
+                        ClickableInputIcon(
                             painter = leadingIcon,
-                            contentDescription = null,
-                            modifier = Modifier.size(InputFieldDefaults.IconSize),
-                            tint = colors.iconColor
+                            tint = colors.iconColor,
+                            onClick = onLeadingIconClick,
+                            clickCornerRadius = iconClickCornerRadius,
                         )
                         Spacer(modifier = Modifier.width(InputFieldDefaults.IconPadding))
                     }
@@ -428,33 +441,26 @@ fun InputField(
                                 thickness = InputFieldDefaults.TrailingDividerWidth,
                                 color = colors.trailingDividerColor,
                             )
-                            Text(
+                            ClickableTrailingUnitText(
                                 text = trailingText.trim(),
-                                style = TextStyle(
-                                    fontSize = InputFieldDefaults.TextSize,
-                                    color = colors.trailingTextColor(enabled)
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .padding(
-                                        start = InputFieldDefaults.TrailingTextStartPadding,
-                                        end = if (trailingIcon != null) {
-                                            InputFieldDefaults.TrailingTextEndPadding
-                                        } else {
-                                            0.dp
-                                        },
-                                    )
-                                    .widthIn(max = trailingTextMaxWidth)
+                                color = colors.trailingTextColor(enabled),
+                                maxWidth = trailingTextMaxWidth,
+                                endPadding = if (trailingIcon != null) {
+                                    InputFieldDefaults.TrailingTextEndPadding
+                                } else {
+                                    0.dp
+                                },
+                                onClick = onTrailingTextClick,
+                                clickCornerRadius = iconClickCornerRadius,
                             )
                         }
 
                         if (trailingIcon != null) {
-                            Icon(
+                            ClickableInputIcon(
                                 painter = trailingIcon,
-                                contentDescription = null,
-                                modifier = Modifier.size(InputFieldDefaults.IconSize),
-                                tint = colors.iconColor
+                                tint = colors.iconColor,
+                                onClick = onTrailingIconClick,
+                                clickCornerRadius = iconClickCornerRadius,
                             )
                         }
                     }
@@ -503,6 +509,107 @@ fun InputField(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Trailing unit text. When [onClick] is set, expands the ripple/hit area with padding
+ * without increasing the InputField height ([matchParentSize] overlay does not affect measure).
+ */
+@Composable
+private fun ClickableTrailingUnitText(
+    text: String,
+    color: Color,
+    maxWidth: Dp,
+    endPadding: Dp,
+    onClick: (() -> Unit)?,
+    clickCornerRadius: Dp,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.padding(
+            start = InputFieldDefaults.TrailingTextStartPadding,
+            end = endPadding,
+        ),
+    ) {
+        Text(
+            text = text,
+            style = TextStyle(
+                fontSize = InputFieldDefaults.TextSize,
+                color = color,
+            ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = maxWidth),
+        )
+        if (onClick != null) {
+            val hPad = InputFieldDefaults.TrailingTextClickHorizontalPadding
+            val vPad = InputFieldDefaults.TrailingTextClickVerticalPadding
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .layout { measurable, constraints ->
+                        val h = hPad.roundToPx()
+                        val v = vPad.roundToPx()
+                        val expandedWidth = constraints.maxWidth + h * 2
+                        val expandedHeight = constraints.maxHeight + v * 2
+                        val placeable = measurable.measure(
+                            Constraints.fixed(expandedWidth, expandedHeight)
+                        )
+                        // Report parent size so this overlay never grows the field
+                        layout(constraints.maxWidth, constraints.maxHeight) {
+                            placeable.place(-h, -v)
+                        }
+                    }
+                    .clip(RoundedCornerShape(clickCornerRadius))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(),
+                    ) { onClick() },
+            )
+        }
+    }
+}
+
+/**
+ * Leading/trailing icon that keeps a fixed [InputFieldDefaults.IconSize] layout slot
+ * while expanding the clickable/ripple area via [InputFieldDefaults.IconTouchPadding]
+ * so the input field outer height/width do not change.
+ */
+@Composable
+private fun ClickableInputIcon(
+    painter: Painter,
+    tint: Color,
+    onClick: (() -> Unit)?,
+    clickCornerRadius: Dp = InputFieldDefaults.IconClickCornerRadius,
+    contentDescription: String? = null,
+) {
+    val touchTarget = InputFieldDefaults.IconSize + InputFieldDefaults.IconTouchPadding * 2
+    Box(
+        modifier = Modifier.size(InputFieldDefaults.IconSize),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = if (onClick != null) {
+                Modifier
+                    .requiredSize(touchTarget)
+                    .clip(RoundedCornerShape(clickCornerRadius))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(),
+                    ) { onClick() }
+            } else {
+                Modifier.size(InputFieldDefaults.IconSize)
+            },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painter,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(InputFieldDefaults.IconSize),
+                tint = tint,
+            )
         }
     }
 }

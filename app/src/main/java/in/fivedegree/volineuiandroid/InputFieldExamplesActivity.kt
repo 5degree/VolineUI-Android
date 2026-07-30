@@ -1,6 +1,7 @@
 package `in`.fivedegree.volineuiandroid
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -44,5 +45,45 @@ class InputFieldExamplesActivity : AppCompatActivity() {
             b.basicInput.setLoading(isLoading)
             b.btnShowLoading.text = if (isLoading) "Stop Loading" else "Toggle Loading"
         }
+
+        setupClickableAccessories()
+    }
+
+    private fun setupClickableAccessories() {
+        b.clickableIconsInput.onPrefixIconClickListener {
+            toast("Prefix icon clicked")
+        }
+        b.clickableIconsInput.onSuffixIconClickListener {
+            toast("Suffix icon clicked")
+        }
+
+        b.clickableTrailingTextInput.onTrailingTextClickListener {
+            toast("Trailing text clicked")
+        }
+        b.clickableTrailingTextInput.onSuffixIconClickListener {
+            toast("Suffix icon clicked")
+        }
+
+        // Also wire existing fertilizer field so suffix + unit are clickable
+        b.fertilizerInput.onTrailingTextClickListener {
+            toast("Fertilizer unit clicked")
+        }
+        b.fertilizerInput.onSuffixIconClickListener {
+            toast("Fertilizer suffix icon clicked")
+        }
+
+        b.disabledClickableInput.onPrefixIconClickListener {
+            toast("Prefix icon clicked (disabled field)")
+        }
+        b.disabledClickableInput.onSuffixIconClickListener {
+            toast("Suffix icon clicked (disabled field)")
+        }
+        b.disabledClickableInput.onTrailingTextClickListener {
+            toast("Trailing text clicked (disabled field)")
+        }
+    }
+
+    private fun toast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }

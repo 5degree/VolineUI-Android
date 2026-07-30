@@ -23,6 +23,12 @@ object InputFieldDefaults {
     val VerticalPadding: Dp = 12.dp
     val IconPadding: Dp = 12.dp
     val IconSize: Dp = 24.dp
+    /** Extra padding around leading/trailing icons for a larger touch target (does not grow the field). */
+    val IconTouchPadding: Dp = 8.dp
+    /** Inset from the field start/end edge to leading/trailing icons. */
+    val IconEdgeInset: Dp = 8.dp
+    /** Default corner radius for clickable icon / trailing-text ripples. */
+    val IconClickCornerRadius: Dp = 8.dp
     val LabelGap: Dp = 5.dp
     val MinHeight: Dp = 48.dp
     /** Vertical inset so the trailing divider does not span the full field height (Figma-style). */
@@ -38,6 +44,9 @@ object InputFieldDefaults {
     /** Space between divider and trailing text, and before optional trailing icon. */
     val TrailingTextStartPadding: Dp = 12.dp
     val TrailingTextEndPadding: Dp = 8.dp
+    /** Extra padding inside the trailing-text hit target when it is clickable. */
+    val TrailingTextClickHorizontalPadding: Dp = 8.dp
+    val TrailingTextClickVerticalPadding: Dp = 6.dp
     /** Max width for trailing unit text; ellipsis applies beyond this (fraction of field width). */
     const val TrailingTextMaxWidthFraction: Float = 0.42f
 

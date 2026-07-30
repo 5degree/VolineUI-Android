@@ -146,6 +146,55 @@
             app:cornerRadius="8dp"
             android:layout_marginBottom="16dp" />
 
+        <!-- Clickable prefix / suffix icons -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clickable Icons &amp; Trailing Text"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginBottom="8dp" />
+
+        <in.fivedegree.volineui.InputField
+            android:id="@+id/clickableIconsInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Search with clickable icons"
+            android:hint="Tap prefix or suffix icon"
+            app:prefixIcon="@drawable/browse_24px"
+            app:suffixIcon="@drawable/verified_24px"
+            app:iconClickCornerRadius="12dp"
+            app:showClearIcon="true"
+            app:cornerRadius="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <in.fivedegree.volineui.InputField
+            android:id="@+id/clickableTrailingTextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Quantity — click unit or info icon"
+            android:hint="0"
+            android:text="25"
+            android:inputType="numberDecimal"
+            app:trailingText="Kg/acre"
+            app:suffixIcon="@drawable/verified_24px"
+            app:cornerRadius="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <in.fivedegree.volineui.InputField
+            android:id="@+id/disabledClickableInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:label="Disabled + clickable accessories"
+            android:text="Icons still clickable when disabled"
+            android:enabled="false"
+            app:prefixIcon="@drawable/account_balance_24px"
+            app:suffixIcon="@drawable/verified_24px"
+            app:trailingText="Locked"
+            app:cornerRadius="8dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- Disabled Input -->
         <in.fivedegree.volineui.InputField
             android:id="@+id/disabledInput"

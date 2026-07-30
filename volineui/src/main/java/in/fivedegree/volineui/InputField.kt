@@ -3,10 +3,13 @@ package `in`.fivedegree.volineui
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
 import android.os.Parcel
 import android.os.Parcelable
 import android.text.Editable
@@ -136,6 +139,26 @@ class InputField @JvmOverloads constructor(
     
     // Value change listener
     private var valueChangeListener: ((String) -> Unit)? = null
+    private var prefixIconClickListener: (() -> Unit)? = null
+    private var suffixIconClickListener: (() -> Unit)? = null
+    private var trailingTextClickListener: (() -> Unit)? = null
+
+    /** Extra padding around prefix/suffix icons for a larger touch target. */
+    private val iconTouchPadding: Float
+        get() = dpToPx(8f)
+
+    /** Inset from the field border to leading/trailing icons. */
+    private val iconEdgeInset: Float
+        get() = dpToPx(8f)
+
+    /** Corner radius for clickable icon / trailing-text ripples. */
+    private var iconClickCornerRadius: Float = dpToPx(8f)
+
+    private val trailingTextClickPaddingH: Float
+        get() = dpToPx(8f)
+
+    private val trailingTextClickPaddingV: Float
+        get() = dpToPx(6f)
 
     init {
         setWillNotDraw(false)
@@ -322,6 +345,10 @@ class InputField @JvmOverloads constructor(
             clearIconRes = typedArray.getResourceId(R.styleable.InputField_clearIcon, 0)
             passwordToggleIconRes = typedArray.getResourceId(R.styleable.InputField_passwordToggleIcon, 0)
             passwordToggleVisibleIconRes = typedArray.getResourceId(R.styleable.InputField_passwordToggleVisibleIcon, 0)
+            iconClickCornerRadius = typedArray.getDimension(
+                R.styleable.InputField_iconClickCornerRadius,
+                dpToPx(8f)
+            )
 
             // Validation
             val validationTypeInt = typedArray.getInt(R.styleable.InputField_validationType, 0)
@@ -729,11 +756,13 @@ class InputField @JvmOverloads constructor(
             if (prefixIconView == null) {
                 prefixIconView = ImageView(context).apply {
                     scaleType = ImageView.ScaleType.FIT_CENTER
+                    applyIconTouchPadding(this)
                 }
                 addView(prefixIconView)
             }
             prefixIconView?.setImageDrawable(drawable)
             prefixIconView?.visibility = VISIBLE
+            bindPrefixIconClick()
             requestLayout()
         } else {
             prefixIconView?.visibility = GONE
@@ -748,14 +777,164 @@ class InputField @JvmOverloads constructor(
             if (suffixIconView == null) {
                 suffixIconView = ImageView(context).apply {
                     scaleType = ImageView.ScaleType.FIT_CENTER
+                    applyIconTouchPadding(this)
                 }
                 addView(suffixIconView)
             }
             suffixIconView?.setImageDrawable(drawable)
             suffixIconView?.visibility = VISIBLE
+            bindSuffixIconClick()
             requestLayout()
         } else {
             suffixIconView?.visibility = GONE
+        }
+    }
+
+    /**
+     * Optional click listener for the prefix (leading) icon.
+     * Clicks fire even when the field is disabled or read-only.
+     */
+    fun onPrefixIconClickListener(listener: () -> Unit) {
+        prefixIconClickListener = listener
+        bindPrefixIconClick()
+    }
+
+    /**
+     * Optional click listener for the suffix (trailing) icon.
+     * Clicks fire even when the field is disabled or read-only.
+     */
+    fun onSuffixIconClickListener(listener: () -> Unit) {
+        suffixIconClickListener = listener
+        bindSuffixIconClick()
+    }
+
+    /**
+     * Optional click listener for the trailing unit text.
+     * Clicks fire even when the field is disabled or read-only.
+     */
+    fun onTrailingTextClickListener(listener: () -> Unit) {
+        trailingTextClickListener = listener
+        bindTrailingTextClick()
+    }
+
+    /**
+     * Corner radius used for the ripple mask on clickable prefix/suffix icons and trailing text.
+     */
+    fun setIconClickCornerRadius(radiusPx: Float) {
+        iconClickCornerRadius = radiusPx
+        // Re-apply ripples so the new radius takes effect
+        if (prefixIconClickListener != null) bindPrefixIconClick()
+        if (suffixIconClickListener != null) bindSuffixIconClick()
+        if (trailingTextClickListener != null) bindTrailingTextClick()
+    }
+
+    fun setIconClickCornerRadiusDp(radiusDp: Float) {
+        setIconClickCornerRadius(dpToPx(radiusDp))
+    }
+
+    private fun applyIconTouchPadding(imageView: ImageView) {
+        val pad = iconTouchPadding.toInt()
+        imageView.setPadding(pad, pad, pad, pad)
+    }
+
+    private fun createRoundedClickRipple(): Drawable {
+        val typedValue = TypedValue()
+        val rippleColor = if (context.theme.resolveAttribute(
+                android.R.attr.colorControlHighlight,
+                typedValue,
+                true
+            )
+        ) {
+            typedValue.data
+        } else {
+            0x1F000000
+        }
+        val mask = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(0xFFFFFFFF.toInt())
+            cornerRadius = iconClickCornerRadius
+        }
+        return RippleDrawable(ColorStateList.valueOf(rippleColor), null, mask)
+    }
+
+    private fun applyRoundedClickRipple(view: View) {
+        view.foreground = createRoundedClickRipple()
+    }
+
+    private fun clearSelectableRipple(view: View) {
+        view.foreground = null
+        view.background = null
+    }
+
+    private fun bindPrefixIconClick() {
+        val view = prefixIconView ?: return
+        val listener = prefixIconClickListener
+        if (listener != null) {
+            view.isClickable = true
+            view.isFocusable = true
+            view.isEnabled = true
+            applyRoundedClickRipple(view)
+            view.setOnClickListener { listener.invoke() }
+        } else {
+            view.setOnClickListener(null)
+            view.isClickable = false
+            view.isFocusable = false
+            clearSelectableRipple(view)
+        }
+    }
+
+    private fun bindSuffixIconClick() {
+        val view = suffixIconView ?: return
+        val listener = suffixIconClickListener
+        if (listener != null) {
+            view.isClickable = true
+            view.isFocusable = true
+            view.isEnabled = true
+            applyRoundedClickRipple(view)
+            view.setOnClickListener { listener.invoke() }
+        } else {
+            view.setOnClickListener(null)
+            view.isClickable = false
+            view.isFocusable = false
+            clearSelectableRipple(view)
+        }
+    }
+
+    private fun bindTrailingTextClick() {
+        val view = trailingTextView ?: return
+        val listener = trailingTextClickListener
+        if (listener != null) {
+            view.isClickable = true
+            view.isFocusable = true
+            view.isEnabled = true
+            val h = trailingTextClickPaddingH.toInt()
+            val v = trailingTextClickPaddingV.toInt()
+            view.setPadding(h, v, h, v)
+            applyRoundedClickRipple(view)
+            view.setOnClickListener { listener.invoke() }
+        } else {
+            view.setOnClickListener(null)
+            view.isClickable = false
+            view.isFocusable = false
+            view.setPadding(0, 0, 0, 0)
+            clearSelectableRipple(view)
+        }
+        requestLayout()
+    }
+
+    /** Keep prefix/suffix/trailing-text clickable even when the field is disabled. */
+    private fun keepAccessoryClicksEnabled() {
+        if (prefixIconClickListener != null) {
+            prefixIconView?.isEnabled = true
+            prefixIconView?.isClickable = true
+        }
+        if (suffixIconClickListener != null) {
+            suffixIconView?.isEnabled = true
+            suffixIconView?.isClickable = true
+        }
+        if (trailingTextClickListener != null) {
+            trailingTextView?.isEnabled = true
+            trailingTextView?.isClickable = true
         }
     }
 
@@ -786,6 +965,7 @@ class InputField @JvmOverloads constructor(
                 includeFontPadding = false
             }
             addView(trailingTextView)
+            bindTrailingTextClick()
         }
     }
 
@@ -813,6 +993,7 @@ class InputField @JvmOverloads constructor(
         super.setEnabled(enabled)
         inputEditText.isEnabled = enabled
         updateTrailingTextColorUi()
+        keepAccessoryClicksEnabled()
         if (!enabled) {
             updateState(FieldState.DISABLED)
         } else if (currentState == FieldState.DISABLED) {
@@ -885,24 +1066,34 @@ class InputField @JvmOverloads constructor(
 
         // Measure input (with icons)
         val iconSize = dpToPx(24f).toInt()
+        val iconTouchSize = iconSize + iconTouchPadding.toInt() * 2
+        val iconMargin = dpToPx(8f).toInt()
+        val edgeInset = iconEdgeInset.toInt()
         var inputWidth = width
         
         if (prefixIconView?.visibility == VISIBLE) {
-            inputWidth -= iconSize + iconPadding.toInt()
+            inputWidth -= edgeInset + iconTouchSize
         }
         
-        val rightIconsCount = listOfNotNull(
+        val rightIcons = listOfNotNull(
             suffixIconView?.takeIf { it.visibility == VISIBLE },
             clearIconView?.takeIf { it.visibility == VISIBLE },
             passwordToggleView?.takeIf { it.visibility == VISIBLE },
             loadingProgressBar?.takeIf { it.visibility == VISIBLE }
-        ).size
-        
-        inputWidth -= rightIconsCount * (iconSize + iconPadding.toInt())
+        )
+        val rightIconsCount = rightIcons.size
+        for (icon in rightIcons) {
+            inputWidth -= if (icon === suffixIconView) iconTouchSize else iconSize + iconMargin * 2
+        }
+        // Always keep a gap between the rightmost icon and the field edge
+        if (rightIconsCount > 0) {
+            inputWidth -= edgeInset
+        }
 
         val trailingGapBeforeDivider = dpToPx(8f).toInt()
-        val trailingInnerEndPad = if (trailingTextContent.isNotEmpty()) {
-            if (rightIconsCount > 0) dpToPx(8f).toInt() else horizontalPadding.toInt()
+        // End pad for trailing-text-only (no right icons); with icons, edgeInset already applied
+        val trailingInnerEndPad = if (trailingTextContent.isNotEmpty() && rightIconsCount == 0) {
+            horizontalPadding.toInt()
         } else {
             0
         }
@@ -929,7 +1120,7 @@ class InputField @JvmOverloads constructor(
             )
         }
         inputWidth -= trailingSectionWidth
-        if (trailingTextContent.isNotEmpty()) {
+        if (trailingInnerEndPad > 0) {
             inputWidth -= trailingInnerEndPad
         }
 
@@ -982,6 +1173,9 @@ class InputField @JvmOverloads constructor(
 
         // Layout input field and icons
         val iconSize = dpToPx(24f).toInt()
+        val iconTouchSize = iconSize + iconTouchPadding.toInt() * 2
+        val iconMargin = dpToPx(8f).toInt()
+        val edgeInset = iconEdgeInset.toInt()
         val inputTop = currentTop
         val inputHeight = inputEditText.measuredHeight.coerceAtLeast(dpToPx(48f).toInt())
         
@@ -993,27 +1187,30 @@ class InputField @JvmOverloads constructor(
             passwordToggleView?.takeIf { it.visibility == VISIBLE },
             loadingProgressBar?.takeIf { it.visibility == VISIBLE }
         ).size
-        val trailingInnerEndPadPx = if (trailingTextView?.visibility == VISIBLE) {
-            if (rightIconsCountLayout > 0) dpToPx(8f).toInt() else horizontalPadding.toInt()
+        val trailingInnerEndPadPx = if (trailingTextView?.visibility == VISIBLE && rightIconsCountLayout == 0) {
+            horizontalPadding.toInt()
         } else {
             0
         }
         val trailingGapBeforeDividerPx = dpToPx(8f).toInt()
-        if (trailingTextView?.visibility == VISIBLE) {
+        if (trailingInnerEndPadPx > 0) {
             rightOffset -= trailingInnerEndPadPx
+        } else if (rightIconsCountLayout > 0) {
+            // Consistent gap between rightmost icon and field edge
+            rightOffset -= edgeInset
         }
 
-        // Layout prefix icon with proper spacing
+        // Layout prefix icon — inset from start edge; visual icon stays 24dp via padding
         if (prefixIconView?.visibility == VISIBLE) {
-            val iconTop = inputTop + (inputHeight - iconSize) / 2
-            val iconMargin = dpToPx(8f).toInt()
+            leftOffset += edgeInset
+            val iconTop = inputTop + (inputHeight - iconTouchSize) / 2
             prefixIconView?.layout(
-                leftOffset + iconMargin,
+                leftOffset,
                 iconTop,
-                leftOffset + iconMargin + iconSize,
-                iconTop + iconSize
+                leftOffset + iconTouchSize,
+                iconTop + iconTouchSize
             )
-            leftOffset += iconSize + iconMargin * 2
+            leftOffset += iconTouchSize
         }
 
         // Layout right icons (from right to left) with proper spacing
@@ -1023,16 +1220,26 @@ class InputField @JvmOverloads constructor(
         clearIconView?.takeIf { it.visibility == VISIBLE }?.let { rightIcons.add(it) }
         suffixIconView?.takeIf { it.visibility == VISIBLE }?.let { rightIcons.add(it) }
 
-        val iconMargin = dpToPx(8f).toInt()
         for (icon in rightIcons) {
-            val iconTop = inputTop + (inputHeight - iconSize) / 2
-            icon.layout(
-                rightOffset - iconSize - iconMargin,
-                iconTop,
-                rightOffset - iconMargin,
-                iconTop + iconSize
-            )
-            rightOffset -= iconSize + iconMargin * 2
+            if (icon === suffixIconView) {
+                val iconTop = inputTop + (inputHeight - iconTouchSize) / 2
+                icon.layout(
+                    rightOffset - iconTouchSize,
+                    iconTop,
+                    rightOffset,
+                    iconTop + iconTouchSize
+                )
+                rightOffset -= iconTouchSize
+            } else {
+                val iconTop = inputTop + (inputHeight - iconSize) / 2
+                icon.layout(
+                    rightOffset - iconSize - iconMargin,
+                    iconTop,
+                    rightOffset - iconMargin,
+                    iconTop + iconSize
+                )
+                rightOffset -= iconSize + iconMargin * 2
+            }
         }
 
         var editRight = rightOffset

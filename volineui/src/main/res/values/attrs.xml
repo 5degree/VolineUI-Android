@@ -43,6 +43,8 @@
         <attr name="clearIcon" format="reference" />
         <attr name="passwordToggleIcon" format="reference" />
         <attr name="passwordToggleVisibleIcon" format="reference" />
+        <!-- Corner radius of the ripple/mask when prefix/suffix icons (or trailing text) are clickable -->
+        <attr name="iconClickCornerRadius" format="dimension" />
         
         <!-- Validation -->
         <attr name="validationType" format="enum">
