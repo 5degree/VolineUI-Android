@@ -10,6 +10,7 @@ import `in`.fivedegree.volineuiandroid.compose.ComposeButtonExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.ComposeDateTimePickerExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.ComposeDialogExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.ComposeDropdownExamplesActivity
+import `in`.fivedegree.volineuiandroid.compose.ComposeFilePickerExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.ComposeImageCarouselExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.ComposeImageViewExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.ComposeInputFieldExamplesActivity
@@ -78,6 +79,9 @@ class MainActivity : AppCompatActivity() {
         }
         b.btnOpenComposeImageCarouselExamples.setOnClickListener {
             startActivity(Intent(this, ComposeImageCarouselExamplesActivity::class.java))
+        }
+        b.btnOpenComposeFilePickerExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeFilePickerExamplesActivity::class.java))
         }
         b.btnOpenToastExamples.setOnClickListener {
             startActivity(Intent(this, ToastExamplesActivity::class.java))

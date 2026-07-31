@@ -5,6 +5,7 @@ import android.app.Application
 import android.os.Build
 import `in`.fivedegree.volinecore.remotelogger.LoggerConfig
 import `in`.fivedegree.volinecore.remotelogger.VolineLogger
+import `in`.fivedegree.volineui.FilePickerManager
 import `in`.fivedegree.volineui.LocationManager
 import `in`.fivedegree.volineui.PermissionManager
 import `in`.fivedegree.volineui.PhotoCaptureManager
@@ -50,5 +51,6 @@ class MyApplication : Application() {
 		PermissionManager.init(this, *permissions)
 		LocationManager.init(this)
 		PhotoCaptureManager.init(this)
+		FilePickerManager.init(this)
 	}
 }

@@ -68,6 +68,9 @@
             android:name="in.fivedegree.volineuiandroid.compose.ComposeImageCarouselExamplesActivity"
             android:exported="false" />
         <activity
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeFilePickerExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name="in.fivedegree.volineuiandroid.ToastExamplesActivity"
             android:exported="false" />
         <activity
