@@ -3,6 +3,7 @@
 package `in`.fivedegree.volineui.filepickermanager
 
 import android.net.Uri
+import android.webkit.MimeTypeMap
 import java.io.File
 import java.util.Locale
 import java.util.UUID
@@ -53,10 +54,35 @@ data class PickedFile(
      */
     fun openableUri(): Uri = uri
 
+    /** Local [File] when available (copied or host-provided). */
+    fun asLocalFile(): File? = localFile?.takeIf { it.exists() }
+
     companion object {
         private val IMAGE_EXTENSIONS = setOf(
             "jpg", "jpeg", "png", "webp", "gif", "bmp", "heic", "heif"
         )
+
+        /**
+         * Build a [PickedFile] from an existing [File] (name, size, mime, extension inferred).
+         * Uses a stable [id] based on absolute path for Compose keys.
+         */
+        @Suppress("DEPRECATION")
+        fun from(file: File): PickedFile {
+            val name = file.name.ifBlank { "file" }
+            val ext = extensionFromName(name)
+            val mime = MimeTypeMap.getSingleton()
+                .getMimeTypeFromExtension(ext)
+                ?.takeIf { it.isNotBlank() }
+            return PickedFile(
+                id = file.absolutePath,
+                uri = Uri.fromFile(file),
+                displayName = name,
+                mimeType = mime,
+                sizeBytes = file.length().coerceAtLeast(0L),
+                extension = ext,
+                localFile = file,
+            )
+        }
 
         fun formatFileSize(bytes: Long): String {
             if (bytes < 0) return "—"

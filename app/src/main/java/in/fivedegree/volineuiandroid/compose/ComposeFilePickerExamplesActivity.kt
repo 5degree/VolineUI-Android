@@ -128,8 +128,8 @@ private fun FilePickerExamplesScreen(modifier: Modifier = Modifier) {
 
         HorizontalDivider()
 
-        SectionTitle("7. Controlled list (no state class)")
-        SectionHint("files + onFilesChange overload")
+        SectionTitle("7. Controlled List<File> (like ImageCarousel)")
+        SectionHint("files: List<File> + onFilesChange: (List<File>) -> Unit")
         ControlledListExample(onError = ::showError)
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -400,7 +400,7 @@ private fun StateHolderExample(onError: (FilePickerErrorType, String) -> Unit) {
 
 @Composable
 private fun ControlledListExample(onError: (FilePickerErrorType, String) -> Unit) {
-    var files by remember { mutableStateOf<List<PickedFile>>(emptyList()) }
+    var files by remember { mutableStateOf<List<java.io.File>>(emptyList()) }
 
     AdvancedFilePicker(
         files = files,
@@ -408,6 +408,8 @@ private fun ControlledListExample(onError: (FilePickerErrorType, String) -> Unit
         label = "Controlled multi (max 4)",
         config = FilePickerConfig(
             allowedMimeTypes = listOf("*/*"),
+            allowMultiple = true,
+            maxFileCount = 4,
             maxFileSizeBytes = 10L * 1024L * 1024L,
         ),
         onError = onError,
@@ -430,6 +432,17 @@ private fun FileSummaryRow(index: Int, file: PickedFile) {
         text = "${index + 1}. ${file.displayName} · ${file.sizeDisplay}" +
             (file.extension.takeIf { it.isNotBlank() }?.let { " · .$it" } ?: "") +
             (file.pageCount?.let { " · $it pages" } ?: ""),
+        fontSize = 12.sp,
+        color = Color(0xFF333333),
+        modifier = Modifier.padding(vertical = 2.dp),
+    )
+}
+
+@Composable
+private fun FileSummaryRow(index: Int, file: java.io.File) {
+    Text(
+        text = "${index + 1}. ${file.name} · ${PickedFile.formatFileSize(file.length())}" +
+            (file.extension.takeIf { it.isNotBlank() }?.let { " · .$it" } ?: ""),
         fontSize = 12.sp,
         color = Color(0xFF333333),
         modifier = Modifier.padding(vertical = 2.dp),

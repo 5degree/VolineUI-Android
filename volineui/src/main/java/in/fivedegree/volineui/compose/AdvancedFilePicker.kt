@@ -57,6 +57,8 @@ import `in`.fivedegree.volineui.filepickermanager.FilePickerErrorType
 import `in`.fivedegree.volineui.filepickermanager.FilePickerException
 import `in`.fivedegree.volineui.filepickermanager.FilePickerResult
 import `in`.fivedegree.volineui.filepickermanager.PickedFile
+import java.io.File
+import kotlin.jvm.JvmName
 
 /**
  * Advanced file picker for Jetpack Compose — mirrors [AdvancedImageView] / [ImageCarousel]
@@ -68,6 +70,110 @@ import `in`.fivedegree.volineui.filepickermanager.PickedFile
  * - Delete, open-in-default-app, loading & error states
  * - [FilePickerManager] integration (or custom [onPickRequest])
  * - Typed [onError] callbacks for host-owned UX
+ *
+ * File-based usage (like [ImageCarousel]):
+ * ```kotlin
+ * var files by remember { mutableStateOf<List<File>>(emptyList()) }
+ *
+ * AdvancedFilePicker(
+ *     files = files,
+ *     onFilesChange = { files = it },
+ *     config = FilePickerConfig.pdf(allowMultiple = true),
+ *     label = "Documents",
+ * )
+ * ```
+ */
+@Composable
+@JvmName("AdvancedFilePickerJavaFiles")
+fun AdvancedFilePicker(
+    files: List<File>,
+    onFilesChange: (List<File>) -> Unit,
+    modifier: Modifier = Modifier,
+    config: FilePickerConfig = FilePickerConfig(),
+    // Label
+    label: String = "",
+    labelGap: Dp = FilePickerDefaults.LabelGap,
+    labelTextStyle: TextStyle = FilePickerDefaults.LabelTextStyle,
+    // Layout
+    cornerRadius: Dp = FilePickerDefaults.CornerRadius,
+    borderWidth: Dp = FilePickerDefaults.BorderWidth,
+    colors: FilePickerColors = FilePickerDefaults.colors(),
+    // Placeholder
+    placeholderText: String = FilePickerDefaults.PlaceholderText,
+    placeholderIconResId: Int = 0,
+    placeholderIconSize: Dp = FilePickerDefaults.PlaceholderIconSize,
+    placeholderTextSize: TextUnit = FilePickerDefaults.PlaceholderTextSize,
+    placeholderGap: Dp = FilePickerDefaults.PlaceholderGap,
+    // Carousel (multi)
+    carouselHeight: Dp = FilePickerDefaults.CarouselHeight,
+    itemWidth: Dp = FilePickerDefaults.ItemWidth,
+    itemSpacing: Dp = FilePickerDefaults.ItemSpacing,
+    // Features
+    showDeleteButton: Boolean = true,
+    enableOpenInApp: Boolean = true,
+    showLoadingIndicator: Boolean = true,
+    enablePickOnTap: Boolean = true,
+    isLoading: Boolean = false,
+    // Callbacks
+    onFileClick: ((File, Int) -> Unit)? = null,
+    onFileDelete: ((File, Int) -> Unit)? = null,
+    onOpenClick: ((File, Int) -> Unit)? = null,
+    onPickRequest: ((FilePickerConfig) -> Unit)? = null,
+    onPickResult: ((FilePickerResult) -> Unit)? = null,
+    onError: ((FilePickerErrorType, String) -> Unit)? = null,
+    onStateChange: ((FilePickerUiState) -> Unit)? = null,
+) {
+    // File API requires local copies so onFilesChange can return java.io.File.
+    val effectiveConfig = remember(config) { config.copy(copyToAppStorage = true) }
+    val pickedFiles = remember(files.map { it.absolutePath }) {
+        files.map { PickedFile.from(it) }
+    }
+
+    AdvancedFilePicker(
+        files = pickedFiles,
+        modifier = modifier,
+        config = effectiveConfig,
+        label = label,
+        labelGap = labelGap,
+        labelTextStyle = labelTextStyle,
+        cornerRadius = cornerRadius,
+        borderWidth = borderWidth,
+        colors = colors,
+        placeholderText = placeholderText,
+        placeholderIconResId = placeholderIconResId,
+        placeholderIconSize = placeholderIconSize,
+        placeholderTextSize = placeholderTextSize,
+        placeholderGap = placeholderGap,
+        carouselHeight = carouselHeight,
+        itemWidth = itemWidth,
+        itemSpacing = itemSpacing,
+        showDeleteButton = showDeleteButton,
+        enableOpenInApp = enableOpenInApp,
+        showLoadingIndicator = showLoadingIndicator,
+        enablePickOnTap = enablePickOnTap,
+        isLoading = isLoading,
+        onFilesChange = { next ->
+            onFilesChange(next.mapNotNull { it.asLocalFile() })
+        },
+        onFileClick = onFileClick?.let { cb ->
+            { picked, index -> picked.asLocalFile()?.let { cb(it, index) } }
+        },
+        onFileDelete = onFileDelete?.let { cb ->
+            { picked, index -> picked.asLocalFile()?.let { cb(it, index) } }
+        },
+        onOpenClick = onOpenClick?.let { cb ->
+            { picked, index -> picked.asLocalFile()?.let { cb(it, index) } }
+        },
+        onPickRequest = onPickRequest,
+        onPickResult = onPickResult,
+        onError = onError,
+        onStateChange = onStateChange,
+    )
+}
+
+/**
+ * Low-level API with [PickedFile] (Uri + metadata). Prefer the [File]-based overload
+ * when you only need local files, matching [ImageCarousel].
  *
  * ```kotlin
  * val state = rememberAdvancedFilePickerState()
