@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import `in`.fivedegree.volineui.util.ActionButtonDefaults
 
 /**
  * Default values and configurations for AdvancedImageView composable.
@@ -59,14 +60,21 @@ object ImageViewDefaults {
     val DeleteButtonMargin: Dp = 6.dp
     val DeleteButtonCornerRadius: Dp = 4.dp
     
-    // ===== ACTION BUTTONS (bottom-right row) =====
-    val ActionButtonRowMargin: Dp = 6.dp
-    val ActionButtonSpacing: Dp = 6.dp
-    val ActionButtonMinHeight: Dp = 28.dp
-    val ActionButtonHorizontalPadding: Dp = 8.dp
-    val ActionButtonIconSize: Dp = 18.dp
-    val ActionButtonTextSize: TextUnit = 12.sp
-    val ActionButtonIconTextGap: Dp = 4.dp
+    // ===== ACTION BUTTONS (bottom-right row) — prefer [ActionButtonDefaults] =====
+    @Deprecated("Use ActionButtonDefaults.RowMargin", ReplaceWith("ActionButtonDefaults.RowMargin", "in.fivedegree.volineui.util.ActionButtonDefaults"))
+    val ActionButtonRowMargin: Dp = ActionButtonDefaults.RowMargin
+    @Deprecated("Use ActionButtonDefaults.Spacing", ReplaceWith("ActionButtonDefaults.Spacing", "in.fivedegree.volineui.util.ActionButtonDefaults"))
+    val ActionButtonSpacing: Dp = ActionButtonDefaults.Spacing
+    @Deprecated("Use ActionButtonDefaults.MinHeight", ReplaceWith("ActionButtonDefaults.MinHeight", "in.fivedegree.volineui.util.ActionButtonDefaults"))
+    val ActionButtonMinHeight: Dp = ActionButtonDefaults.MinHeight
+    @Deprecated("Use ActionButtonDefaults.HorizontalPadding", ReplaceWith("ActionButtonDefaults.HorizontalPadding", "in.fivedegree.volineui.util.ActionButtonDefaults"))
+    val ActionButtonHorizontalPadding: Dp = ActionButtonDefaults.HorizontalPadding
+    @Deprecated("Use ActionButtonDefaults.IconSize", ReplaceWith("ActionButtonDefaults.IconSize", "in.fivedegree.volineui.util.ActionButtonDefaults"))
+    val ActionButtonIconSize: Dp = ActionButtonDefaults.IconSize
+    @Deprecated("Use ActionButtonDefaults.TextSize", ReplaceWith("ActionButtonDefaults.TextSize", "in.fivedegree.volineui.util.ActionButtonDefaults"))
+    val ActionButtonTextSize: TextUnit = ActionButtonDefaults.TextSize
+    @Deprecated("Use ActionButtonDefaults.IconTextGap", ReplaceWith("ActionButtonDefaults.IconTextGap", "in.fivedegree.volineui.util.ActionButtonDefaults"))
+    val ActionButtonIconTextGap: Dp = ActionButtonDefaults.IconTextGap
     
     // ===== LOADING INDICATOR =====
     val LoadingIndicatorSize: Dp = 36.dp

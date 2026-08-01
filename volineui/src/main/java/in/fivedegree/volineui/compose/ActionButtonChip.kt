@@ -24,8 +24,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import `in`.fivedegree.volineui.imageview.ActionButtonConfig
-import `in`.fivedegree.volineui.imageview.ImageViewDefaults
+import `in`.fivedegree.volineui.util.ActionButtonConfig
+import `in`.fivedegree.volineui.util.ActionButtonDefaults
 
 @Composable
 internal fun ActionButtonChip(
@@ -35,7 +35,7 @@ internal fun ActionButtonChip(
     val shape = RoundedCornerShape(cornerRadius)
     Row(
         modifier = Modifier
-            .heightIn(min = ImageViewDefaults.ActionButtonMinHeight)
+            .heightIn(min = ActionButtonDefaults.MinHeight)
             .clip(shape)
             .background(Color(config.backgroundColor))
             .clickable(
@@ -44,7 +44,7 @@ internal fun ActionButtonChip(
                 indication = ripple()
             ) { config.onClick() }
             .padding(
-                horizontal = ImageViewDefaults.ActionButtonHorizontalPadding,
+                horizontal = ActionButtonDefaults.HorizontalPadding,
                 vertical = 4.dp
             )
             .alpha(if (config.enabled) 1f else 0.5f),
@@ -53,15 +53,15 @@ internal fun ActionButtonChip(
         Icon(
             painter = painterResource(id = config.iconResId),
             contentDescription = config.resolvedContentDescription(),
-            modifier = Modifier.size(ImageViewDefaults.ActionButtonIconSize),
+            modifier = Modifier.size(ActionButtonDefaults.IconSize),
             tint = Color(config.iconTint)
         )
         if (!config.text.isNullOrEmpty()) {
-            Spacer(modifier = Modifier.width(ImageViewDefaults.ActionButtonIconTextGap))
+            Spacer(modifier = Modifier.width(ActionButtonDefaults.IconTextGap))
             Text(
                 text = config.text,
                 style = TextStyle(
-                    fontSize = ImageViewDefaults.ActionButtonTextSize,
+                    fontSize = ActionButtonDefaults.TextSize,
                     color = Color(config.textColor)
                 )
             )

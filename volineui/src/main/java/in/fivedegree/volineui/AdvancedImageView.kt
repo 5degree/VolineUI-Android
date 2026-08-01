@@ -32,7 +32,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
-import `in`.fivedegree.volineui.imageview.ActionButtonConfig
+import `in`.fivedegree.volineui.util.ActionButtonConfig
 import `in`.fivedegree.volineui.imageview.FullScreenImageViewer
 import `in`.fivedegree.volineui.imageview.ImageScaleType
 import `in`.fivedegree.volineui.imageview.ImageState

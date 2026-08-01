@@ -57,8 +57,8 @@ import `in`.fivedegree.volineui.filepickermanager.FilePickerErrorType
 import `in`.fivedegree.volineui.filepickermanager.FilePickerException
 import `in`.fivedegree.volineui.filepickermanager.FilePickerResult
 import `in`.fivedegree.volineui.filepickermanager.PickedFile
-import `in`.fivedegree.volineui.imageview.ActionButtonConfig
-import `in`.fivedegree.volineui.imageview.ImageViewDefaults
+import `in`.fivedegree.volineui.util.ActionButtonConfig
+import `in`.fivedegree.volineui.util.ActionButtonDefaults
 import java.io.File
 import kotlin.jvm.JvmName
 import androidx.compose.ui.graphics.toArgb
@@ -708,7 +708,7 @@ private fun FileCard(
     val actionScroll = rememberScrollState()
     val chipCorner = (cornerRadius.value * 0.4f).coerceAtLeast(4f).dp
     val bottomContentPad =
-        if (actionButtons.isNotEmpty()) ImageViewDefaults.ActionButtonMinHeight + 10.dp else 0.dp
+        if (actionButtons.isNotEmpty()) ActionButtonDefaults.MinHeight + 10.dp else 0.dp
 
     Box(
         modifier = modifier
@@ -833,7 +833,7 @@ private fun FileCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomEnd)
-                .padding(ImageViewDefaults.ActionButtonRowMargin),
+                .padding(ActionButtonDefaults.RowMargin),
         ) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -841,7 +841,7 @@ private fun FileCard(
             ) {
                 Row(
                     modifier = Modifier.horizontalScroll(actionScroll),
-                    horizontalArrangement = Arrangement.spacedBy(ImageViewDefaults.ActionButtonSpacing),
+                    horizontalArrangement = Arrangement.spacedBy(ActionButtonDefaults.Spacing),
                 ) {
                     actionButtons.forEach { cfg ->
                         ActionButtonChip(config = cfg, cornerRadius = chipCorner)

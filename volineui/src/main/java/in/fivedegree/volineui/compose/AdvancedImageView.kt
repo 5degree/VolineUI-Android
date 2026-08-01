@@ -53,7 +53,8 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import `in`.fivedegree.volineui.R
 import `in`.fivedegree.volineui.PhotoCaptureManager
-import `in`.fivedegree.volineui.imageview.ActionButtonConfig
+import `in`.fivedegree.volineui.util.ActionButtonConfig
+import `in`.fivedegree.volineui.util.ActionButtonDefaults
 import `in`.fivedegree.volineui.imageview.FullScreenImageViewer
 import `in`.fivedegree.volineui.imageview.ImageScaleType
 import `in`.fivedegree.volineui.imageview.ImageSource
@@ -397,7 +398,7 @@ fun AdvancedImageView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomEnd)
-                    .padding(ImageViewDefaults.ActionButtonRowMargin)
+                    .padding(ActionButtonDefaults.RowMargin)
             ) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -405,7 +406,7 @@ fun AdvancedImageView(
                 ) {
                     Row(
                         modifier = Modifier.horizontalScroll(actionScroll),
-                        horizontalArrangement = Arrangement.spacedBy(ImageViewDefaults.ActionButtonSpacing),
+                        horizontalArrangement = Arrangement.spacedBy(ActionButtonDefaults.Spacing),
                     ) {
                         actionButtons.forEach { cfg ->
                             ActionButtonChip(config = cfg, cornerRadius = chipCorner)

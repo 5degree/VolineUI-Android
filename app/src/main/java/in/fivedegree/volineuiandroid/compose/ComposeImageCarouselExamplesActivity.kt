@@ -29,7 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import `in`.fivedegree.volineui.compose.ImageCarousel
-import `in`.fivedegree.volineui.imageview.ActionButtonConfig
+import `in`.fivedegree.volineui.util.ActionButtonConfig
 import `in`.fivedegree.volineui.imageview.ImageCarouselDefaults
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import `in`.fivedegree.volineuiandroid.R

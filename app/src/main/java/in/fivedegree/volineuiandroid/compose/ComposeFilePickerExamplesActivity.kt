@@ -38,7 +38,7 @@ import `in`.fivedegree.volineui.filepickermanager.FilePickerConfig
 import `in`.fivedegree.volineui.filepickermanager.FilePickerErrorType
 import `in`.fivedegree.volineui.filepickermanager.FilePickerResult
 import `in`.fivedegree.volineui.filepickermanager.PickedFile
-import `in`.fivedegree.volineui.imageview.ActionButtonConfig
+import `in`.fivedegree.volineui.util.ActionButtonConfig
 import `in`.fivedegree.volineuiandroid.R
 import `in`.fivedegree.volineuiandroid.ui.theme.AppTheme
 import `in`.fivedegree.volineui.R as volineR

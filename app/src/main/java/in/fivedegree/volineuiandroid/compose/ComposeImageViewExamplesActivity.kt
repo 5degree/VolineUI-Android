@@ -40,7 +40,7 @@ import `in`.fivedegree.volineui.R as volineR
 import `in`.fivedegree.volineui.compose.AdvancedImageView
 import `in`.fivedegree.volineui.PhotoCaptureManager
 import `in`.fivedegree.volineui.compose.rememberAdvancedImageViewState
-import `in`.fivedegree.volineui.imageview.ActionButtonConfig
+import `in`.fivedegree.volineui.util.ActionButtonConfig
 import `in`.fivedegree.volineui.imageview.ImageScaleType
 import `in`.fivedegree.volineui.imageview.ImageSource
 import `in`.fivedegree.volineui.imageview.ImageState

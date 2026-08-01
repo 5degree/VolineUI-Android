@@ -1,22 +1,16 @@
 package `in`.fivedegree.volineui.imageview
 
-import android.graphics.Color
-import androidx.annotation.ColorInt
+import `in`.fivedegree.volineui.util.ActionButtonConfig as SharedActionButtonConfig
 
 /**
- * Configuration for a single overlay action chip on [`in`.fivedegree.volineui.AdvancedImageView]
- * or [`in`.fivedegree.volineui.compose.AdvancedImageView] (bottom-right row).
+ * Moved to [`in`.fivedegree.volineui.util.ActionButtonConfig].
+ * This typealias remains for binary / source compatibility.
  */
-data class ActionButtonConfig(
-    val iconResId: Int,
-    val text: String? = null,
-    @param:ColorInt val iconTint: Int = Color.WHITE,
-    @param:ColorInt val backgroundColor: Int = 0x66000000,
-    @param:ColorInt val textColor: Int = Color.WHITE,
-    val contentDescription: String? = null,
-    val enabled: Boolean = true,
-    val onClick: () -> Unit,
-) {
-    fun resolvedContentDescription(): String =
-        contentDescription ?: text ?: "Action"
-}
+@Deprecated(
+    message = "Moved to in.fivedegree.volineui.util.ActionButtonConfig",
+    replaceWith = ReplaceWith(
+        "ActionButtonConfig",
+        "in.fivedegree.volineui.util.ActionButtonConfig",
+    ),
+)
+typealias ActionButtonConfig = SharedActionButtonConfig

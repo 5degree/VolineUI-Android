@@ -9,7 +9,7 @@ import `in`.fivedegree.volineui.R as VolineR
 import `in`.fivedegree.volineui.AdvancedImageView
 import `in`.fivedegree.volineui.ImageCarousel
 import `in`.fivedegree.volineui.PhotoCaptureManager
-import `in`.fivedegree.volineui.imageview.ActionButtonConfig
+import `in`.fivedegree.volineui.util.ActionButtonConfig
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureResult
 import java.io.File
