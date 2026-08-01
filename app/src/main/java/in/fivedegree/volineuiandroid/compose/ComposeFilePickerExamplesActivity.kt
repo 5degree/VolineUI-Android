@@ -38,7 +38,10 @@ import `in`.fivedegree.volineui.filepickermanager.FilePickerConfig
 import `in`.fivedegree.volineui.filepickermanager.FilePickerErrorType
 import `in`.fivedegree.volineui.filepickermanager.FilePickerResult
 import `in`.fivedegree.volineui.filepickermanager.PickedFile
+import `in`.fivedegree.volineui.imageview.ActionButtonConfig
+import `in`.fivedegree.volineuiandroid.R
 import `in`.fivedegree.volineuiandroid.ui.theme.AppTheme
+import `in`.fivedegree.volineui.R as volineR
 
 /**
  * Demo screen for [AdvancedFilePicker] — single/multi pick, presets, size limits,
@@ -85,7 +88,7 @@ private fun FilePickerExamplesScreen(modifier: Modifier = Modifier) {
             color = Color.Black,
         )
         Text(
-            text = "Tap placeholders / add tiles to pick. Use open icon to launch the default app. Errors toast with typed [FilePickerErrorType].",
+            text = "Tap placeholders / add tiles to pick. Open is the first bottom-right action chip (custom chips follow). Errors toast with typed [FilePickerErrorType].",
             fontSize = 13.sp,
             color = Color(0xFF666666),
         )
@@ -131,6 +134,12 @@ private fun FilePickerExamplesScreen(modifier: Modifier = Modifier) {
         SectionTitle("7. Controlled List<File> (like ImageCarousel)")
         SectionHint("files: List<File> + onFilesChange: (List<File>) -> Unit")
         ControlledListExample(onError = ::showError)
+
+        HorizontalDivider()
+
+        SectionTitle("8. Action buttons [Open, Upload, Info]")
+        SectionHint("Built-in Open first, then custom chips · File API: (File, Int) -> List")
+        ActionButtonsExample(onError = ::showError)
 
         Spacer(modifier = Modifier.height(32.dp))
     }
@@ -424,6 +433,55 @@ private fun ControlledListExample(onError: (FilePickerErrorType, String) -> Unit
             }
         }
     }
+}
+
+@Composable
+private fun ActionButtonsExample(onError: (FilePickerErrorType, String) -> Unit) {
+    val context = LocalContext.current
+    var files by remember { mutableStateOf<List<java.io.File>>(emptyList()) }
+    var lastAction by remember { mutableStateOf("Idle — pick files to see [Open, Upload, Info]") }
+
+    AdvancedFilePicker(
+        files = files,
+        onFilesChange = { files = it },
+        label = "Docs with actions",
+        config = FilePickerConfig.pdf(
+            maxFileSizeBytes = 8L * 1024L * 1024L,
+            allowMultiple = true,
+            maxFileCount = 3,
+        ),
+        enableOpenInApp = true,
+        showDeleteButton = true,
+        onError = onError,
+        actionButtons = { file, index ->
+            listOf(
+                ActionButtonConfig(
+                    iconResId = R.drawable.ic_cloud_upload,
+                    text = "Upload",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC1976D2.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        lastAction = "Upload [$index] ${file.name}"
+                        Toast.makeText(context, lastAction, Toast.LENGTH_SHORT).show()
+                    },
+                ),
+                ActionButtonConfig(
+                    iconResId = volineR.drawable.ic_info_filled,
+                    text = "Info",
+                    iconTint = 0xFFFFFFFF.toInt(),
+                    backgroundColor = 0xCC00796B.toInt(),
+                    textColor = 0xFFFFFFFF.toInt(),
+                    onClick = {
+                        lastAction =
+                            "Info [$index] ${file.name} · ${PickedFile.formatFileSize(file.length())}"
+                        Toast.makeText(context, lastAction, Toast.LENGTH_SHORT).show()
+                    },
+                ),
+            )
+        },
+    )
+    StatusLine("${files.size}/3 · $lastAction")
 }
 
 @Composable

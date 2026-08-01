@@ -57,8 +57,11 @@ import `in`.fivedegree.volineui.filepickermanager.FilePickerErrorType
 import `in`.fivedegree.volineui.filepickermanager.FilePickerException
 import `in`.fivedegree.volineui.filepickermanager.FilePickerResult
 import `in`.fivedegree.volineui.filepickermanager.PickedFile
+import `in`.fivedegree.volineui.imageview.ActionButtonConfig
+import `in`.fivedegree.volineui.imageview.ImageViewDefaults
 import java.io.File
 import kotlin.jvm.JvmName
+import androidx.compose.ui.graphics.toArgb
 
 /**
  * Advanced file picker for Jetpack Compose — mirrors [AdvancedImageView] / [ImageCarousel]
@@ -67,7 +70,7 @@ import kotlin.jvm.JvmName
  * Features:
  * - Config-driven MIME / extension / size / PDF page / image dimension validation
  * - Single-file placeholder or multi-file horizontal card carousel
- * - Delete, open-in-default-app, loading & error states
+ * - Delete, bottom-right action chips (`[Open] + custom`), loading & error states
  * - [FilePickerManager] integration (or custom [onPickRequest])
  * - Typed [onError] callbacks for host-owned UX
  *
@@ -80,6 +83,7 @@ import kotlin.jvm.JvmName
  *     onFilesChange = { files = it },
  *     config = FilePickerConfig.pdf(allowMultiple = true),
  *     label = "Documents",
+ *     actionButtons = { file, index -> listOf(/* Upload, Info, … */) },
  * )
  * ```
  */
@@ -114,6 +118,8 @@ fun AdvancedFilePicker(
     showLoadingIndicator: Boolean = true,
     enablePickOnTap: Boolean = true,
     isLoading: Boolean = false,
+    /** Per-file action chips; built-in Open (if enabled) is prepended automatically. */
+    actionButtons: (File, Int) -> List<ActionButtonConfig> = { _, _ -> emptyList() },
     // Callbacks
     onFileClick: ((File, Int) -> Unit)? = null,
     onFileDelete: ((File, Int) -> Unit)? = null,
@@ -128,6 +134,7 @@ fun AdvancedFilePicker(
     val pickedFiles = remember(files.map { it.absolutePath }) {
         files.map { PickedFile.from(it) }
     }
+    val hostActionButtons = actionButtons
 
     AdvancedFilePicker(
         files = pickedFiles,
@@ -152,6 +159,10 @@ fun AdvancedFilePicker(
         showLoadingIndicator = showLoadingIndicator,
         enablePickOnTap = enablePickOnTap,
         isLoading = isLoading,
+        actionButtons = { index ->
+            val javaFile = files.getOrNull(index) ?: return@AdvancedFilePicker emptyList()
+            hostActionButtons(javaFile, index)
+        },
         onFilesChange = { next ->
             onFilesChange(next.mapNotNull { it.asLocalFile() })
         },
@@ -215,6 +226,11 @@ fun AdvancedFilePicker(
     showLoadingIndicator: Boolean = true,
     enablePickOnTap: Boolean = true,
     isLoading: Boolean = false,
+    /**
+     * Per-item action chips (bottom-right). Built-in Open chip is prepended when
+     * [enableOpenInApp] is true: `[Open] + actionButtons(index)`.
+     */
+    actionButtons: (Int) -> List<ActionButtonConfig> = { emptyList() },
     // Callbacks
     onFilesChange: ((List<PickedFile>) -> Unit)? = null,
     onFileClick: ((PickedFile, Int) -> Unit)? = null,
@@ -428,9 +444,13 @@ fun AdvancedFilePicker(
                 colors = colors,
                 compact = false,
                 showDeleteButton = showDeleteButton,
-                enableOpenInApp = enableOpenInApp,
+                actionButtons = resolveFileActionButtons(
+                    enableOpenInApp = enableOpenInApp,
+                    openIconTint = colors.openIconTint,
+                    custom = actionButtons(0),
+                    onOpen = { openFile(file, 0) },
+                ),
                 onClick = { onFileClick?.invoke(file, 0) },
-                onOpen = { openFile(file, 0) },
                 onDelete = { deleteFile(file, 0) },
             )
             if (effectiveLoading) {
@@ -471,9 +491,13 @@ fun AdvancedFilePicker(
                             colors = colors,
                             compact = true,
                             showDeleteButton = showDeleteButton,
-                            enableOpenInApp = enableOpenInApp,
+                            actionButtons = resolveFileActionButtons(
+                                enableOpenInApp = enableOpenInApp,
+                                openIconTint = colors.openIconTint,
+                                custom = actionButtons(index),
+                                onOpen = { openFile(file, index) },
+                            ),
                             onClick = { onFileClick?.invoke(file, index) },
-                            onOpen = { openFile(file, index) },
                             onDelete = { deleteFile(file, index) },
                         )
                     }
@@ -532,6 +556,7 @@ fun AdvancedFilePicker(
     enableOpenInApp: Boolean = true,
     showLoadingIndicator: Boolean = true,
     enablePickOnTap: Boolean = true,
+    actionButtons: (Int) -> List<ActionButtonConfig> = { emptyList() },
     onFileClick: ((PickedFile, Int) -> Unit)? = null,
     onFileDelete: ((PickedFile, Int) -> Unit)? = null,
     onOpenClick: ((PickedFile, Int) -> Unit)? = null,
@@ -563,6 +588,7 @@ fun AdvancedFilePicker(
         showLoadingIndicator = showLoadingIndicator,
         enablePickOnTap = enablePickOnTap,
         isLoading = state.isForceLoading,
+        actionButtons = actionButtons,
         onFilesChange = { state.replaceFiles(it) },
         onFileClick = onFileClick,
         onFileDelete = onFileDelete,
@@ -673,13 +699,16 @@ private fun FileCard(
     colors: FilePickerColors,
     compact: Boolean,
     showDeleteButton: Boolean,
-    enableOpenInApp: Boolean,
+    actionButtons: List<ActionButtonConfig>,
     onClick: () -> Unit,
-    onOpen: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val shape = RoundedCornerShape(cornerRadius)
     val iconRes = remember(file.mimeType, file.extension) { iconForFile(file) }
+    val actionScroll = rememberScrollState()
+    val chipCorner = (cornerRadius.value * 0.4f).coerceAtLeast(4f).dp
+    val bottomContentPad =
+        if (actionButtons.isNotEmpty()) ImageViewDefaults.ActionButtonMinHeight + 10.dp else 0.dp
 
     Box(
         modifier = modifier
@@ -698,7 +727,8 @@ private fun FileCard(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(FilePickerDefaults.CardPadding),
+                    .padding(FilePickerDefaults.CardPadding)
+                    .padding(bottom = bottomContentPad),
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Icon(
@@ -729,20 +759,13 @@ private fun FileCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                if (enableOpenInApp) {
-                    FileActionIcon(
-                        iconRes = R.drawable.ic_open_in_new,
-                        contentDescription = "Open",
-                        tint = colors.openIconTint,
-                        onClick = onOpen,
-                    )
-                }
             }
         } else {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(FilePickerDefaults.CardPadding),
+                    .padding(FilePickerDefaults.CardPadding)
+                    .padding(bottom = bottomContentPad),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -774,14 +797,6 @@ private fun FileCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                if (enableOpenInApp) {
-                    FileActionIcon(
-                        iconRes = R.drawable.ic_open_in_new,
-                        contentDescription = "Open",
-                        tint = colors.openIconTint,
-                        onClick = onOpen,
-                    )
-                }
             }
         }
 
@@ -810,33 +825,54 @@ private fun FileCard(
                 )
             }
         }
+
+        androidx.compose.animation.AnimatedVisibility(
+            visible = actionButtons.isNotEmpty(),
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomEnd)
+                .padding(ImageViewDefaults.ActionButtonRowMargin),
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.BottomEnd,
+            ) {
+                Row(
+                    modifier = Modifier.horizontalScroll(actionScroll),
+                    horizontalArrangement = Arrangement.spacedBy(ImageViewDefaults.ActionButtonSpacing),
+                ) {
+                    actionButtons.forEach { cfg ->
+                        ActionButtonChip(config = cfg, cornerRadius = chipCorner)
+                    }
+                }
+            }
+        }
     }
 }
 
-@Composable
-private fun FileActionIcon(
-    iconRes: Int,
-    contentDescription: String,
-    tint: androidx.compose.ui.graphics.Color,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(FilePickerDefaults.ActionIconSize + FilePickerDefaults.ActionIconPadding * 2)
-            .clip(RoundedCornerShape(4.dp))
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(),
-            ) { onClick() },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(id = iconRes),
-            contentDescription = contentDescription,
-            modifier = Modifier.size(FilePickerDefaults.ActionIconSize),
-            tint = tint,
+private fun resolveFileActionButtons(
+    enableOpenInApp: Boolean,
+    openIconTint: androidx.compose.ui.graphics.Color,
+    custom: List<ActionButtonConfig>,
+    onOpen: () -> Unit,
+): List<ActionButtonConfig> {
+    val openChip = if (enableOpenInApp) {
+        listOf(
+            ActionButtonConfig(
+                iconResId = R.drawable.ic_open_in_new,
+                text = null,
+                iconTint = openIconTint.toArgb(),
+                backgroundColor = 0x66000000,
+                contentDescription = "Open",
+                onClick = onOpen,
+            )
         )
+    } else {
+        emptyList()
     }
+    return openChip + custom
 }
 
 @Composable
