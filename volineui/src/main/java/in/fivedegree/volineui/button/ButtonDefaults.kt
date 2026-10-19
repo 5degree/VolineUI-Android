@@ -110,13 +110,19 @@ object ButtonDefaults {
         backgroundColorPressed: Color = darkenColor(backgroundColor, 0.15f),
         backgroundColorDisabled: Color = DisabledBackgroundColor,
         textColor: Color = DefaultTextColor,
-        textColorPressed: Color = DefaultTextColor,
+        // Keep white sticky so default buttonColors() (white text on filled buttons) presses
+        // as white, but derive from textColor like textColors/outlinedColors do when the user
+        // supplied a custom text color, so pressing darkens instead of flipping to white.
+        textColorPressed: Color = if (textColor == Color.White) Color.White else darkenColor(textColor, 0.15f),
         textColorDisabled: Color = DisabledTextColor,
         borderColor: Color = MaterialTheme.colorScheme.primary,
         borderColorPressed: Color = darkenColor(borderColor, 0.15f),
         borderColorDisabled: Color = DisabledBorderColor,
         iconColor: Color = textColor,
-        iconColorPressed: Color = textColorPressed,
+        // Keep white sticky so default buttonColors() (white icons) press as white,
+        // but derive from iconColor like textColors/tonalColors/iconColors do when
+        // the user has supplied a custom icon color.
+        iconColorPressed: Color = if (iconColor == Color.White) Color.White else darkenColor(iconColor, 0.15f),
         iconColorDisabled: Color = DisabledTextColor,
         rippleColor: Color = RippleColor,
         loadingColor: Color = LoadingColor,

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -302,8 +303,17 @@ fun AdvancedButton(
     }
 
     // Adjust styling based on button style
+    // For icon-only buttons, respect custom background colors. colors() defaults
+    // backgroundColor to theme primary, so a background that differs from it is
+    // treated as an explicit customization and rendered as-is, instead of being
+    // forced transparent by the mapped TEXT/OUTLINED style. Plain defaults keep
+    // the standard transparent icon-button look.
+    val usesCustomIconBackground = isIconOnlyButton &&
+        colors.backgroundColor != MaterialTheme.colorScheme.primary
+
     val actualBackgroundColor = when (effectiveStyle) {
-        ButtonStyle.OUTLINED, ButtonStyle.TEXT -> Color.Transparent
+        ButtonStyle.OUTLINED, ButtonStyle.TEXT ->
+            if (usesCustomIconBackground) backgroundColor else Color.Transparent
         ButtonStyle.TONAL -> backgroundColor.copy(alpha = 0.15f)
         ButtonStyle.CHIP -> backgroundColor.copy(alpha = 0.098f)  // Matches View: 25/255
         else -> backgroundColor
@@ -328,12 +338,14 @@ fun AdvancedButton(
         else -> iconColor
     }
 
-    // For OUTLINED style: use black as default if borderColor uses default primary/pressed colors
-    // This checks the NORMAL state borderColor to detect if default was used, then applies black consistently
+    // For OUTLINED style: use black as default only when the plain default colors() are
+    // used (border equals the default background and text is still the default white).
+    // If the user customized the text/border colors, render them as-is.
     val normalStateBorderColor = colors.borderColor(ButtonState.NORMAL)
+    val isDefaultOutlinedColors = normalStateBorderColor == colors.backgroundColor &&
+        colors.textColor == Color.White
     val actualBorderColor = when (effectiveStyle) {
-        ButtonStyle.OUTLINED -> if (normalStateBorderColor == colors.backgroundColor ||
-            normalStateBorderColor == Color.Black) Color.Black else borderColor
+        ButtonStyle.OUTLINED -> if (isDefaultOutlinedColors) Color.Black else borderColor
         else -> borderColor
     }
 
