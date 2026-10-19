@@ -63,6 +63,11 @@ class InputFieldExamplesActivity : AppCompatActivity() {
         b.clickableTrailingTextInput.onSuffixIconClickListener {
             toast("Suffix icon clicked")
         }
+        // Leading prefix text mirrors the trailing slot (prefix icon -> text -> divider -> input)
+        b.clickableTrailingTextInput.setLeadingText("$")
+        b.clickableTrailingTextInput.onLeadingTextClickListener {
+            toast("Leading text clicked")
+        }
 
         // Also wire existing fertilizer field so suffix + unit are clickable
         b.fertilizerInput.onTrailingTextClickListener {
@@ -80,6 +85,10 @@ class InputFieldExamplesActivity : AppCompatActivity() {
         }
         b.disabledClickableInput.onTrailingTextClickListener {
             toast("Trailing text clicked (disabled field)")
+        }
+        b.disabledClickableInput.setLeadingText("$")
+        b.disabledClickableInput.onLeadingTextClickListener {
+            toast("Leading text clicked (disabled field)")
         }
     }
 

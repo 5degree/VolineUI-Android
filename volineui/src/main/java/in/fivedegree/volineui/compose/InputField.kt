@@ -103,9 +103,11 @@ private val decimalInputRegex = Regex("^[0-9]*\\.?[0-9]*$")
  * @param borderWidth Border width in normal state
  * @param focusedBorderWidth Border width when focused
  * @param leadingIcon Optional icon at the start of the field
+ * @param leadingText Optional prefix text (e.g. "$") shown in a leading slot
  * @param trailingText Optional suffix text (e.g. "Kg/acre") shown in a trailing slot
  * @param trailingIcon Optional icon at the end of the field
  * @param onLeadingIconClick Optional click callback for the leading icon
+ * @param onLeadingTextClick Optional click callback for the leading text
  * @param onTrailingIconClick Optional click callback for the trailing icon
  * @param onTrailingTextClick Optional click callback for the trailing text
  * @param iconClickCornerRadius Corner radius for clickable icon / trailing-text ripples
@@ -143,9 +145,11 @@ fun InputField(
     borderWidth: Dp = InputFieldDefaults.BorderWidth,
     focusedBorderWidth: Dp = InputFieldDefaults.FocusedBorderWidth,
     leadingIcon: Painter? = null,
+    leadingText: String? = null,
     trailingText: String? = null,
     trailingIcon: Painter? = null,
     onLeadingIconClick: (() -> Unit)? = null,
+    onLeadingTextClick: (() -> Unit)? = null,
     onTrailingIconClick: (() -> Unit)? = null,
     onTrailingTextClick: (() -> Unit)? = null,
     iconClickCornerRadius: Dp = InputFieldDefaults.IconClickCornerRadius,
@@ -166,6 +170,7 @@ fun InputField(
     textOverflow: TextOverflow = TextOverflow.Ellipsis,
 ) {
     val effectiveHint = hint ?: label?.takeIf { it.isNotBlank() }?.let { "Enter $it" }
+    val showLeadingSlot = !leadingText.isNullOrBlank()
     val showTrailingSlot = !trailingText.isNullOrBlank()
     val allowedCharacterSet = remember(allowedChars) { allowedChars.flatMap { it.asIterable() }.toSet() }
 
@@ -315,7 +320,10 @@ fun InputField(
             ) {
                 val trailingTextMaxWidth =
                     (maxWidth * InputFieldDefaults.TrailingTextMaxWidthFraction).coerceAtLeast(48.dp)
+                val leadingTextMaxWidth =
+                    (maxWidth * InputFieldDefaults.TrailingTextMaxWidthFraction).coerceAtLeast(48.dp)
                 val trailingDividerHeight = InputFieldDefaults.TrailingDividerHeight
+                val leadingDividerHeight = InputFieldDefaults.TrailingDividerHeight
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -334,7 +342,32 @@ fun InputField(
                             onClick = onLeadingIconClick,
                             clickCornerRadius = iconClickCornerRadius,
                         )
-                        Spacer(modifier = Modifier.width(InputFieldDefaults.IconPadding))
+                        if (!showLeadingSlot) {
+                            Spacer(modifier = Modifier.width(InputFieldDefaults.IconPadding))
+                        }
+                    }
+
+                    // Leading prefix text + divider (mirrors trailing slot)
+                    if (showLeadingSlot) {
+                        ClickableUnitText(
+                            text = leadingText.trim(),
+                            color = colors.trailingTextColor(enabled),
+                            maxWidth = leadingTextMaxWidth,
+                            startPadding = if (leadingIcon != null) {
+                                InputFieldDefaults.TrailingTextEndPadding
+                            } else {
+                                0.dp
+                            },
+                            endPadding = InputFieldDefaults.TrailingTextStartPadding,
+                            onClick = onLeadingTextClick,
+                            clickCornerRadius = iconClickCornerRadius,
+                        )
+                        VerticalDivider(
+                            modifier = Modifier.height(leadingDividerHeight.coerceAtLeast(1.dp)),
+                            thickness = InputFieldDefaults.TrailingDividerWidth,
+                            color = colors.trailingDividerColor,
+                        )
+                        Spacer(modifier = Modifier.width(InputFieldDefaults.TrailingInputToDividerGap))
                     }
 
                     // Text field
@@ -441,10 +474,11 @@ fun InputField(
                                 thickness = InputFieldDefaults.TrailingDividerWidth,
                                 color = colors.trailingDividerColor,
                             )
-                            ClickableTrailingUnitText(
+                            ClickableUnitText(
                                 text = trailingText.trim(),
                                 color = colors.trailingTextColor(enabled),
                                 maxWidth = trailingTextMaxWidth,
+                                startPadding = InputFieldDefaults.TrailingTextStartPadding,
                                 endPadding = if (trailingIcon != null) {
                                     InputFieldDefaults.TrailingTextEndPadding
                                 } else {
@@ -514,14 +548,16 @@ fun InputField(
 }
 
 /**
- * Trailing unit text. When [onClick] is set, expands the ripple/hit area with padding
- * without increasing the InputField height ([matchParentSize] overlay does not affect measure).
+ * Unit text for the leading/trailing slots. When [onClick] is set, expands the ripple/hit area
+ * with padding without increasing the InputField height ([matchParentSize] overlay does not
+ * affect measure). Leading and trailing slots share the same colors and dimensions.
  */
 @Composable
-private fun ClickableTrailingUnitText(
+private fun ClickableUnitText(
     text: String,
     color: Color,
     maxWidth: Dp,
+    startPadding: Dp,
     endPadding: Dp,
     onClick: (() -> Unit)?,
     clickCornerRadius: Dp,
@@ -529,7 +565,7 @@ private fun ClickableTrailingUnitText(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.padding(
-            start = InputFieldDefaults.TrailingTextStartPadding,
+            start = startPadding,
             end = endPadding,
         ),
     ) {
@@ -683,6 +719,26 @@ private fun InputFieldPreview() {
             hint = "0",
             trailingText = "Very long unit that ellipsize…",
             trailingIcon = painterResource(id = R.drawable.ic_clear)
+        )
+
+        InputField(
+            value = text,
+            onValueChange = { text = it },
+            label = "Amount (leading unit)",
+            hint = "0",
+            leadingText = "$",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+
+        InputField(
+            value = text,
+            onValueChange = { text = it },
+            label = "Leading + trailing units",
+            hint = "0",
+            leadingText = "$",
+            trailingText = "USD",
+            onLeadingTextClick = { },
+            onTrailingTextClick = { }
         )
     }
 }

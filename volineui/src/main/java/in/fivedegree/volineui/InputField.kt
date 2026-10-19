@@ -61,8 +61,15 @@ class InputField @JvmOverloads constructor(
     private var clearIconView: ImageView? = null
     private var passwordToggleView: ImageView? = null
     private var loadingProgressBar: ProgressBar? = null
+    private var leadingTextView: TextView? = null
+    private var leadingDividerView: View? = null
     private var trailingTextView: TextView? = null
     private var trailingDividerView: View? = null
+
+    /** Shown to the left of the input, right of the prefix icon. Mirrors trailing slot. */
+    private var leadingTextContent: String = ""
+    private var leadingTextColorValue: Int = 0xFF9E9E9E.toInt()
+    private var leadingDividerColorValue: Int = 0xFFCCCCCC.toInt()
 
     /** Shown to the right of the input, left of suffix/clear/password/loading icons. */
     private var trailingTextContent: String = ""
@@ -141,6 +148,7 @@ class InputField @JvmOverloads constructor(
     private var valueChangeListener: ((String) -> Unit)? = null
     private var prefixIconClickListener: (() -> Unit)? = null
     private var suffixIconClickListener: (() -> Unit)? = null
+    private var leadingTextClickListener: (() -> Unit)? = null
     private var trailingTextClickListener: (() -> Unit)? = null
 
     /** Extra padding around prefix/suffix icons for a larger touch target. */
@@ -224,6 +232,7 @@ class InputField @JvmOverloads constructor(
         // Apply initial state
         updateState(currentState)
 
+        applyLeadingTextVisibility()
         applyTrailingTextVisibility()
     }
 
@@ -338,6 +347,17 @@ class InputField @JvmOverloads constructor(
             }
             trailingDividerColorValue = typedArray.getColor(
                 R.styleable.InputField_trailingDividerColor,
+                borderColor
+            )
+            leadingTextContent = typedArray.getString(R.styleable.InputField_leadingText)?.trim() ?: ""
+            if (typedArray.hasValue(R.styleable.InputField_leadingTextColor)) {
+                leadingTextColorValue = typedArray.getColor(
+                    R.styleable.InputField_leadingTextColor,
+                    leadingTextColorValue
+                )
+            }
+            leadingDividerColorValue = typedArray.getColor(
+                R.styleable.InputField_leadingDividerColor,
                 borderColor
             )
             
@@ -809,6 +829,15 @@ class InputField @JvmOverloads constructor(
     }
 
     /**
+     * Optional click listener for the leading prefix text.
+     * Clicks fire even when the field is disabled or read-only.
+     */
+    fun onLeadingTextClickListener(listener: () -> Unit) {
+        leadingTextClickListener = listener
+        bindLeadingTextClick()
+    }
+
+    /**
      * Optional click listener for the trailing unit text.
      * Clicks fire even when the field is disabled or read-only.
      */
@@ -818,13 +847,14 @@ class InputField @JvmOverloads constructor(
     }
 
     /**
-     * Corner radius used for the ripple mask on clickable prefix/suffix icons and trailing text.
+     * Corner radius used for the ripple mask on clickable prefix/suffix icons and leading/trailing text.
      */
     fun setIconClickCornerRadius(radiusPx: Float) {
         iconClickCornerRadius = radiusPx
         // Re-apply ripples so the new radius takes effect
         if (prefixIconClickListener != null) bindPrefixIconClick()
         if (suffixIconClickListener != null) bindSuffixIconClick()
+        if (leadingTextClickListener != null) bindLeadingTextClick()
         if (trailingTextClickListener != null) bindTrailingTextClick()
     }
 
@@ -900,6 +930,28 @@ class InputField @JvmOverloads constructor(
         }
     }
 
+    private fun bindLeadingTextClick() {
+        val view = leadingTextView ?: return
+        val listener = leadingTextClickListener
+        if (listener != null) {
+            view.isClickable = true
+            view.isFocusable = true
+            view.isEnabled = true
+            val h = trailingTextClickPaddingH.toInt()
+            val v = trailingTextClickPaddingV.toInt()
+            view.setPadding(h, v, h, v)
+            applyRoundedClickRipple(view)
+            view.setOnClickListener { listener.invoke() }
+        } else {
+            view.setOnClickListener(null)
+            view.isClickable = false
+            view.isFocusable = false
+            view.setPadding(0, 0, 0, 0)
+            clearSelectableRipple(view)
+        }
+        requestLayout()
+    }
+
     private fun bindTrailingTextClick() {
         val view = trailingTextView ?: return
         val listener = trailingTextClickListener
@@ -922,7 +974,7 @@ class InputField @JvmOverloads constructor(
         requestLayout()
     }
 
-    /** Keep prefix/suffix/trailing-text clickable even when the field is disabled. */
+    /** Keep prefix/suffix/leading-text/trailing-text clickable even when the field is disabled. */
     private fun keepAccessoryClicksEnabled() {
         if (prefixIconClickListener != null) {
             prefixIconView?.isEnabled = true
@@ -932,10 +984,24 @@ class InputField @JvmOverloads constructor(
             suffixIconView?.isEnabled = true
             suffixIconView?.isClickable = true
         }
+        if (leadingTextClickListener != null) {
+            leadingTextView?.isEnabled = true
+            leadingTextView?.isClickable = true
+        }
         if (trailingTextClickListener != null) {
             trailingTextView?.isEnabled = true
             trailingTextView?.isClickable = true
         }
+    }
+
+    /**
+     * Optional prefix label (e.g. "$") shown after the prefix icon and before the input,
+     * followed by a vertical divider. Long text is ellipsized at the end. Pass null or blank to remove.
+     */
+    fun setLeadingText(text: CharSequence?) {
+        leadingTextContent = text?.toString()?.trim() ?: ""
+        applyLeadingTextVisibility()
+        requestLayout()
     }
 
     /**
@@ -946,6 +1012,47 @@ class InputField @JvmOverloads constructor(
         trailingTextContent = text?.toString()?.trim() ?: ""
         applyTrailingTextVisibility()
         requestLayout()
+    }
+
+    private fun ensureLeadingViews() {
+        if (leadingDividerView == null) {
+            leadingDividerView = View(context).apply {
+                visibility = GONE
+            }
+            addView(leadingDividerView)
+        }
+        leadingDividerView?.setBackgroundColor(leadingDividerColorValue)
+        if (leadingTextView == null) {
+            leadingTextView = TextView(context).apply {
+                visibility = GONE
+                textSize = 16f
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
+                includeFontPadding = false
+            }
+            addView(leadingTextView)
+            bindLeadingTextClick()
+        }
+    }
+
+    private fun applyLeadingTextVisibility() {
+        if (leadingTextContent.isEmpty()) {
+            leadingTextView?.visibility = GONE
+            leadingDividerView?.visibility = GONE
+        } else {
+            ensureLeadingViews()
+            leadingTextView?.text = leadingTextContent
+            updateLeadingTextColorUi()
+            leadingTextView?.visibility = VISIBLE
+            leadingDividerView?.visibility = VISIBLE
+        }
+    }
+
+    private fun updateLeadingTextColorUi() {
+        val base = leadingTextColorValue
+        leadingTextView?.setTextColor(
+            if (isEnabled) base else ColorUtils.setAlphaComponent(base, (255 * 0.5f).toInt())
+        )
     }
 
     private fun ensureTrailingViews() {
@@ -992,6 +1099,7 @@ class InputField @JvmOverloads constructor(
     override fun setEnabled(enabled: Boolean) {
         super.setEnabled(enabled)
         inputEditText.isEnabled = enabled
+        updateLeadingTextColorUi()
         updateTrailingTextColorUi()
         keepAccessoryClicksEnabled()
         if (!enabled) {
@@ -1124,6 +1232,42 @@ class InputField @JvmOverloads constructor(
             inputWidth -= trailingInnerEndPad
         }
 
+        // Leading prefix section (mirrors trailing): text + divider + gap to input.
+        // Start pad for leading-text-only (no prefix icon); with icon, edgeInset already applied.
+        val hasPrefixIcon = prefixIconView?.visibility == VISIBLE
+        val leadingInnerStartPad = if (leadingTextContent.isNotEmpty() && !hasPrefixIcon) {
+            horizontalPadding.toInt()
+        } else {
+            0
+        }
+        var leadingSectionWidth = 0
+        if (leadingTextContent.isNotEmpty()) {
+            ensureLeadingViews()
+            val maxTextW = (width * 0.42f).toInt().coerceAtLeast(1)
+            val textPadStart = if (hasPrefixIcon) dpToPx(8f).toInt() else 0
+            val textPadEnd = dpToPx(12f).toInt()
+            val dividerW = dpToPx(1f).toInt()
+            val leadingGapAfterDivider = dpToPx(8f).toInt()
+            leadingTextView!!.measure(
+                MeasureSpec.makeMeasureSpec((maxTextW - textPadStart).coerceAtLeast(1), MeasureSpec.AT_MOST),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+            )
+            leadingSectionWidth =
+                textPadStart + leadingTextView!!.measuredWidth + textPadEnd +
+                    dividerW + leadingGapAfterDivider
+            val minInputRowH = dpToPx(48f).toInt()
+            val inset = dpToPx(8f).toInt()
+            val divH = (minInputRowH - inset * 2).coerceAtLeast(1)
+            leadingDividerView!!.measure(
+                MeasureSpec.makeMeasureSpec(dividerW, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(divH, MeasureSpec.EXACTLY)
+            )
+        }
+        inputWidth -= leadingSectionWidth
+        if (leadingInnerStartPad > 0) {
+            inputWidth -= leadingInnerStartPad
+        }
+
         measureChild(
             inputEditText,
             MeasureSpec.makeMeasureSpec(inputWidth, MeasureSpec.EXACTLY),
@@ -1213,6 +1357,41 @@ class InputField @JvmOverloads constructor(
             leftOffset += iconTouchSize
         }
 
+        // Layout leading prefix text + divider (mirrors trailing slot)
+        var editLeft = leftOffset
+        if (leadingTextView?.visibility == VISIBLE && leadingDividerView?.visibility == VISIBLE) {
+            val hasPrefixIconLayout = prefixIconView?.visibility == VISIBLE
+            if (!hasPrefixIconLayout) {
+                // Start pad for leading-text-only (no prefix icon); with icon, edgeInset already applied
+                leftOffset += horizontalPadding.toInt()
+                editLeft = leftOffset
+            }
+            val textPadStart = if (hasPrefixIconLayout) dpToPx(8f).toInt() else 0
+            val textPadEnd = dpToPx(12f).toInt()
+            val dividerW = leadingDividerView!!.measuredWidth
+            val gapAfterDivider = dpToPx(8f).toInt()
+            val tw = leadingTextView!!.measuredWidth
+            val th = leadingTextView!!.measuredHeight
+            val textLeft = leftOffset + textPadStart
+            val textTop = inputTop + (inputHeight - th) / 2
+            leadingTextView!!.layout(
+                textLeft,
+                textTop,
+                textLeft + tw,
+                textTop + th
+            )
+            val divH = leadingDividerView!!.measuredHeight
+            val divTop = inputTop + (inputHeight - divH) / 2
+            val dividerLeft = textLeft + tw + textPadEnd
+            leadingDividerView!!.layout(
+                dividerLeft,
+                divTop,
+                dividerLeft + dividerW,
+                divTop + divH
+            )
+            editLeft = dividerLeft + dividerW + gapAfterDivider
+        }
+
         // Layout right icons (from right to left) with proper spacing
         val rightIcons = mutableListOf<View>()
         loadingProgressBar?.takeIf { it.visibility == VISIBLE }?.let { rightIcons.add(it) }
@@ -1273,7 +1452,7 @@ class InputField @JvmOverloads constructor(
 
         // Layout input
         inputEditText.layout(
-            leftOffset,
+            editLeft,
             inputTop,
             editRight,
             inputTop + inputHeight

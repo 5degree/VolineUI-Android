@@ -120,8 +120,8 @@ private fun InputFieldExamplesScreen(modifier: Modifier = Modifier) {
 
         HorizontalDivider()
 
-        // Clickable leading/trailing icons & trailing text
-        SectionTitle("Clickable Icons & Trailing Text")
+        // Clickable leading/trailing icons & leading/trailing text
+        SectionTitle("Clickable Icons & Leading/Trailing Text")
         ClickableAccessoriesExample()
 
         HorizontalDivider()
@@ -129,6 +129,12 @@ private fun InputFieldExamplesScreen(modifier: Modifier = Modifier) {
         // Trailing unit text (Figma-style)
         SectionTitle("Trailing text (units)")
         TrailingTextExamples()
+
+        HorizontalDivider()
+
+        // Leading prefix text (mirrors trailing slot)
+        SectionTitle("Leading text (prefix)")
+        LeadingTextExamples()
 
         HorizontalDivider()
 
@@ -310,10 +316,12 @@ private fun ClickableAccessoriesExample() {
         InputField(
             value = quantity,
             onValueChange = { quantity = it },
-            label = "Quantity — click unit or info icon",
+            label = "Quantity — click prefix, unit or info icon",
             hint = "0",
+            leadingText = "$",
             trailingText = "Kg/acre",
             trailingIcon = painterResource(volineR.drawable.ic_info_filled),
+            onLeadingTextClick = { toast("Leading text clicked") },
             onTrailingTextClick = { toast("Trailing text clicked") },
             onTrailingIconClick = { toast("Trailing icon clicked") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -326,9 +334,11 @@ private fun ClickableAccessoriesExample() {
             enabled = false,
             leadingIcon = painterResource(R.drawable.account_balance_24px),
             trailingIcon = painterResource(volineR.drawable.ic_warning_filled),
+            leadingText = "$",
             trailingText = "Locked",
             onLeadingIconClick = { toast("Leading icon clicked (disabled field)") },
             onTrailingIconClick = { toast("Trailing icon clicked (disabled field)") },
+            onLeadingTextClick = { toast("Leading text clicked (disabled field)") },
             onTrailingTextClick = { toast("Trailing text clicked (disabled field)") }
         )
     }
@@ -366,6 +376,50 @@ private fun TrailingTextExamples() {
             trailingText = "Very long unit label that should ellipsize",
             trailingIcon = painterResource(volineR.drawable.ic_warning_filled),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+    }
+}
+
+@Composable
+private fun LeadingTextExamples() {
+    val context = LocalContext.current
+    var price by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf("12") }
+    var both by remember { mutableStateOf("100") }
+
+    fun toast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        InputField(
+            value = price,
+            onValueChange = { price = it },
+            label = "Price per acre",
+            hint = "0",
+            leadingText = "₹",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+        InputField(
+            value = amount,
+            onValueChange = { amount = it },
+            label = "Amount with prefix icon + clickable prefix",
+            hint = "0",
+            leadingIcon = painterResource(R.drawable.account_balance_24px),
+            leadingText = "$",
+            onLeadingTextClick = { toast("Leading text clicked") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+        InputField(
+            value = both,
+            onValueChange = { both = it },
+            label = "Leading + trailing units",
+            hint = "0",
+            leadingText = "$",
+            trailingText = "USD",
+            onLeadingTextClick = { toast("Leading text clicked") },
+            onTrailingTextClick = { toast("Trailing text clicked") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
     }
 }

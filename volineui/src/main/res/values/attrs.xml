@@ -32,6 +32,11 @@
         <attr name="android:enabled" />
         <attr name="readOnly" format="boolean" />
         
+        <!-- Leading unit / prefix (e.g. $): ellipsized text + divider; order: prefix icon then text then divider then input -->
+        <attr name="leadingText" format="string" />
+        <attr name="leadingTextColor" format="color" />
+        <attr name="leadingDividerColor" format="color" />
+
         <!-- Trailing unit / suffix (e.g. Kg/acre): divider + ellipsized text; icon order: text then suffix icon -->
         <attr name="trailingText" format="string" />
         <attr name="trailingTextColor" format="color" />
