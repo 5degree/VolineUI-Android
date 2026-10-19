@@ -16,7 +16,7 @@ VolineUI is published on **Maven Central** as `io.github.5degree:volineui`. The 
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("io.github.5degree:volineui:2.2.0")
+    implementation("io.github.5degree:volineui:2.2.1")
 }
 ```
 
@@ -27,7 +27,7 @@ Maven Central is included by default in modern Android projects (AGP 7+), so no 
 ```groovy
 // app/build.gradle
 dependencies {
-    implementation 'io.github.5degree:volineui:2.2.0'
+    implementation 'io.github.5degree:volineui:2.2.1'
 }
 ```
 
@@ -35,7 +35,7 @@ dependencies {
 
 ```toml
 [versions]
-volineui = "2.2.0"
+volineui = "2.2.1"
 
 [libraries]
 volineui = { module = "io.github.5degree:volineui", version.ref = "volineui" }
