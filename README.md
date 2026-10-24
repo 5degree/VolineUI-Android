@@ -167,6 +167,7 @@ VolineDialog.confirm(
 | Dropdown | ✓ | ✓ | Single/multi select, search, chips, filtering |
 | Radio | ✓ | ✓ | Segmented control with animated pill indicator |
 | DateTimePicker | — | ✓ | Date, time, or date+time; styled like InputField |
+| RulerValuePicker | ✓ | ✓ | Draggable ruler slider; horizontal/vertical, fling, snapping, labels, haptics |
 | SignaturePad | ✓ | — | Drawing, undo/redo, export (PNG, JPG, SVG, Base64) |
 | AdvancedImageView | ✓ | ✓ | URL/file/bitmap/URI/base64 sources; camera capture |
 | ImageCarousel | ✓ | ✓ | Horizontal image list with indicators and full-screen preview |
@@ -253,6 +254,48 @@ Dropdown(
 )
 ```
 
+### View — RulerValuePicker (XML)
+
+```xml
+<in.fivedegree.volineui.RulerValuePicker
+    android:id="@+id/ruler"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:rulerMinValue="150"
+    app:rulerMaxValue="210"
+    app:rulerStep="1"
+    app:rulerMajorStep="10"
+    app:rulerValue="160"
+    app:rulerUnit="cm" />
+```
+
+```kotlin
+ruler.setOnValueChangeFinishedListener { value ->
+    // value is snapped and clamped
+}
+```
+
+### Compose — RulerValuePicker
+
+```kotlin
+val state = rememberRulerValuePickerState(
+    minValue = 150.0,
+    maxValue = 210.0,
+    step = 1.0,
+    majorStep = 10.0,
+    initialValue = 160.0,
+    unit = "cm",
+)
+
+RulerValuePicker(
+    state = state,
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(120.dp),
+    tickShape = RulerTickShape.ROUNDED_LINE,
+)
+```
+
 ### Photo capture with watermark
 
 ```kotlin
@@ -304,6 +347,7 @@ PermissionManager.instance.requestPermission(Manifest.permission.CAMERA) { resul
 in.fivedegree.volineui
 ├── AdvancedButton, InputField, Dropdown, Radio, SignaturePad
 ├── AdvancedImageView, ImageCarousel
+├── RulerValuePicker
 ├── VolineDialog, VolineToast
 ├── PermissionManager, LocationManager, PhotoCaptureManager
 ├── button/          — shared button enums and defaults
@@ -316,6 +360,7 @@ in.fivedegree.volineui
 ├── permissionmanager/
 ├── photocapturemanager/
 ├── radio/
+├── ruler/           — scale, enums, colors, dimensions
 ├── signaturepad/
 └── toast/
 ```
@@ -348,7 +393,7 @@ View components read colors from your app theme (e.g. `colorPrimary` for dialog/
 
 ## Demo app
 
-Run the `:app` module to explore all components. `MainActivity` links to View-based and Compose example screens for buttons, inputs, dropdowns, radios, dialogs, toasts, image views, carousels, date/time pickers, signature pad, permissions, location, and photo capture.
+Run the `:app` module to explore all components. `MainActivity` links to View-based and Compose example screens for buttons, inputs, dropdowns, radios, dialogs, toasts, image views, carousels, date/time pickers, ruler pickers, signature pad, permissions, location, and photo capture.
 
 ## License
 

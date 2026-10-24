@@ -493,4 +493,122 @@
         <!-- Common -->
         <attr name="android:enabled" />
     </declare-styleable>
+
+    <declare-styleable name="RulerValuePicker">
+        <!-- Scale -->
+        <attr name="rulerValue" format="float" />
+        <attr name="rulerMinValue" format="float" />
+        <attr name="rulerMaxValue" format="float" />
+        <attr name="rulerStep" format="float" />
+        <attr name="rulerMajorStep" format="float" />
+        <attr name="rulerDecimals" format="integer" />
+        <attr name="rulerUnit" format="string" />
+
+        <!-- Orientation & behavior -->
+        <attr name="rulerOrientation" format="enum">
+            <enum name="horizontal" value="0" />
+            <enum name="vertical" value="1" />
+        </attr>
+        <attr name="rulerReversed" format="boolean" />
+        <attr name="rulerSnapToStep" format="boolean" />
+        <attr name="rulerReadOnly" format="boolean" />
+        <attr name="rulerEnableFling" format="boolean" />
+        <attr name="rulerMinimumLength" format="dimension" />
+
+        <!-- Ticks -->
+        <attr name="rulerTickSpacing" format="dimension" />
+        <attr name="rulerMinLabelSpacing" format="dimension" />
+        <attr name="rulerShowMinorTicks" format="boolean" />
+        <attr name="rulerShowMajorTicks" format="boolean" />
+        <attr name="rulerShowSelectedTick" format="boolean" />
+        <attr name="rulerShowBaseline" format="boolean" />
+        <attr name="rulerTickShape" format="enum">
+            <enum name="line" value="0" />
+            <enum name="dot" value="1" />
+            <enum name="roundedLine" value="2" />
+        </attr>
+
+        <!-- Labels -->
+        <attr name="rulerShowLabels" format="boolean" />
+        <attr name="rulerShowSelectedLabel" format="boolean" />
+        <attr name="rulerLabelPosition" format="enum">
+            <enum name="above" value="0" />
+            <enum name="below" value="1" />
+            <enum name="alternate" value="2" />
+            <enum name="none" value="3" />
+        </attr>
+
+        <!-- Center indicator -->
+        <attr name="rulerShowIndicator" format="boolean" />
+        <attr name="rulerIndicatorStyle" format="enum">
+            <enum name="line" value="0" />
+            <enum name="triangle" value="1" />
+            <enum name="bubble" value="2" />
+            <enum name="none" value="3" />
+        </attr>
+
+        <!-- Value display -->
+        <attr name="rulerShowValue" format="boolean" />
+        <attr name="rulerValueDisplayMode" format="enum">
+            <enum name="none" value="0" />
+            <enum name="bubble" value="1" />
+            <enum name="header" value="2" />
+        </attr>
+
+        <!-- Fading edges -->
+        <attr name="rulerShowFadingEdges" format="boolean" />
+        <attr name="rulerFadeWidth" format="dimension" />
+
+        <!-- Colors -->
+        <attr name="rulerTickColor" format="color" />
+        <attr name="rulerMajorTickColor" format="color" />
+        <attr name="rulerSelectedTickColor" format="color" />
+        <attr name="rulerLabelColor" format="color" />
+        <attr name="rulerSelectedLabelColor" format="color" />
+        <attr name="rulerIndicatorColor" format="color" />
+        <attr name="rulerBaselineColor" format="color" />
+        <attr name="rulerBubbleColor" format="color" />
+        <attr name="rulerBubbleTextColor" format="color" />
+        <attr name="rulerHeaderTextColor" format="color" />
+        <attr name="rulerContainerColor" format="color" />
+        <attr name="rulerDisabledAlpha" format="float" />
+
+        <!-- Dimensions -->
+        <attr name="rulerMinorTickWidth" format="dimension" />
+        <attr name="rulerMinorTickHeight" format="dimension" />
+        <attr name="rulerMajorTickWidth" format="dimension" />
+        <attr name="rulerMajorTickHeight" format="dimension" />
+        <attr name="rulerSelectedTickWidth" format="dimension" />
+        <attr name="rulerSelectedTickHeight" format="dimension" />
+        <attr name="rulerTickCornerRadius" format="dimension" />
+        <attr name="rulerDotRadius" format="dimension" />
+        <attr name="rulerLabelTextSize" format="dimension" />
+        <attr name="rulerLabelGap" format="dimension" />
+        <attr name="rulerAlternateLabelGap" format="dimension" />
+        <attr name="rulerValueTextSize" format="dimension" />
+        <attr name="rulerHeaderTextSize" format="dimension" />
+        <attr name="rulerHeaderGap" format="dimension" />
+        <attr name="rulerIndicatorWidth" format="dimension" />
+        <attr name="rulerIndicatorHeight" format="dimension" />
+        <attr name="rulerTriangleWidth" format="dimension" />
+        <attr name="rulerTriangleHeight" format="dimension" />
+        <attr name="rulerBubbleCornerRadius" format="dimension" />
+        <attr name="rulerBubbleHorizontalPadding" format="dimension" />
+        <attr name="rulerBubbleVerticalPadding" format="dimension" />
+        <attr name="rulerBubbleGap" format="dimension" />
+        <attr name="rulerBaselineWidth" format="dimension" />
+
+        <!-- Haptics & animation -->
+        <attr name="rulerEnableHaptics" format="boolean" />
+        <attr name="rulerHapticMode" format="enum">
+            <enum name="none" value="0" />
+            <enum name="step" value="1" />
+            <enum name="majorStep" value="2" />
+        </attr>
+        <attr name="rulerHapticThrottle" format="integer" />
+        <attr name="rulerAnimationDuration" format="integer" />
+
+        <!-- Common -->
+        <attr name="android:enabled" />
+    </declare-styleable>
 </resources>

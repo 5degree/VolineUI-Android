@@ -27,6 +27,12 @@
             android:name="in.fivedegree.volineuiandroid.compose.ComposeButtonExamplesActivity"
             android:exported="false" />
         <activity
+            android:name="in.fivedegree.volineuiandroid.RulerValuePickerExamplesActivity"
+            android:exported="false" />
+        <activity
+            android:name="in.fivedegree.volineuiandroid.compose.ComposeRulerValuePickerExamplesActivity"
+            android:exported="false" />
+        <activity
             android:name="in.fivedegree.volineuiandroid.compose.ComposeInputFieldExamplesActivity"
             android:exported="false" />
         <activity

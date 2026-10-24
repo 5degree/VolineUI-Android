@@ -15,6 +15,7 @@ import `in`.fivedegree.volineuiandroid.compose.ComposeImageCarouselExamplesActiv
 import `in`.fivedegree.volineuiandroid.compose.ComposeImageViewExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.ComposeInputFieldExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.ComposeRadioExamplesActivity
+import `in`.fivedegree.volineuiandroid.compose.ComposeRulerValuePickerExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.ComposeToastExamplesActivity
 import `in`.fivedegree.volineuiandroid.compose.RemoteLoggerTestActivity
 import `in`.fivedegree.volineuiandroid.databinding.ActivityMainBinding
@@ -76,6 +77,12 @@ class MainActivity : AppCompatActivity() {
         }
         b.btnOpenComposeButtonExamples.setOnClickListener {
             startActivity(Intent(this, ComposeButtonExamplesActivity::class.java))
+        }
+        b.btnOpenRulerValuePickerExamples.setOnClickListener {
+            startActivity(Intent(this, RulerValuePickerExamplesActivity::class.java))
+        }
+        b.btnOpenComposeRulerValuePickerExamples.setOnClickListener {
+            startActivity(Intent(this, ComposeRulerValuePickerExamplesActivity::class.java))
         }
         b.btnOpenComposeImageCarouselExamples.setOnClickListener {
             startActivity(Intent(this, ComposeImageCarouselExamplesActivity::class.java))

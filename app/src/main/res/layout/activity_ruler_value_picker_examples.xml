@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    tools:context=".RulerValuePickerExamplesActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RulerValuePicker Examples"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvRulerStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="Status: drag a ruler to begin"
+            android:textColor="#666666"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Bubble, rounded ticks, unit"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <in.fivedegree.volineui.RulerValuePicker
+            android:id="@+id/rulerBasic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:rulerMinValue="150"
+            app:rulerMaxValue="210"
+            app:rulerMajorStep="10"
+            app:rulerStep="1"
+            app:rulerTickShape="roundedLine"
+            app:rulerUnit="cm"
+            app:rulerValue="160" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"
+            android:text="Reversed, labels below, triangle, header"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <in.fivedegree.volineui.RulerValuePicker
+            android:id="@+id/rulerReversed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:rulerIndicatorStyle="triangle"
+            app:rulerLabelPosition="below"
+            app:rulerMajorStep="10"
+            app:rulerMaxValue="100"
+            app:rulerMinValue="0"
+            app:rulerReversed="true"
+            app:rulerStep="1"
+            app:rulerValue="40"
+            app:rulerValueDisplayMode="header" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"
+            android:text="Vertical, dot ticks, labels on the right"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <in.fivedegree.volineui.RulerValuePicker
+            android:id="@+id/rulerVertical"
+            android:layout_width="140dp"
+            android:layout_height="320dp"
+            android:layout_gravity="center_horizontal"
+            app:rulerLabelPosition="below"
+            app:rulerMajorStep="10"
+            app:rulerMaxValue="100"
+            app:rulerMinValue="0"
+            app:rulerOrientation="vertical"
+            app:rulerStep="1"
+            app:rulerTickShape="dot"
+            app:rulerUnit="kg"
+            app:rulerValue="60" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"
+            android:text="Disabled"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <in.fivedegree.volineui.RulerValuePicker
+            android:id="@+id/rulerDisabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:enabled="false"
+            app:rulerMajorStep="5"
+            app:rulerMaxValue="10"
+            app:rulerMinValue="0"
+            app:rulerStep="1"
+            app:rulerValue="5" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"
+            android:text="Programmatic controls"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnRulerSnap"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Snap" />
+
+            <Button
+                android:id="@+id/btnRulerBack"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="-1" />
+
+            <Button
+                android:id="@+id/btnRulerForward"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="+1" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnRulerSetValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Animate to 200 cm" />
+
+        <Button
+            android:id="@+id/btnRulerToggleEnabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Disable basic picker" />
+
+    </LinearLayout>
+
+</ScrollView>
