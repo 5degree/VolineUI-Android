@@ -162,6 +162,12 @@ private fun InputFieldExamplesScreen(modifier: Modifier = Modifier) {
 
         HorizontalDivider()
 
+        // Clickable box for disabled / read-only fields
+        SectionTitle("Clickable Box (Disabled / Read-only)")
+        ClickableBoxExample()
+
+        HorizontalDivider()
+
         // Loading State
         SectionTitle("Loading State")
         LoadingExample()
@@ -479,6 +485,33 @@ private fun DisabledExample() {
         label = "Disabled Field",
         enabled = false
     )
+}
+
+@Composable
+private fun ClickableBoxExample() {
+    val context = LocalContext.current
+
+    fun toast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        InputField(
+            value = "Tap this read-only field",
+            onValueChange = { },
+            label = "Read-only with click action",
+            readOnly = true,
+            onInputFieldClick = { toast("Read-only field clicked") }
+        )
+
+        InputField(
+            value = "Tap this disabled field",
+            onValueChange = { },
+            label = "Disabled with click action",
+            enabled = false,
+            onInputFieldClick = { toast("Disabled field clicked") }
+        )
+    }
 }
 
 @Composable

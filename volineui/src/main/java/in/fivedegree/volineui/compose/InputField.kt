@@ -94,6 +94,8 @@ private val decimalInputRegex = Regex("^[0-9]*\\.?[0-9]*$")
  * @param hint Optional hint/placeholder text
  * @param enabled Whether the field is enabled
  * @param readOnly Whether the field is read-only
+ * @param onInputFieldClick Optional click callback for the input box only (the label and
+ * error/counter area are excluded). Clicks fire even when the field is disabled or read-only.
  * @param isError Whether the field is in error state
  * @param isSuccess Whether the field is in success state
  * @param isLoading Whether the field is in loading state
@@ -136,6 +138,7 @@ fun InputField(
     hint: String? = null,
     enabled: Boolean = true,
     readOnly: Boolean = false,
+    onInputFieldClick: (() -> Unit)? = null,
     isError: Boolean = false,
     isSuccess: Boolean = false,
     isLoading: Boolean = false,
@@ -176,6 +179,7 @@ fun InputField(
 
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val inputFieldClickInteractionSource = remember { MutableInteractionSource() }
     val focusRequester = remember { FocusRequester() }
     rememberCoroutineScope()
 
@@ -221,7 +225,6 @@ fun InputField(
                         InputValidator.isValidCustomPattern(value, customValidationPattern)
                     } else true
                 }
-                else -> true
             }
             onValidationResult?.invoke(isValid)
         }
@@ -313,6 +316,17 @@ fun InputField(
                     width = currentBorderWidth,
                     color = animatedBorderColor,
                     shape = RoundedCornerShape(cornerRadius)
+                )
+                .then(
+                    if (onInputFieldClick != null) {
+                        Modifier.clickable(
+                            interactionSource = inputFieldClickInteractionSource,
+                            indication = ripple(),
+                            onClick = onInputFieldClick
+                        )
+                    } else {
+                        Modifier
+                    }
                 )
         ) {
             BoxWithConstraints(

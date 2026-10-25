@@ -146,6 +146,8 @@ class InputField @JvmOverloads constructor(
     
     // Value change listener
     private var valueChangeListener: ((String) -> Unit)? = null
+    private var inputFieldClickListener: (() -> Unit)? = null
+    private var inputClickOverlayView: View? = null
     private var prefixIconClickListener: (() -> Unit)? = null
     private var suffixIconClickListener: (() -> Unit)? = null
     private var leadingTextClickListener: (() -> Unit)? = null
@@ -372,7 +374,7 @@ class InputField @JvmOverloads constructor(
 
             // Validation
             val validationTypeInt = typedArray.getInt(R.styleable.InputField_validationType, 0)
-            validationType = ValidationType.values()[validationTypeInt]
+            validationType = ValidationType.entries[validationTypeInt]
             customValidationPattern = typedArray.getString(
                 R.styleable.InputField_customValidationPattern
             ) ?: ""
@@ -657,6 +659,18 @@ class InputField @JvmOverloads constructor(
     }
 
     /**
+     * Set a click listener for the input box only (the label and error/counter area are excluded).
+     * Clicks fire even when the field is disabled or read-only.
+     *
+     * While a listener is set, the box acts as a clickable surface and does not forward
+     * touches to the input or accessory icons.
+     */
+    fun onInputFieldClick(listener: () -> Unit) {
+        this.inputFieldClickListener = listener
+        bindInputFieldClick()
+    }
+
+    /**
      * Set maximum length of characters allowed in the input field.
      *
      * @param length Maximum number of characters. Use -1 to remove the limit.
@@ -867,7 +881,7 @@ class InputField @JvmOverloads constructor(
         imageView.setPadding(pad, pad, pad, pad)
     }
 
-    private fun createRoundedClickRipple(): Drawable {
+    private fun createRoundedClickRipple(radius: Float = iconClickCornerRadius): Drawable {
         val typedValue = TypedValue()
         val rippleColor = if (context.theme.resolveAttribute(
                 android.R.attr.colorControlHighlight,
@@ -882,7 +896,7 @@ class InputField @JvmOverloads constructor(
         val mask = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             setColor(0xFFFFFFFF.toInt())
-            cornerRadius = iconClickCornerRadius
+            cornerRadius = radius
         }
         return RippleDrawable(ColorStateList.valueOf(rippleColor), null, mask)
     }
@@ -971,6 +985,26 @@ class InputField @JvmOverloads constructor(
             view.setPadding(0, 0, 0, 0)
             clearSelectableRipple(view)
         }
+        requestLayout()
+    }
+
+    private fun bindInputFieldClick() {
+        val listener = inputFieldClickListener
+        if (listener == null) {
+            inputClickOverlayView?.visibility = GONE
+            return
+        }
+        val overlay = inputClickOverlayView ?: View(context).also { view ->
+            view.isClickable = true
+            view.isFocusable = true
+            addView(view)
+            inputClickOverlayView = view
+        }
+        overlay.foreground = createRoundedClickRipple(cornerRadius)
+        overlay.isEnabled = true
+        overlay.isClickable = true
+        overlay.visibility = VISIBLE
+        overlay.setOnClickListener { inputFieldClickListener?.invoke() }
         requestLayout()
     }
 
@@ -1364,7 +1398,6 @@ class InputField @JvmOverloads constructor(
             if (!hasPrefixIconLayout) {
                 // Start pad for leading-text-only (no prefix icon); with icon, edgeInset already applied
                 leftOffset += horizontalPadding.toInt()
-                editLeft = leftOffset
             }
             val textPadStart = if (hasPrefixIconLayout) dpToPx(8f).toInt() else 0
             val textPadEnd = dpToPx(12f).toInt()
@@ -1457,6 +1490,16 @@ class InputField @JvmOverloads constructor(
             editRight,
             inputTop + inputHeight
         )
+
+        // Click target overlay covering the box only (excludes label and error/counter text)
+        if (inputClickOverlayView?.visibility == VISIBLE) {
+            inputClickOverlayView?.layout(
+                paddingStart,
+                inputTop,
+                right - left - paddingEnd,
+                inputTop + inputHeight
+            )
+        }
         currentTop += inputHeight
 
         // Layout error text
@@ -1541,7 +1584,7 @@ class InputField @JvmOverloads constructor(
             if (state.errorText.isNotEmpty()) {
                 showError(state.errorText)
             }
-            updateState(FieldState.values()[state.currentState])
+            updateState(FieldState.entries[state.currentState])
         } else {
             super.onRestoreInstanceState(state)
         }

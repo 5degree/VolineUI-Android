@@ -90,6 +90,13 @@ class InputFieldExamplesActivity : AppCompatActivity() {
         b.disabledClickableInput.onLeadingTextClickListener {
             toast("Leading text clicked (disabled field)")
         }
+
+        b.disabledInput.onInputFieldClick {
+            toast("Disabled field box clicked")
+        }
+        b.readonlyInput.onInputFieldClick {
+            toast("Read-only field box clicked")
+        }
     }
 
     private fun toast(message: String) {
