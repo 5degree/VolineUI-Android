@@ -114,4 +114,19 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.4.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.4.0")
     implementation("io.coil-kt.coil3:coil-gif:3.4.0")
+
+    // Activity-Compose for VolineCameraActivity's setContent (the library
+    // previously had no Compose activity, so this was not on the classpath).
+    implementation(libs.androidx.activity.compose)
+
+    // Material icons for the in-app camera controls (close, flash, switch camera).
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // CameraX - in-app camera used by PhotoCaptureManager.
+    // Latest stable at time of writing is 1.6.2 (1.7.0 is release-candidate only).
+    // No system camera app is launched for photo capture.
+    implementation("androidx.camera:camera-core:1.6.2")
+    implementation("androidx.camera:camera-camera2:1.6.2")
+    implementation("androidx.camera:camera-lifecycle:1.6.2")
+    implementation("androidx.camera:camera-view:1.6.2")
 }

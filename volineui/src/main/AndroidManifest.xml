@@ -8,4 +8,18 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <application>
+        <!--
+            In-app camera for PhotoCaptureManager. Declared here so it is merged
+            into the host app's manifest automatically; hosts do not need to
+            declare it themselves. Not exported: it is only launched by the
+            library itself. No theme is set on purpose, so the activity
+            inherits the host application's theme (see VolineCameraActivity,
+            which derives its Compose colour scheme from the host theme).
+        -->
+        <activity
+            android:name=".camera.VolineCameraActivity"
+            android:exported="false" />
+    </application>
+
 </manifest>

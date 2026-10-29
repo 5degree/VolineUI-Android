@@ -7,6 +7,7 @@ import android.app.AlertDialog
 import android.app.Application
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -25,7 +26,7 @@ import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
+import `in`.fivedegree.volineui.camera.VolineCameraActivity
 import `in`.fivedegree.volineui.locationmanager.LocationResult
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureException
@@ -42,9 +43,11 @@ import java.util.concurrent.TimeUnit
 
 /**
  * PhotoCaptureManager - A comprehensive and reusable photo capture manager for Android
- * 
+ *
  * Features:
- * - Camera capture with Activity Result API
+ * - In-app camera capture with CameraX (VolineCameraActivity). No external
+ *   camera app is launched, and there is no fallback to one: a camera
+ *   failure is reported as PhotoCaptureResult.Error.
  * - Gallery photo picker
  * - Intelligent image compression (target file size)
  * - Watermark with custom text, timestamp, and GPS coordinates
@@ -103,16 +106,19 @@ class PhotoCaptureManager private constructor(
     private var currentActivityRef: WeakReference<ComponentActivity>? = null
     
     // Activity result launchers
-    private var cameraLauncher: ActivityResultLauncher<Uri>? = null
+    // Launcher for the library-owned in-app camera activity. It is separate
+    // from the gallery launcher and is never a TakePicture launcher: photo
+    // capture must not leave the app for a system camera app.
+    private var cameraActivityLauncher: ActivityResultLauncher<Intent>? = null
     private var galleryLauncher: ActivityResultLauncher<String>? = null
-    
+
     // Callbacks for capture operations
     private var currentCallback: ((PhotoCaptureResult) -> Unit)? = null
     private var currentConfig: PhotoCaptureConfig? = null
-    
-    // Temporary file for camera capture
+
+    // Temporary file for camera capture. The in-app camera writes directly
+    // to this file; no FileProvider URI for an external app is needed.
     private var tempCameraFile: File? = null
-    private var tempCameraUri: Uri? = null
     
     private val mainHandler = Handler(Looper.getMainLooper())
     
@@ -120,30 +126,38 @@ class PhotoCaptureManager private constructor(
         // Register activity lifecycle callbacks to automatically track current activity
         application.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                // The in-app camera activity must not overwrite the host
+                // activity's launchers or become the "current activity" for
+                // capture purposes: the host's camera-activity launcher is
+                // what receives the camera result, and it must stay intact
+                // while the camera screen is on top.
+                if (activity is VolineCameraActivity) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                     registerActivityResultLaunchers(activity)
                 }
             }
-            
+
             override fun onActivityStarted(activity: Activity) {}
-            
+
             override fun onActivityResumed(activity: Activity) {
+                if (activity is VolineCameraActivity) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                 }
             }
-            
+
             override fun onActivityPaused(activity: Activity) {}
-            
+
             override fun onActivityStopped(activity: Activity) {}
-            
+
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
-            
+
             override fun onActivityDestroyed(activity: Activity) {
+                if (activity is VolineCameraActivity) return
                 if (currentActivityRef?.get() == activity) {
                     currentActivityRef = null
-                    cameraLauncher = null
+                    cameraActivityLauncher = null
                     galleryLauncher = null
                 }
             }
@@ -154,25 +168,44 @@ class PhotoCaptureManager private constructor(
      * Register activity result launchers for the current activity
      */
     private fun registerActivityResultLaunchers(activity: ComponentActivity) {
-        // Camera launcher
-        cameraLauncher = activity.registerForActivityResult(
-            ActivityResultContracts.TakePicture()
-        ) { success ->
-            if (success && tempCameraUri != null && tempCameraFile != null) {
-                val file = tempCameraFile!!
-                val config = currentConfig ?: PhotoCaptureConfig()
-                val callback = currentCallback
-                
-                // Notify processing started
-                callback?.invoke(PhotoCaptureResult.Processing)
-                
-                // Process image asynchronously
-                processImage(file, config, callback)
-            } else {
-                currentCallback?.invoke(PhotoCaptureResult.Cancelled)
-                cleanupTempFiles()
-                currentCallback = null
-                currentConfig = null
+        // In-app camera launcher. The camera activity writes directly to
+        // tempCameraFile and returns RESULT_OK with that path; it never
+        // launches a system camera app, so there is no TakePicture path here.
+        cameraActivityLauncher = activity.registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val file = tempCameraFile
+            val config = currentConfig ?: PhotoCaptureConfig()
+            val callback = currentCallback
+            when {
+                result.resultCode == Activity.RESULT_OK && file != null && file.exists() -> {
+                    // Notify processing started, then reuse the existing
+                    // pipeline: EXIF rotation, watermark, compression, and
+                    // optional gallery save. processImage() cleans up the
+                    // temporary file itself.
+                    callback?.invoke(PhotoCaptureResult.Processing)
+                    processImage(file, config, callback)
+                }
+                result.resultCode == VolineCameraActivity.RESULT_ERROR -> {
+                    val message = result.data
+                        ?.getStringExtra(VolineCameraActivity.EXTRA_ERROR_MESSAGE)
+                        ?: PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE
+                    callback?.invoke(
+                        PhotoCaptureResult.Error(
+                            PhotoCaptureException(message),
+                            message
+                        )
+                    )
+                    cleanupTempFiles()
+                    currentCallback = null
+                    currentConfig = null
+                }
+                else -> {
+                    callback?.invoke(PhotoCaptureResult.Cancelled)
+                    cleanupTempFiles()
+                    currentCallback = null
+                    currentConfig = null
+                }
             }
         }
         
@@ -294,7 +327,7 @@ class PhotoCaptureManager private constructor(
             checkLocationServicesAndLaunchCamera(config, callback)
         } else {
             // No watermark or watermark without location
-            launchCamera(config, callback)
+            launchInAppCamera(config, callback)
         }
     }
     
@@ -329,7 +362,7 @@ class PhotoCaptureManager private constructor(
             return
         }
         
-        launchCamera(config, callback)
+        launchInAppCamera(config, callback)
     }
     
     /**
@@ -365,29 +398,45 @@ class PhotoCaptureManager private constructor(
     }
     
     /**
-     * Launch camera
+     * Launch the library-owned in-app camera.
+     *
+     * No external camera app is launched and no FileProvider URI is handed
+     * to another app: the camera activity writes directly to a temporary
+     * file created here, and the result comes back through
+     * [cameraActivityLauncher]. If that launcher is not available (for
+     * example, capture was requested before any host activity was created),
+     * this reports an error instead of falling back to a system camera.
      */
-    private fun launchCamera(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
+    private fun launchInAppCamera(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
         try {
             val activity = currentActivityRef?.get() ?: return
-            
-            // Create temp file for camera output
-            tempCameraFile = createTempImageFile()
-            tempCameraUri = FileProvider.getUriForFile(
-                activity,
-                "${application.packageName}.provider",
-                tempCameraFile!!
-            )
+            val launcher = cameraActivityLauncher ?: run {
+                callback(
+                    PhotoCaptureResult.Error(
+                        PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                        "Camera is not ready. Please try again."
+                    )
+                )
+                return
+            }
 
+            // Create temp file for the in-app camera's output.
+            tempCameraFile = createTempImageFile()
             currentCallback = callback
             currentConfig = config
-            
-            cameraLauncher?.launch(tempCameraUri)
+
+            val intent = Intent(activity, VolineCameraActivity::class.java).apply {
+                putExtra(
+                    VolineCameraActivity.EXTRA_OUTPUT_PATH,
+                    tempCameraFile!!.absolutePath
+                )
+            }
+            launcher.launch(intent)
         } catch (e: Exception) {
             callback(
                 PhotoCaptureResult.Error(
                     PhotoCaptureException(PhotoCaptureException.ERROR_FILE_CREATION_FAILED),
-                    "Failed to create camera file: ${e.message}"
+                    "Failed to start camera: ${e.message}"
                 )
             )
             cleanupTempFiles()
@@ -756,7 +805,6 @@ class PhotoCaptureManager private constructor(
     private fun cleanupTempFiles() {
         tempCameraFile?.delete()
         tempCameraFile = null
-        tempCameraUri = null
     }
     
     companion object {

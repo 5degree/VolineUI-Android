@@ -314,6 +314,14 @@ PhotoCaptureManager.instance.capturePhoto(config) { result ->
 }
 ```
 
+Photo capture opens VolineUI's own in-app camera screen (CameraX) — it does
+not launch a system camera app, and there is no fallback to one: if the
+in-app camera cannot start, `capturePhoto` reports an `Error`. The camera
+screen inherits the host app's Material theme for its controls, and offers
+a full-screen preview, front/back switching, flash, tap-to-focus,
+pinch-to-zoom, and a Retake / Use photo review step. Front-camera photos
+are saved as captured (not mirrored to match the preview).
+
 ### Location
 
 ```kotlin
@@ -351,6 +359,7 @@ in.fivedegree.volineui
 ├── VolineDialog, VolineToast
 ├── PermissionManager, LocationManager, PhotoCaptureManager
 ├── button/          — shared button enums and defaults
+├── camera/          — in-app CameraX camera activity and screen
 ├── compose/         — Jetpack Compose equivalents
 ├── dialog/          — dialog types and defaults
 ├── dropdown/        — options, filters, state
@@ -374,7 +383,10 @@ The library manifest declares permissions used by camera, location, and network 
 - `INTERNET`
 - `VIBRATE` (haptic feedback on buttons)
 
-Configure `FileProvider` in your app if you use camera capture (see `PhotoCaptureManager` and your app's manifest for authority setup).
+No `FileProvider` setup is needed for camera capture anymore: the in-app
+camera writes directly to a file created by `PhotoCaptureManager`. (A
+`FileProvider` in a host app is harmless, but it is no longer on the
+capture path.)
 
 ## Dependencies
 
@@ -386,6 +398,7 @@ VolineUI pulls in:
 - AndroidX ExifInterface
 - Glide (View image loading)
 - Coil 3 (Compose image loading, GIF, network)
+- CameraX 1.6.2 (in-app camera: core, camera2, lifecycle, view)
 
 ## Theming
 
