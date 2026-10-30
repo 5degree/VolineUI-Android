@@ -21,6 +21,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
+import `in`.fivedegree.volineui.camera.VolineCameraActivity
 import `in`.fivedegree.volineui.filepickermanager.FilePickerConfig
 import `in`.fivedegree.volineui.filepickermanager.FilePickerErrorType
 import `in`.fivedegree.volineui.filepickermanager.FilePickerException
@@ -86,6 +87,10 @@ class FilePickerManager private constructor(
     init {
         application.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                // Do not track the in-app camera activity or register
+                // launchers on it; the host activity owns those, the same
+                // rule PhotoCaptureManager applies.
+                if (activity is VolineCameraActivity) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                     registerLaunchers(activity)
@@ -95,6 +100,7 @@ class FilePickerManager private constructor(
             override fun onActivityStarted(activity: Activity) {}
 
             override fun onActivityResumed(activity: Activity) {
+                if (activity is VolineCameraActivity) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                 }

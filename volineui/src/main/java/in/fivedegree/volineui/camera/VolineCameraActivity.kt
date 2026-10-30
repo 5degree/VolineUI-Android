@@ -4,6 +4,7 @@ package `in`.fivedegree.volineui.camera
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -45,6 +46,7 @@ class VolineCameraActivity : ComponentActivity() {
 
         val outputPath = intent.getStringExtra(EXTRA_OUTPUT_PATH)
         if (outputPath.isNullOrBlank()) {
+            Log.w(TAG, "VolineCamera finishing with RESULT_ERROR: no output path in intent")
             setResult(
                 RESULT_ERROR,
                 Intent().putExtra(EXTRA_ERROR_MESSAGE, "Camera output file was not provided.")
@@ -58,6 +60,7 @@ class VolineCameraActivity : ComponentActivity() {
                 CameraScreen(
                     outputFile = File(outputPath),
                     onUsePhoto = { file ->
+                        Log.d(TAG, "VolineCamera finishing with RESULT_OK (Use photo)")
                         setResult(
                             RESULT_OK,
                             Intent().putExtra(EXTRA_OUTPUT_PATH, file.absolutePath)
@@ -65,10 +68,12 @@ class VolineCameraActivity : ComponentActivity() {
                         finish()
                     },
                     onClose = {
+                        Log.d(TAG, "VolineCamera finishing with RESULT_CANCELED (close/back)")
                         setResult(RESULT_CANCELED)
                         finish()
                     },
                     onError = { message ->
+                        Log.w(TAG, "VolineCamera finishing with RESULT_ERROR: $message")
                         setResult(
                             RESULT_ERROR,
                             Intent().putExtra(EXTRA_ERROR_MESSAGE, message)
@@ -78,6 +83,14 @@ class VolineCameraActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onDestroy() {
+        // Distinguishes a deliberate finish() (isFinishing=true) from a
+        // system destroy/recreation (isFinishing=false) in logcat, which
+        // was the missing piece when diagnosing an instant close.
+        Log.d(TAG, "VolineCamera onDestroy isFinishing=$isFinishing")
+        super.onDestroy()
     }
 
     /**
@@ -125,6 +138,8 @@ class VolineCameraActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val TAG = "VolineCamera"
+
         /** Absolute path of the file the captured photo must be written to. */
         const val EXTRA_OUTPUT_PATH = "voline_camera_output_path"
 

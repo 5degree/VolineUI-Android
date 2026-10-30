@@ -14,6 +14,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import `in`.fivedegree.volineui.camera.VolineCameraActivity
 import `in`.fivedegree.volineui.permissionmanager.PermissionException
 import `in`.fivedegree.volineui.permissionmanager.PermissionResult
 import `in`.fivedegree.volineui.permissionmanager.PermissionStatus
@@ -75,15 +76,21 @@ class PermissionManager private constructor(
         // Register activity lifecycle callbacks to automatically track current activity
         application.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                // The in-app camera activity must not become the tracked
+                // current activity or have launchers registered on it, the
+                // same rule PhotoCaptureManager applies: the host activity
+                // owns the launchers that receive results.
+                if (activity is VolineCameraActivity) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                     registerPermissionLaunchers(activity)
                 }
             }
-            
+
             override fun onActivityStarted(activity: Activity) {}
-            
+
             override fun onActivityResumed(activity: Activity) {
+                if (activity is VolineCameraActivity) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                 }

@@ -73,6 +73,7 @@ import `in`.fivedegree.volineui.button.ButtonSize
 import `in`.fivedegree.volineui.button.ButtonStyle
 import `in`.fivedegree.volineui.compose.AdvancedButton
 import java.io.File
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -142,6 +143,11 @@ internal fun CameraScreen(
             if (!hasFrontCamera && !hasBackCamera) {
                 cameraError = "No camera is available on this device."
             }
+        } catch (e: CancellationException) {
+            // The effect was cancelled (e.g. the screen left composition).
+            // That is normal teardown, not a camera failure, and must never
+            // be reported as an error that finishes the activity.
+            throw e
         } catch (e: Exception) {
             cameraError = "Camera could not be started: ${e.message}"
         }
@@ -190,6 +196,13 @@ internal fun CameraScreen(
             // Wait until this effect is cancelled (lens change / dispose),
             // then release the camera in finally.
             kotlinx.coroutines.awaitCancellation()
+        } catch (e: CancellationException) {
+            // Normal teardown / lens-change restart: the effect is simply
+            // restarted or disposed. Previously this was caught by the
+            // generic Exception handler below, which set cameraError and
+            // finished the activity with an error instead of rebinding.
+            // Re-throw so cancellation stays cancellation.
+            throw e
         } catch (e: Exception) {
             if (cameraError == null) {
                 cameraError = "Camera could not be started: ${e.message}"

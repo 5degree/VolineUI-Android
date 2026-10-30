@@ -25,6 +25,7 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.SettingsClient
 import `in`.fivedegree.volineui.locationmanager.LocationException
+import `in`.fivedegree.volineui.camera.VolineCameraActivity
 import `in`.fivedegree.volineui.locationmanager.LocationResult
 import `in`.fivedegree.volineui.locationmanager.LocationStatus
 import java.lang.ref.WeakReference
@@ -138,6 +139,10 @@ class LocationManager private constructor(
         application.registerActivityLifecycleCallbacks(object :
             Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                // Do not track the in-app camera activity or register
+                // launchers on it; the host activity owns those, the same
+                // rule PhotoCaptureManager applies.
+                if (activity is VolineCameraActivity) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                     registerLocationSettingsLauncher(activity)
@@ -147,6 +152,7 @@ class LocationManager private constructor(
             override fun onActivityStarted(activity: Activity) {}
 
             override fun onActivityResumed(activity: Activity) {
+                if (activity is VolineCameraActivity) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                 }
