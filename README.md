@@ -328,6 +328,42 @@ by the photo's EXIF orientation, so it matches the returned photo.
 Front-camera photos are saved as captured (not mirrored to match the
 preview).
 
+### Document OCR (photo capture)
+
+A host that wants data read off a document photo passes the fields it
+wants in the capture config. After the user confirms the photo, an OCR
+step runs on-device (ML Kit, Latin + Devanagari, no network, so the
+photo never leaves the device) and the user picks a field, then taps
+its words on the photo — pinch-zoom and pan included — for each field.
+Tapping a word of the active field removes it, tapping a word of
+another field moves it, and a field's value is its words in tap order.
+Nothing can be typed by hand. Done is disabled until every required
+field has a value; optional fields left empty are absent from the
+result. The photo itself goes through the unchanged pipeline
+(watermark, compression, gallery save) and comes back together with
+the collected values. The same OCR step opens for gallery picks.
+
+```kotlin
+val config = PhotoCaptureConfig(
+    ocrFields = listOf(
+        OcrField("personName", "Person Name", required = true),
+        OcrField("dob", "Date of Birth", required = true),
+        OcrField("gender", "Gender", required = false),
+        OcrField("documentNumber", "Document Number", required = true)
+    )
+)
+PhotoCaptureManager.instance.capturePhoto(config) { result ->
+    if (result is PhotoCaptureResult.Success) {
+        println(result.ocrData) // e.g. {personName=..., dob=..., documentNumber=...}
+    }
+}
+```
+
+If recognition fails or finds no text, the user is offered Retry scan,
+Continue with photo only (empty OCR data), and Retake (camera) or
+Cancel (gallery). Back from the OCR step returns to the photo
+confirmation screen; in the gallery flow it cancels.
+
 ### Location
 
 ```kotlin

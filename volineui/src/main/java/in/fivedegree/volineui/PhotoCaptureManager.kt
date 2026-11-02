@@ -182,9 +182,12 @@ class PhotoCaptureManager private constructor(
                     // Notify processing started, then reuse the existing
                     // pipeline: EXIF rotation, watermark, compression, and
                     // optional gallery save. processImage() cleans up the
-                    // temporary file itself.
+                    // temporary file itself. The OCR values collected in
+                    // the camera activity (empty when OCR was off) travel
+                    // with the result so the host gets photo and data
+                    // together; the pipeline itself is unchanged.
                     callback?.invoke(PhotoCaptureResult.Processing)
-                    processImage(file, config, callback)
+                    processImage(file, config, callback, readOcrData(result.data))
                 }
                 result.resultCode == VolineCameraActivity.RESULT_ERROR -> {
                     val message = result.data
@@ -218,11 +221,38 @@ class PhotoCaptureManager private constructor(
                     val tempFile = copyUriToTempFile(uri)
                     val config = currentConfig ?: PhotoCaptureConfig()
                     val callback = currentCallback
-                    
-                    // Notify processing started
-                    callback?.invoke(PhotoCaptureResult.Processing)
-                    
-                    processImage(tempFile, config, callback)
+
+                    if (config.ocrFields.isNotEmpty()) {
+                        // Gallery photo with OCR: open the OCR step on the
+                        // picked photo instead of processing immediately.
+                        // The picked file becomes tempCameraFile so the
+                        // camera-activity result handler above -- and its
+                        // cleanup -- treats it exactly like a capture.
+                        tempCameraFile = tempFile
+                        val ocrLauncher = cameraActivityLauncher
+                        if (ocrLauncher == null) {
+                            callback?.invoke(
+                                PhotoCaptureResult.Error(
+                                    PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                                    "Camera is not ready. Please try again."
+                                )
+                            )
+                            cleanupTempFiles()
+                            currentCallback = null
+                            currentConfig = null
+                        } else {
+                            val intent = Intent(activity, VolineCameraActivity::class.java).apply {
+                                putExtra(VolineCameraActivity.EXTRA_INPUT_PATH, tempFile.absolutePath)
+                                putOcrFieldExtras(config)
+                            }
+                            ocrLauncher.launch(intent)
+                        }
+                    } else {
+                        // Notify processing started
+                        callback?.invoke(PhotoCaptureResult.Processing)
+
+                        processImage(tempFile, config, callback)
+                    }
                 } catch (e: Exception) {
                     currentCallback?.invoke(
                         PhotoCaptureResult.Error(
@@ -430,6 +460,7 @@ class PhotoCaptureManager private constructor(
                     VolineCameraActivity.EXTRA_OUTPUT_PATH,
                     tempCameraFile!!.absolutePath
                 )
+                putOcrFieldExtras(config)
             }
             launcher.launch(intent)
         } catch (e: Exception) {
@@ -453,12 +484,49 @@ class PhotoCaptureManager private constructor(
     }
     
     /**
+     * Read the OCR values the camera activity returned, as a field-key
+     * to value map. Absent, mismatched, or non-OCR results yield an
+     * empty map: OCR data is never fabricated from a partial extra set.
+     */
+    private fun readOcrData(data: Intent?): Map<String, String> {
+        if (data == null) return emptyMap()
+        val keys = data.getStringArrayExtra(VolineCameraActivity.EXTRA_OCR_DATA_KEYS)
+            ?: return emptyMap()
+        val values = data.getStringArrayExtra(VolineCameraActivity.EXTRA_OCR_DATA_VALUES)
+            ?: return emptyMap()
+        if (keys.size != values.size) return emptyMap()
+        return keys.zip(values).toMap()
+    }
+
+    /**
+     * Attach a config's OCR fields to a camera-activity intent as
+     * parallel arrays. Empty for a non-OCR capture, which the activity
+     * treats as "no OCR step".
+     */
+    private fun Intent.putOcrFieldExtras(config: PhotoCaptureConfig): Intent {
+        putExtra(
+            VolineCameraActivity.EXTRA_OCR_KEYS,
+            config.ocrFields.map { it.key }.toTypedArray()
+        )
+        putExtra(
+            VolineCameraActivity.EXTRA_OCR_LABELS,
+            config.ocrFields.map { it.label }.toTypedArray()
+        )
+        putExtra(
+            VolineCameraActivity.EXTRA_OCR_REQUIRED,
+            config.ocrFields.map { it.required }.toBooleanArray()
+        )
+        return this
+    }
+
+    /**
      * Process captured or picked image - runs async after photo capture
      */
     private fun processImage(
         sourceFile: File,
         config: PhotoCaptureConfig,
-        callback: ((PhotoCaptureResult) -> Unit)?
+        callback: ((PhotoCaptureResult) -> Unit)?,
+        ocrData: Map<String, String> = emptyMap()
     ) {
         // Run processing in background thread
         Thread {
@@ -500,7 +568,8 @@ class PhotoCaptureManager private constructor(
                             dimensions = bitmap.width to bitmap.height,
                             location = location,
                             timestamp = timestamp,
-                            hasWatermark = config.watermarkText != null
+                            hasWatermark = config.watermarkText != null,
+                            ocrData = ocrData
                         )
                     )
                 }

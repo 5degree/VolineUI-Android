@@ -7,6 +7,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import `in`.fivedegree.volineui.PhotoCaptureManager
+import `in`.fivedegree.volineui.photocapturemanager.OcrField
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureResult
 import java.io.File
@@ -27,6 +28,8 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
     private lateinit var btnCaptureCachedLocation: Button
     private lateinit var btnCaptureFreshLocation: Button
     private lateinit var btnPickFromGallery: Button
+    private lateinit var btnCaptureOcr: Button
+    private lateinit var btnPickOcrFromGallery: Button
 
     private lateinit var ivPhoto: ImageView
     private lateinit var tvMetadata: TextView
@@ -46,6 +49,8 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
         btnCaptureCachedLocation = findViewById(R.id.btnCaptureCachedLocation)
         btnCaptureFreshLocation = findViewById(R.id.btnCaptureFreshLocation)
         btnPickFromGallery = findViewById(R.id.btnPickFromGallery)
+        btnCaptureOcr = findViewById(R.id.btnCaptureOcr)
+        btnPickOcrFromGallery = findViewById(R.id.btnPickOcrFromGallery)
 
         ivPhoto = findViewById(R.id.ivPhoto)
         tvMetadata = findViewById(R.id.tvMetadata)
@@ -102,6 +107,41 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                 handlePhotoResult(result)
             }
         }
+
+        // Capture a document photo and collect fields with OCR: after
+        // confirming the photo, the user taps words on it for each field.
+        btnCaptureOcr.setOnClickListener {
+            val config = PhotoCaptureConfig(
+                watermarkText = null,
+                targetFileSizeKB = 200,
+                ocrFields = listOf(
+                    OcrField("personName", "Person Name", required = true),
+                    OcrField("dob", "Date of Birth", required = true),
+                    OcrField("gender", "Gender", required = false),
+                    OcrField("documentNumber", "Document Number", required = true)
+                )
+            )
+            PhotoCaptureManager.instance.capturePhoto(config) { result ->
+                handlePhotoResult(result)
+            }
+        }
+
+        // Same OCR flow, starting from a gallery photo instead of the camera.
+        btnPickOcrFromGallery.setOnClickListener {
+            val config = PhotoCaptureConfig(
+                watermarkText = null,
+                targetFileSizeKB = 200,
+                ocrFields = listOf(
+                    OcrField("personName", "Person Name", required = true),
+                    OcrField("dob", "Date of Birth", required = true),
+                    OcrField("gender", "Gender", required = false),
+                    OcrField("documentNumber", "Document Number", required = true)
+                )
+            )
+            PhotoCaptureManager.instance.pickPhotoFromGallery(config) { result ->
+                handlePhotoResult(result)
+            }
+        }
     }
 
     private fun handlePhotoResult(result: PhotoCaptureResult) {
@@ -126,6 +166,14 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                     appendLine("Size: ${result.fileSizeDisplay}")
                     appendLine("Dimensions: ${result.dimensionsDisplay}")
                     appendLine("Watermark: ${if (result.hasWatermark) "Yes" else "No"}")
+
+                    if (result.ocrData.isNotEmpty()) {
+                        appendLine()
+                        appendLine("OCR data:")
+                        result.ocrData.forEach { (key, value) ->
+                            appendLine("  $key: $value")
+                        }
+                    }
 
                     result.location?.let { location ->
                         appendLine()

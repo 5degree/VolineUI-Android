@@ -129,4 +129,18 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.6.2")
     implementation("androidx.camera:camera-lifecycle:1.6.2")
     implementation("androidx.camera:camera-view:1.6.2")
+
+    // ML Kit on-device text recognition (bundled models) for the OCR step
+    // of photo capture. Bundled, not Play-services-delivered, so OCR works
+    // immediately after install with no download and no network: a document
+    // photo never leaves the device. Latin covers English and other Latin
+    // scripts; Devanagari covers Hindi and also reads Latin text, and both
+    // recognizers run so a mixed-script document is covered either way.
+    // Adding a script later (e.g. Bengali, Telugu) is one more artifact
+    // here plus one entry in the recognizer set. Versions are the current
+    // stable ML Kit releases.
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
+
+    testImplementation(libs.junit)
 }

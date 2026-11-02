@@ -74,6 +74,22 @@
             android:textAllCaps="false"
             android:layout_marginBottom="16dp" />
 
+        <Button
+            android:id="@+id/btnCaptureOcr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔍 Capture Document (OCR)"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnPickOcrFromGallery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔍 Pick Document from Gallery (OCR)"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp" />
+
         <!-- Photo Preview Section -->
         <TextView
             android:layout_width="match_parent"

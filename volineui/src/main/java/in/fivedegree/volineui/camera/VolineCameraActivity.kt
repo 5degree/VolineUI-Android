@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import `in`.fivedegree.volineui.photocapturemanager.OcrField
 import java.io.File
 
 /**
@@ -29,6 +30,18 @@ import java.io.File
  * [EXTRA_OUTPUT_PATH]. On "Use photo" the activity finishes with
  * [android.app.Activity.RESULT_OK] and the same path; on close / back it
  * finishes with [android.app.Activity.RESULT_CANCELED].
+ *
+ * OCR mode: when the caller also passes OCR fields ([EXTRA_OCR_KEYS] /
+ * [EXTRA_OCR_LABELS] / [EXTRA_OCR_REQUIRED]), confirming a photo moves
+ * to an OCR step instead of finishing, and Done finishes with
+ * [android.app.Activity.RESULT_OK] plus the path and the collected
+ * values ([EXTRA_OCR_DATA_KEYS] / [EXTRA_OCR_DATA_VALUES]).
+ *
+ * OCR-only mode: when the caller passes [EXTRA_INPUT_PATH] instead of
+ * an output path (a gallery photo), the capture UI is skipped and the
+ * screen starts at the OCR step for that file. OCR fields are required
+ * in this mode: without fields there is nothing to collect, so a
+ * missing or malformed field set finishes with [RESULT_ERROR].
  *
  * Theme: no theme is set on this activity in the library manifest, so it
  * inherits the host application's theme. The Compose colour scheme below is
@@ -45,7 +58,23 @@ class VolineCameraActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val outputPath = intent.getStringExtra(EXTRA_OUTPUT_PATH)
-        if (outputPath.isNullOrBlank()) {
+        val inputPath = intent.getStringExtra(EXTRA_INPUT_PATH)
+        val (ocrFields, ocrFieldsMalformed) = readOcrFields(intent)
+        if (inputPath != null) {
+            // OCR-only mode (gallery photo): fields are mandatory here.
+            if (ocrFieldsMalformed || ocrFields.isEmpty()) {
+                Log.w(TAG, "VolineCamera finishing with RESULT_ERROR: invalid OCR fields for input photo")
+                setResult(
+                    RESULT_ERROR,
+                    Intent().putExtra(
+                        EXTRA_ERROR_MESSAGE,
+                        "OCR fields were not provided for the picked photo."
+                    )
+                )
+                finish()
+                return
+            }
+        } else if (outputPath.isNullOrBlank()) {
             Log.w(TAG, "VolineCamera finishing with RESULT_ERROR: no output path in intent")
             setResult(
                 RESULT_ERROR,
@@ -53,17 +82,44 @@ class VolineCameraActivity : ComponentActivity() {
             )
             finish()
             return
+        } else if (ocrFieldsMalformed) {
+            Log.w(TAG, "VolineCamera finishing with RESULT_ERROR: malformed OCR fields")
+            setResult(
+                RESULT_ERROR,
+                Intent().putExtra(EXTRA_ERROR_MESSAGE, "OCR fields were invalid.")
+            )
+            finish()
+            return
         }
+
+        // In OCR-only mode the "output" file is the picked photo itself:
+        // the capture UI never runs, so nothing is ever written to it,
+        // and the OCR step returns it unchanged.
+        val outputFile = File(inputPath ?: outputPath!!)
+        val ocrInputFile = inputPath?.let { File(it) }
 
         setContent {
             MaterialTheme(colorScheme = hostColorScheme()) {
                 CameraScreen(
-                    outputFile = File(outputPath),
+                    outputFile = outputFile,
                     onUsePhoto = { file ->
                         Log.d(TAG, "VolineCamera finishing with RESULT_OK (Use photo)")
                         setResult(
                             RESULT_OK,
                             Intent().putExtra(EXTRA_OUTPUT_PATH, file.absolutePath)
+                        )
+                        finish()
+                    },
+                    ocrFields = ocrFields,
+                    inputFile = ocrInputFile,
+                    onOcrDone = { file, ocrData ->
+                        Log.d(TAG, "VolineCamera finishing with RESULT_OK (OCR Done, ${ocrData.size} fields)")
+                        setResult(
+                            RESULT_OK,
+                            Intent()
+                                .putExtra(EXTRA_OUTPUT_PATH, file.absolutePath)
+                                .putExtra(EXTRA_OCR_DATA_KEYS, ocrData.keys.toTypedArray())
+                                .putExtra(EXTRA_OCR_DATA_VALUES, ocrData.values.toTypedArray())
                         )
                         finish()
                     },
@@ -83,6 +139,26 @@ class VolineCameraActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    /**
+     * Read the host's OCR fields from the intent's parallel arrays.
+     * Returns the fields plus a malformed flag: the arrays must all be
+     * present and the same length, or the set is unusable. No arrays at
+     * all means "no OCR", which is only valid for the camera path.
+     */
+    private fun readOcrFields(intent: Intent): Pair<List<OcrField>, Boolean> {
+        val keys = intent.getStringArrayExtra(EXTRA_OCR_KEYS) ?: return emptyList<OcrField>() to false
+        val labels = intent.getStringArrayExtra(EXTRA_OCR_LABELS)
+        val required = intent.getBooleanArrayExtra(EXTRA_OCR_REQUIRED)
+        if (labels == null || required == null ||
+            labels.size != keys.size || required.size != keys.size
+        ) {
+            return emptyList<OcrField>() to true
+        }
+        return keys.mapIndexed { index, key ->
+            OcrField(key = key, label = labels[index], required = required[index])
+        } to false
     }
 
     override fun onDestroy() {
@@ -143,8 +219,26 @@ class VolineCameraActivity : ComponentActivity() {
         /** Absolute path of the file the captured photo must be written to. */
         const val EXTRA_OUTPUT_PATH = "voline_camera_output_path"
 
+        /** Absolute path of an existing photo to run the OCR step on (gallery mode). */
+        const val EXTRA_INPUT_PATH = "voline_camera_input_path"
+
         /** Human-readable error message, present only with [RESULT_ERROR]. */
         const val EXTRA_ERROR_MESSAGE = "voline_camera_error_message"
+
+        /** OCR field keys, parallel to [EXTRA_OCR_LABELS] and [EXTRA_OCR_REQUIRED]. */
+        const val EXTRA_OCR_KEYS = "voline_camera_ocr_keys"
+
+        /** OCR field labels shown to the user, parallel to [EXTRA_OCR_KEYS]. */
+        const val EXTRA_OCR_LABELS = "voline_camera_ocr_labels"
+
+        /** OCR field required flags, parallel to [EXTRA_OCR_KEYS]. */
+        const val EXTRA_OCR_REQUIRED = "voline_camera_ocr_required"
+
+        /** Collected OCR values' keys on RESULT_OK, parallel to [EXTRA_OCR_DATA_VALUES]. */
+        const val EXTRA_OCR_DATA_KEYS = "voline_camera_ocr_data_keys"
+
+        /** Collected OCR values on RESULT_OK, parallel to [EXTRA_OCR_DATA_KEYS]. */
+        const val EXTRA_OCR_DATA_VALUES = "voline_camera_ocr_data_values"
 
         /**
          * Custom result code for a camera failure. Deliberately distinct from

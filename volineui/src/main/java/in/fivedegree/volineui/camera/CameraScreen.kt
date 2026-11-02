@@ -17,6 +17,7 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,12 +35,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -68,13 +72,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -86,6 +93,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import `in`.fivedegree.volineui.photocapturemanager.OcrField
 import java.io.File
 import java.util.Locale
 import kotlin.math.ln
@@ -128,6 +136,20 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
  * Theme: colours come from the MaterialTheme supplied by
  * [VolineCameraActivity], which derives its scheme from the host
  * application's theme. The preview itself is always black.
+ *
+ * OCR step: when [ocrFields] is non-empty, confirming a photo does not
+ * finish the activity. It moves to an OCR step instead: the photo is
+ * recognised on-device, and the user taps words on the photo for each
+ * requested field, then taps Done. [onOcrDone] receives the photo and
+ * the collected values; [onUsePhoto] is only used when OCR is off.
+ * When [inputFile] is given (a gallery photo), the capture UI is skipped
+ * entirely and the screen starts at the OCR step for that file.
+ *
+ * OCR state (words, selections, step) is deliberately remember, not
+ * rememberSaveable: words and selections are not Bundle-safe, and a
+ * recreation re-enters cleanly -- camera mode returns to the
+ * confirmation screen, where Continue rescans, and gallery mode rescans
+ * automatically because its file comes from the intent.
  */
 @Composable
 internal fun CameraScreen(
@@ -136,6 +158,9 @@ internal fun CameraScreen(
 	onClose: () -> Unit,
 	onError: (String) -> Unit,
 	modifier: Modifier = Modifier,
+	ocrFields: List<OcrField> = emptyList(),
+	inputFile: File? = null,
+	onOcrDone: (File, Map<String, String>) -> Unit = { _, _ -> },
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -170,6 +195,112 @@ internal fun CameraScreen(
     var zoomMin by remember { mutableFloatStateOf(1f) }
     var zoomMax by remember { mutableFloatStateOf(1f) }
     var zoomRatio by remember { mutableFloatStateOf(1f) }
+
+    // OCR step state. ocrEnabled is the whole switch: with no fields,
+    // none of this code runs and the screen behaves exactly as before.
+    val ocrEnabled = ocrFields.isNotEmpty()
+    val ocrOnlyMode = inputFile != null
+    var ocrStep by remember { mutableStateOf(OcrStep.NONE) }
+    var ocrWords by remember { mutableStateOf<List<OcrWord>>(emptyList()) }
+    var ocrImageWidth by remember { mutableIntStateOf(0) }
+    var ocrImageHeight by remember { mutableIntStateOf(0) }
+    var ocrSelections by remember { mutableStateOf<Map<String, List<OcrWord>>>(emptyMap()) }
+    var ocrActiveFieldKey by remember { mutableStateOf<String?>(null) }
+    var ocrErrorMessage by remember { mutableStateOf<String?>(null) }
+    var ocrScannedForPath by remember { mutableStateOf<String?>(null) }
+    // Monotonic scan id: a scan that is still running when the user
+    // retakes, goes back, or closes must never overwrite the new state
+    // with a stale result. resetOcrState bumps the id to invalidate it.
+    var ocrScanId by remember { mutableIntStateOf(0) }
+
+    fun resetOcrState() {
+        ocrScanId++
+        ocrStep = OcrStep.NONE
+        ocrWords = emptyList()
+        ocrImageWidth = 0
+        ocrImageHeight = 0
+        ocrSelections = emptyMap()
+        ocrActiveFieldKey = null
+        ocrErrorMessage = null
+        ocrScannedForPath = null
+    }
+
+    fun startOcrScan(file: File) {
+        val scanId = ++ocrScanId
+        ocrStep = OcrStep.SCANNING
+        ocrErrorMessage = null
+        coroutineScope.launch {
+            try {
+                val recognition = withContext(Dispatchers.Default) {
+                    recognizeOcrWords(context, file)
+                }
+                if (scanId != ocrScanId) return@launch
+                if (recognition.words.isEmpty()) {
+                    ocrErrorMessage = "No text found in this photo."
+                    ocrStep = OcrStep.FAILED
+                } else {
+                    ocrWords = recognition.words
+                    ocrImageWidth = recognition.imageWidth
+                    ocrImageHeight = recognition.imageHeight
+                    ocrScannedForPath = file.absolutePath
+                    if (ocrActiveFieldKey == null) {
+                        ocrActiveFieldKey = ocrFields.firstOrNull()?.key
+                    }
+                    ocrStep = OcrStep.SELECTING
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                if (scanId != ocrScanId) return@launch
+                ocrErrorMessage = "Text recognition failed: ${e.message}"
+                ocrStep = OcrStep.FAILED
+            }
+        }
+    }
+
+    fun continueToOcr() {
+        val path = capturedPath ?: return
+        // Back from the selection screen to confirmation, then Continue
+        // again, reuses the scan and the selections for this photo.
+        if (ocrScannedForPath == path && ocrWords.isNotEmpty()) {
+            ocrStep = OcrStep.SELECTING
+            return
+        }
+        startOcrScan(File(path))
+    }
+
+    fun retakePhoto() {
+        resetOcrState()
+        capturedPath = null
+        try {
+            outputFile.delete()
+        } catch (_: Exception) {
+            // The next capture overwrites the file.
+        }
+    }
+
+    // Gallery mode has no capture or confirmation screen: scan the
+    // picked photo as soon as the screen appears.
+    LaunchedEffect(inputFile) {
+        if (inputFile != null && ocrStep == OcrStep.NONE) {
+            startOcrScan(inputFile)
+        }
+    }
+
+    // System back inside the OCR step. Camera mode returns to the photo
+    // confirmation screen; gallery mode has no confirmation screen, so
+    // back cancels the whole capture.
+    BackHandler(
+        enabled = ocrStep == OcrStep.SCANNING ||
+            ocrStep == OcrStep.SELECTING ||
+            ocrStep == OcrStep.FAILED
+    ) {
+        if (ocrOnlyMode) {
+            onClose()
+        } else {
+            ocrStep = OcrStep.NONE
+        }
+    }
 
     fun applyZoom(ratio: Float) {
         val cam = camera ?: return
@@ -322,12 +453,101 @@ internal fun CameraScreen(
         capturedPath?.let { decodeReviewBitmap(it) }
     }
 
+    // The photo the OCR step works on: the gallery file in OCR-only
+    // mode, the captured photo otherwise. Decoded the same way as the
+    // confirmation image, so OCR boxes and the displayed photo agree.
+    val ocrDisplayPath = inputFile?.absolutePath ?: capturedPath
+    val ocrReviewBitmap: Bitmap? = remember(ocrDisplayPath) {
+        ocrDisplayPath?.let { decodeReviewBitmap(it) }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        if (capturedPath == null) {
+        if (ocrStep == OcrStep.SELECTING) {
+            OcrSelectionScreen(
+                bitmap = ocrReviewBitmap,
+                words = ocrWords,
+                ocrImageWidth = ocrImageWidth,
+                ocrImageHeight = ocrImageHeight,
+                fields = ocrFields,
+                selections = ocrSelections,
+                activeFieldKey = ocrActiveFieldKey,
+                onActiveFieldChange = { key -> ocrActiveFieldKey = key },
+                onWordTap = { word ->
+                    val activeKey = ocrActiveFieldKey
+                    if (activeKey != null) {
+                        val current = ocrSelections.toMutableMap()
+                        val assignedTo = current.entries.firstOrNull { (_, words) ->
+                            words.any { it.id == word.id }
+                        }?.key
+                        when {
+                            // Tap on a word of the active field removes it.
+                            assignedTo == activeKey -> {
+                                current[activeKey] = current[activeKey].orEmpty()
+                                    .filter { it.id != word.id }
+                            }
+                            // Tap on a word of another field moves it here.
+                            assignedTo != null -> {
+                                current[assignedTo] = current[assignedTo].orEmpty()
+                                    .filter { it.id != word.id }
+                                current[activeKey] = current[activeKey].orEmpty() + word
+                            }
+                            // Tap on an unassigned word appends it, in tap
+                            // order: the list order is the value's order.
+                            else -> {
+                                current[activeKey] = current[activeKey].orEmpty() + word
+                            }
+                        }
+                        ocrSelections = current
+                    }
+                },
+                onClearField = { key ->
+                    ocrSelections = ocrSelections.toMutableMap().apply { remove(key) }
+                },
+                onBack = {
+                    if (ocrOnlyMode) {
+                        onClose()
+                    } else {
+                        ocrStep = OcrStep.NONE
+                    }
+                },
+                onDone = {
+                    val resultFile = inputFile ?: outputFile
+                    onOcrDone(resultFile, buildOcrData(ocrFields, ocrSelections))
+                },
+                canFinish = canFinishOcr(ocrFields, ocrSelections)
+            )
+        } else if (ocrStep == OcrStep.SCANNING ||
+            (ocrOnlyMode && ocrStep == OcrStep.NONE)
+        ) {
+            OcrScanningScreen(
+                onCancel = {
+                    if (ocrOnlyMode) {
+                        onClose()
+                    } else {
+                        ocrStep = OcrStep.NONE
+                    }
+                }
+            )
+        } else if (ocrStep == OcrStep.FAILED) {
+            OcrFailureScreen(
+                message = ocrErrorMessage ?: "Text recognition failed.",
+                showRetake = !ocrOnlyMode,
+                onRetry = {
+                    val file = inputFile ?: capturedPath?.let { File(it) }
+                    if (file != null) startOcrScan(file)
+                },
+                onContinuePhotoOnly = {
+                    val resultFile = inputFile ?: outputFile
+                    onOcrDone(resultFile, emptyMap())
+                },
+                onRetake = { retakePhoto() },
+                onCancel = { onClose() }
+            )
+        } else if (capturedPath == null) {
             // Preview, sized to the selected aspect ratio instead of
             // filling the whole screen. In portrait a 4:3 capture is
             // displayed 3:4 and a 16:9 capture 9:16, with black bars
@@ -690,23 +910,30 @@ internal fun CameraScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     TextButton(
-                        onClick = {
-                            capturedPath = null
-                            try {
-                                outputFile.delete()
-                            } catch (_: Exception) {
-                                // The next capture overwrites the file.
-                            }
-                        },
+                        onClick = { retakePhoto() },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(text = "Retake", color = Color.White)
                     }
+                    // In OCR mode this does not finish the activity: it
+                    // moves to the OCR step for the confirmed photo. The
+                    // Continue button is deliberately not gated on any
+                    // values -- no values exist yet at this point; the
+                    // required-field gate lives on Done, in the OCR step.
                     TextButton(
-                        onClick = { onUsePhoto(outputFile) },
+                        onClick = {
+                            if (ocrEnabled) {
+                                continueToOcr()
+                            } else {
+                                onUsePhoto(outputFile)
+                            }
+                        },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(text = "Use photo", color = Color.White)
+                        Text(
+                            text = if (ocrEnabled) "Continue" else "Use photo",
+                            color = Color.White
+                        )
                     }
                 }
             }
@@ -872,6 +1099,397 @@ private fun ZoomRuler(
                 strokeWidth = 3.dp.toPx(),
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
+        }
+    }
+}
+
+/** Steps of the OCR flow. NONE means "not in the OCR flow" (capture or confirm). */
+private enum class OcrStep { NONE, SCANNING, SELECTING, FAILED }
+
+/**
+ * Scanning state: the recognizers are running on the confirmed photo.
+ * Cancel returns to confirmation (camera mode) or cancels (gallery mode),
+ * exactly like system back in this state.
+ */
+@Composable
+private fun OcrScanningScreen(onCancel: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator(
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Scanning text…",
+            color = Color.White,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Reading the photo on this device. Nothing is uploaded.",
+            color = Color.White.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.bodySmall
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        TextButton(onClick = onCancel) {
+            Text(text = "Cancel", color = Color.White)
+        }
+    }
+}
+
+/**
+ * OCR failure state: recognition errored, or the photo contains no
+ * recognised words. Every recovery option is offered: retry the scan,
+ * continue with the photo only (empty OCR data, an explicit user
+ * override of the required-field gate), retake on the camera path, or
+ * cancel. Gallery mode has no camera to retake with, so it offers
+ * Cancel instead of Retake.
+ */
+@Composable
+private fun OcrFailureScreen(
+    message: String,
+    showRetake: Boolean,
+    onRetry: () -> Unit,
+    onContinuePhotoOnly: () -> Unit,
+    onRetake: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = message,
+            color = Color.White,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        TextButton(onClick = onRetry) {
+            Text(text = "Retry scan", color = Color.White)
+        }
+        TextButton(onClick = onContinuePhotoOnly) {
+            Text(text = "Continue with photo only", color = Color.White)
+        }
+        if (showRetake) {
+            TextButton(onClick = onRetake) {
+                Text(text = "Retake", color = Color.White)
+            }
+        }
+        TextButton(onClick = onCancel) {
+            Text(text = "Cancel", color = Color.White)
+        }
+    }
+}
+
+/**
+ * Field-selection screen: the user picks a field, then taps its words
+ * on the photo. Words are drawn as boxes over the photo, in the same
+ * transformed layer as the image, so pinch-zoom and pan move boxes and
+ * photo together.
+ *
+ * Coordinate chain for a tap, all in pixels: the tap arrives in
+ * container coordinates; the inverse of the graphicsLayer transform
+ * (scale about the layer centre, then translation) gives the point in
+ * displayed-photo coordinates; the Fit rectangle maps that into review
+ * bitmap coordinates; the review-to-OCR scale maps it into OCR image
+ * coordinates, where [findWordAt] runs. Boxes are drawn with the
+ * forward chain. No step in the chain rotates: OCR boxes and the review
+ * bitmap share the EXIF-rotated orientation.
+ *
+ * Tap and transform live in separate pointerInput blocks on purpose:
+ * the transform block only consumes movement past the touch threshold,
+ * so a pure tap (no movement) still reaches the tap block, while a
+ * pan or pinch cancels the tap. That is what keeps "tap a word" and
+ * "pan the zoomed photo" from fighting each other.
+ */
+@Composable
+private fun OcrSelectionScreen(
+    bitmap: Bitmap?,
+    words: List<OcrWord>,
+    ocrImageWidth: Int,
+    ocrImageHeight: Int,
+    fields: List<OcrField>,
+    selections: Map<String, List<OcrWord>>,
+    activeFieldKey: String?,
+    onActiveFieldChange: (String) -> Unit,
+    onWordTap: (OcrWord) -> Unit,
+    onClearField: (String) -> Unit,
+    onBack: () -> Unit,
+    onDone: () -> Unit,
+    canFinish: Boolean
+) {
+    val primary = MaterialTheme.colorScheme.primary
+    val density = LocalDensity.current
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    // Gesture blocks are keyed on stable inputs, not on scale/offset,
+    // so a mid-gesture recomposition never restarts the gesture. The
+    // latest values are read through these references instead, which is
+    // what makes pinch and pan accumulate instead of snapping back.
+    val latestScale by rememberUpdatedState(scale)
+    val latestOffset by rememberUpdatedState(offset)
+    val filledCount = fields.count { selections[it.key]?.isNotEmpty() == true }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onBack) {
+                Text(text = "Back", color = Color.White)
+            }
+            Text(
+                text = "Select text",
+                color = Color.White,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "$filledCount of ${fields.size}",
+                color = Color.White.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        Text(
+            text = "Tap a field, then tap its words on the photo. Pinch to zoom, drag to pan.",
+            color = Color.White.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        )
+
+        BoxWithConstraints(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .clipToBounds()
+        ) {
+            val containerWidthPx = with(density) { maxWidth.toPx() }
+            val containerHeightPx = with(density) { maxHeight.toPx() }
+            val fitRect = if (bitmap != null) {
+                fitDisplayRect(
+                    containerWidthPx,
+                    containerHeightPx,
+                    bitmap.width.toFloat(),
+                    bitmap.height.toFloat()
+                )
+            } else {
+                OcrBox(0f, 0f, 0f, 0f)
+            }
+            val reviewScaleX =
+                if (bitmap != null && ocrImageWidth > 0) bitmap.width.toFloat() / ocrImageWidth else 1f
+            val reviewScaleY =
+                if (bitmap != null && ocrImageHeight > 0) bitmap.height.toFloat() / ocrImageHeight else 1f
+            val fitScaleX =
+                if (bitmap != null && bitmap.width > 0) fitRect.width / bitmap.width else 1f
+            val fitScaleY =
+                if (bitmap != null && bitmap.height > 0) fitRect.height / bitmap.height else 1f
+
+            fun wordAtTap(tap: Offset): OcrWord? {
+                if (bitmap == null || fitRect.width <= 0f) return null
+                val centerX = containerWidthPx / 2f
+                val centerY = containerHeightPx / 2f
+                val contentX = centerX + (tap.x - centerX - latestOffset.x) / latestScale
+                val contentY = centerY + (tap.y - centerY - latestOffset.y) / latestScale
+                if (!fitRect.contains(contentX, contentY)) return null
+                val reviewX = (contentX - fitRect.left) / fitScaleX
+                val reviewY = (contentY - fitRect.top) / fitScaleY
+                return findWordAt(words, reviewX / reviewScaleX, reviewY / reviewScaleY)
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(words, fitRect) {
+                        detectTapGestures(
+                            onTap = { tap ->
+                                wordAtTap(tap)?.let { onWordTap(it) }
+                            },
+                            onDoubleTap = {
+                                scale = 1f
+                                offset = Offset.Zero
+                            }
+                        )
+                    }
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val newScale = (latestScale * zoom).coerceIn(1f, 4f)
+                            scale = newScale
+                            if (newScale <= 1f) {
+                                offset = Offset.Zero
+                            } else {
+                                val maxX = containerWidthPx * newScale / 2f
+                                val maxY = containerHeightPx * newScale / 2f
+                                offset = Offset(
+                                    (latestOffset.x + pan.x).coerceIn(-maxX, maxX),
+                                    (latestOffset.y + pan.y).coerceIn(-maxY, maxY)
+                                )
+                            }
+                        }
+                    }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offset.x,
+                            translationY = offset.y
+                        )
+                ) {
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Document photo for text selection",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        words.forEach { word ->
+                            val assignedTo = selections.entries.firstOrNull { (_, selected) ->
+                                selected.any { it.id == word.id }
+                            }?.key
+                            val isActiveField = assignedTo == activeFieldKey
+                            val borderColor = when {
+                                isActiveField -> primary
+                                assignedTo != null -> Color.White.copy(alpha = 0.7f)
+                                else -> Color.White.copy(alpha = 0.45f)
+                            }
+                            val fillColor = when {
+                                isActiveField -> primary.copy(alpha = 0.25f)
+                                assignedTo != null -> Color.White.copy(alpha = 0.12f)
+                                else -> Color.Transparent
+                            }
+                            val left = fitRect.left + word.box.left * reviewScaleX * fitScaleX
+                            val top = fitRect.top + word.box.top * reviewScaleY * fitScaleY
+                            val boxWidth = word.box.width * reviewScaleX * fitScaleX
+                            val boxHeight = word.box.height * reviewScaleY * fitScaleY
+                            Box(
+                                modifier = Modifier
+                                    .offset { IntOffset(left.toInt(), top.toInt()) }
+                                    .size(
+                                        with(density) { boxWidth.toDp() },
+                                        with(density) { boxHeight.toDp() }
+                                    )
+                                    .border(2.dp, borderColor, RoundedCornerShape(4.dp))
+                                    .background(fillColor, RoundedCornerShape(4.dp))
+                            )
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Photo unavailable",
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 260.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            fields.forEach { field ->
+                val value = selections[field.key]?.let { joinSelectedWords(it) }.orEmpty()
+                val isActive = field.key == activeFieldKey
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isActive) primary.copy(alpha = 0.15f) else Color.Transparent
+                        )
+                        .border(
+                            width = if (isActive) 1.dp else 0.dp,
+                            color = if (isActive) primary else Color.Transparent,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable(
+                            role = Role.Button,
+                            onClickLabel = "Select field ${field.label}"
+                        ) { onActiveFieldChange(field.key) }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = field.label + if (field.required) " *" else "",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                        Text(
+                            text = if (value.isEmpty()) "Tap words on the photo" else value,
+                            color = if (value.isEmpty()) {
+                                Color.White.copy(alpha = 0.5f)
+                            } else {
+                                Color.White
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    if (value.isNotEmpty()) {
+                        TextButton(onClick = { onClearField(field.key) }) {
+                            Text(
+                                text = "Clear",
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(
+                onClick = onDone,
+                enabled = canFinish
+            ) {
+                Text(
+                    text = "Done",
+                    color = if (canFinish) {
+                        Color.White
+                    } else {
+                        Color.White.copy(alpha = 0.4f)
+                    }
+                )
+            }
         }
     }
 }

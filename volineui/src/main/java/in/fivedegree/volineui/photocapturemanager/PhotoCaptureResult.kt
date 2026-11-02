@@ -40,6 +40,13 @@ sealed class PhotoCaptureResult {
      * @property location GPS coordinates if watermark was applied with location
      * @property timestamp Capture timestamp in milliseconds
      * @property hasWatermark True if watermark was applied
+     * @property ocrData Values the user collected in the OCR step, keyed by
+     *   the host's [OcrField.key]. Empty when the capture did not use OCR
+     *   (no [PhotoCaptureConfig.ocrFields]) or when the user chose to
+     *   continue with the photo only after an OCR failure. Only fields
+     *   with at least one selected word appear; unfilled optional fields
+     *   are absent, and required fields are always present on a Done
+     *   result because Done is gated on them.
      */
     data class Success(
         val file: File,
@@ -48,7 +55,8 @@ sealed class PhotoCaptureResult {
         val dimensions: Pair<Int, Int>,
         val location: LocationResult? = null,
         val timestamp: Long,
-        val hasWatermark: Boolean
+        val hasWatermark: Boolean,
+        val ocrData: Map<String, String> = emptyMap()
     ) : PhotoCaptureResult() {
         /**
          * Get user-friendly file size display
