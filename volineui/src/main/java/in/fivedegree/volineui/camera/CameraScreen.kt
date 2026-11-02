@@ -7,7 +7,7 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -57,6 +57,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -67,20 +69,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -96,6 +95,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
+import androidx.core.content.edit
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 /**
  * In-app camera screen.
@@ -112,7 +114,7 @@ import kotlinx.coroutines.withContext
  *
  * Defaults: back camera, flash off. The lens is deliberately not
  * persisted (unlike the aspect ratio), so every fresh camera open
- * starts on the back camera even if a previous open ended on front;
+ * starts on the back camera even if a previous open-ended on front;
  * rememberSaveable only preserves the lens across recreation of the
  * same open, e.g. a rotation.
  *
@@ -129,19 +131,19 @@ import kotlinx.coroutines.withContext
  */
 @Composable
 internal fun CameraScreen(
-    outputFile: File,
-    onUsePhoto: (File) -> Unit,
-    onClose: () -> Unit,
-    onError: (String) -> Unit,
-    modifier: Modifier = Modifier
+	outputFile: File,
+	onUsePhoto: (File) -> Unit,
+	onClose: () -> Unit,
+	onError: (String) -> Unit,
+	modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
 
-    var lensFacing by rememberSaveable { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
-    var flashMode by rememberSaveable { mutableStateOf(ImageCapture.FLASH_MODE_OFF) }
+    var lensFacing by rememberSaveable { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
+    var flashMode by rememberSaveable { mutableIntStateOf(ImageCapture.FLASH_MODE_OFF) }
     var isCapturing by remember { mutableStateOf(false) }
     var capturedPath by rememberSaveable { mutableStateOf<String?>(null) }
     var cameraError by remember { mutableStateOf<String?>(null) }
@@ -157,7 +159,7 @@ internal fun CameraScreen(
     var focusVisible by remember { mutableStateOf(false) }
 
     // Aspect ratio, remembered across camera opens in SharedPreferences
-    // (rememberSaveable alone only survives recreation of this activity).
+    // (rememberSavable alone only survives recreation of this activity).
     // CameraX only offers 4:3 and 16:9 target ratios, so those are the
     // only options offered; anything else would silently fall back.
     var aspect by remember { mutableStateOf(loadCameraAspect(context)) }
@@ -165,9 +167,9 @@ internal fun CameraScreen(
 
     // Zoom range, read from the bound camera (never hardcoded): some
     // devices have a fixed lens (max == min) and then the ruler hides.
-    var zoomMin by remember { mutableStateOf(1f) }
-    var zoomMax by remember { mutableStateOf(1f) }
-    var zoomRatio by remember { mutableStateOf(1f) }
+    var zoomMin by remember { mutableFloatStateOf(1f) }
+    var zoomMax by remember { mutableFloatStateOf(1f) }
+    var zoomRatio by remember { mutableFloatStateOf(1f) }
 
     fun applyZoom(ratio: Float) {
         val cam = camera ?: return
@@ -388,7 +390,7 @@ internal fun CameraScreen(
                                         // must not block capture.
                                     }
                                     coroutineScope.launch {
-                                        delay(1500)
+                                        delay(1500.milliseconds)
                                         focusVisible = false
                                     }
                                 }
@@ -522,14 +524,7 @@ internal fun CameraScreen(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.65f)
-                            )
-                        )
-                    )
+                    .background(Color.Black.copy(alpha = 0.4f))
                     .padding(top = 16.dp, bottom = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -742,9 +737,9 @@ private fun loadCameraAspect(context: Context): CameraAspect {
 
 private fun saveCameraAspect(context: Context, aspect: CameraAspect) {
     context.getSharedPreferences(CAMERA_PREFS_NAME, Context.MODE_PRIVATE)
-        .edit()
-        .putInt(CAMERA_PREFS_ASPECT, if (aspect == CameraAspect.SIXTEEN_NINE) 1 else 0)
-        .apply()
+        .edit {
+	        putInt(CAMERA_PREFS_ASPECT, if (aspect == CameraAspect.SIXTEEN_NINE) 1 else 0)
+        }
 }
 
 /**
@@ -762,10 +757,10 @@ private fun saveCameraAspect(context: Context, aspect: CameraAspect) {
  */
 @Composable
 private fun ZoomRuler(
-    zoomRatio: Float,
-    zoomMin: Float,
-    zoomMax: Float,
-    onZoomChange: (Float) -> Unit
+	zoomRatio: Float,
+	zoomMin: Float,
+	zoomMax: Float,
+	onZoomChange: (Float) -> Unit,
 ) {
     val primary = MaterialTheme.colorScheme.primary
     val textMeasurer = rememberTextMeasurer()
@@ -792,10 +787,8 @@ private fun ZoomRuler(
     val t = tForRatio(zoomRatio)
     Box(
         modifier = Modifier
-            .width(300.dp)
+            .fillMaxWidth()
             .height(64.dp)
-            .clip(RoundedCornerShape(32.dp))
-            .background(Color.Black.copy(alpha = 0.4f))
     ) {
         Canvas(
             modifier = Modifier
@@ -842,7 +835,7 @@ private fun ZoomRuler(
             // Major ticks and labels at the zoom stops that exist on
             // this device.
             for (stop in listOf(1f, 2f, 3f, 5f, zoomMax).distinct()) {
-                if (stop < zoomMin || stop > zoomMax) continue
+                if (stop !in zoomMin..zoomMax) continue
                 val x = xForRatio(stop)
                 if (x < 0f || x > size.width) continue
                 drawLine(
