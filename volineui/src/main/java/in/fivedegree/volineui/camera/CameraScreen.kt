@@ -3,8 +3,11 @@
 package `in`.fivedegree.volineui.camera
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -24,6 +27,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,6 +60,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,27 +70,27 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import java.io.File
 import java.util.Locale
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.cos
 import kotlin.math.ln
 import kotlin.math.pow
-import kotlin.math.sin
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -95,13 +100,21 @@ import kotlinx.coroutines.withContext
 /**
  * In-app camera screen.
  *
- * Professional, full-screen camera: black preview, top status pill
- * (lens + flash), large central shutter with aspect-ratio pill and
- * switch-camera on either side, tap-to-focus, pinch-to-zoom, an iOS-style
- * arc zoom slider driven by the bound camera's own zoom range, an
+ * Professional camera: black preview sized to the selected aspect
+ * ratio (not stretched to fill the screen), top status pill (lens +
+ * flash), large central shutter with aspect-ratio pill and
+ * switch-camera on either side, tap-to-focus, pinch-to-zoom, an
+ * iPhone-style ruler zoom control driven by the bound camera's own
+ * zoom range (swipe left to zoom in, right to zoom out), an
  * aspect-ratio switch (4:3 / 16:9, persisted across opens), and a
  * Retake / Use photo review step with plain text buttons. It never
  * launches an external camera app.
+ *
+ * Defaults: back camera, flash off. The lens is deliberately not
+ * persisted (unlike the aspect ratio), so every fresh camera open
+ * starts on the back camera even if a previous open ended on front;
+ * rememberSaveable only preserves the lens across recreation of the
+ * same open, e.g. a rotation.
  *
  * Front-camera mirroring (the "recommended" behaviour): CameraX mirrors the
  * front-camera preview so it feels like a mirror, but the saved file is
@@ -128,7 +141,7 @@ internal fun CameraScreen(
     val density = LocalDensity.current
 
     var lensFacing by rememberSaveable { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
-    var flashMode by rememberSaveable { mutableStateOf(ImageCapture.FLASH_MODE_AUTO) }
+    var flashMode by rememberSaveable { mutableStateOf(ImageCapture.FLASH_MODE_OFF) }
     var isCapturing by remember { mutableStateOf(false) }
     var capturedPath by rememberSaveable { mutableStateOf<String?>(null) }
     var cameraError by remember { mutableStateOf<String?>(null) }
@@ -151,7 +164,7 @@ internal fun CameraScreen(
     LaunchedEffect(aspect) { saveCameraAspect(context, aspect) }
 
     // Zoom range, read from the bound camera (never hardcoded): some
-    // devices have a fixed lens (max == min) and then the arc hides.
+    // devices have a fixed lens (max == min) and then the ruler hides.
     var zoomMin by remember { mutableStateOf(1f) }
     var zoomMax by remember { mutableStateOf(1f) }
     var zoomRatio by remember { mutableStateOf(1f) }
@@ -229,7 +242,7 @@ internal fun CameraScreen(
             camera = boundCamera
             imageCapture = capture
             hasFlash = boundCamera.cameraInfo.hasFlashUnit()
-            // Zoom range for this lens; the arc slider and pinch both
+            // Zoom range for this lens; the ruler slider and pinch both
             // read and write zoomRatio, so they always stay in sync.
             // A fresh bind starts at 1x (clamped into the new range).
             val zoomState = boundCamera.cameraInfo.zoomState.value
@@ -313,68 +326,102 @@ internal fun CameraScreen(
             .background(Color.Black)
     ) {
         if (capturedPath == null) {
-            // Preview, tap-to-focus and pinch-to-zoom.
+            // Preview, sized to the selected aspect ratio instead of
+            // filling the whole screen. In portrait a 4:3 capture is
+            // displayed 3:4 and a 16:9 capture 9:16, with black bars
+            // above and below; in landscape the label ratio applies
+            // directly. FIT_CENTER means the preview frame is the
+            // captured frame, not a centre crop of it, so what is
+            // shown is what the photo will contain.
+            //
+            // Pinch-to-zoom stays on the full-screen box (bars
+            // included). Tap-to-focus lives on the preview box
+            // itself, so its coordinates are already in PreviewView
+            // space -- on the old full-screen layout the two boxes
+            // were the same size, but they are not any more, and a
+            // tap measured against the full screen would focus the
+            // wrong point on an aspect-sized preview.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .pointerInput(camera) {
-                        detectTapGestures { offset ->
-                            val view = previewView ?: return@detectTapGestures
-                            val cam = camera ?: return@detectTapGestures
-                            focusPoint = offset
-                            focusVisible = true
-                            try {
-                                val point = view.meteringPointFactory.createPoint(offset.x, offset.y)
-                                val action = FocusMeteringAction.Builder(point).build()
-                                cam.cameraControl.startFocusAndMetering(action)
-                            } catch (_: Exception) {
-                                // Focus is a best-effort enhancement; a failure
-                                // must not block capture.
-                            }
-                            coroutineScope.launch {
-                                delay(1500)
-                                focusVisible = false
-                            }
-                        }
-                    }
                     .pointerInput(camera) {
                         detectTransformGestures { _, _, zoomChange, _ ->
                             val cam = camera ?: return@detectTransformGestures
                             val zoomState = cam.cameraInfo.zoomState.value ?: return@detectTransformGestures
                             val newRatio = (zoomState.zoomRatio * zoomChange)
                                 .coerceIn(zoomState.minZoomRatio, zoomState.maxZoomRatio)
-                            // Keep the arc thumb in sync with pinch zoom.
+                            // Keep the ruler position in sync with pinch zoom.
                             zoomRatio = newRatio
                             cam.cameraControl.setZoomRatio(newRatio)
                         }
                     }
             ) {
-                AndroidView(
-                    factory = { ctx ->
-                        PreviewView(ctx).apply {
-                            scaleType = PreviewView.ScaleType.FILL_CENTER
-                            previewView = this
-                        }
-                    },
+                BoxWithConstraints(
                     modifier = Modifier.fillMaxSize()
-                )
-
-                // Focus ring.
-                if (focusVisible && focusPoint != null) {
-                    val point = focusPoint!!
-                    val ringSize = 80.dp
-                    val ringPx = with(density) { ringSize.toPx() }
+                ) {
+                    val labelRatio = if (aspect == CameraAspect.FOUR_THREE) 4f / 3f else 16f / 9f
+                    val displayRatio = if (LocalConfiguration.current.orientation ==
+                        Configuration.ORIENTATION_PORTRAIT
+                    ) {
+                        1f / labelRatio
+                    } else {
+                        labelRatio
+                    }
+                    val previewWidth = minOf(maxWidth, maxHeight * displayRatio)
+                    val previewHeight = previewWidth / displayRatio
                     Box(
                         modifier = Modifier
-                            .offset {
-                                IntOffset(
-                                    (point.x - ringPx / 2).toInt(),
-                                    (point.y - ringPx / 2).toInt()
-                                )
+                            .size(previewWidth, previewHeight)
+                            .align(Alignment.Center)
+                            .pointerInput(camera) {
+                                detectTapGestures { offset ->
+                                    val view = previewView ?: return@detectTapGestures
+                                    val cam = camera ?: return@detectTapGestures
+                                    focusPoint = offset
+                                    focusVisible = true
+                                    try {
+                                        val point = view.meteringPointFactory.createPoint(offset.x, offset.y)
+                                        val action = FocusMeteringAction.Builder(point).build()
+                                        cam.cameraControl.startFocusAndMetering(action)
+                                    } catch (_: Exception) {
+                                        // Focus is a best-effort enhancement; a failure
+                                        // must not block capture.
+                                    }
+                                    coroutineScope.launch {
+                                        delay(1500)
+                                        focusVisible = false
+                                    }
+                                }
                             }
-                            .size(ringSize)
-                            .border(2.dp, Color.White, CircleShape)
-                    )
+                    ) {
+                        AndroidView(
+                            factory = { ctx ->
+                                PreviewView(ctx).apply {
+                                    scaleType = PreviewView.ScaleType.FIT_CENTER
+                                    previewView = this
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        // Focus ring.
+                        if (focusVisible && focusPoint != null) {
+                            val point = focusPoint!!
+                            val ringSize = 80.dp
+                            val ringPx = with(density) { ringSize.toPx() }
+                            Box(
+                                modifier = Modifier
+                                    .offset {
+                                        IntOffset(
+                                            (point.x - ringPx / 2).toInt(),
+                                            (point.y - ringPx / 2).toInt()
+                                        )
+                                    }
+                                    .size(ringSize)
+                                    .border(2.dp, Color.White, CircleShape)
+                            )
+                        }
+                    }
                 }
             }
 
@@ -466,9 +513,10 @@ internal fun CameraScreen(
             }
 
             // Bottom control cluster, over a gradient scrim so the
-            // controls stay readable over any preview: arc zoom slider,
-            // zoom readout, then aspect pill / shutter / switch-camera
-            // in a row whose equal side weights keep the shutter centred.
+            // controls stay readable over any preview: ruler zoom
+            // control, zoom readout, then aspect pill / shutter /
+            // switch-camera in a row whose equal side weights keep
+            // the shutter centred.
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -499,7 +547,7 @@ internal fun CameraScreen(
                     }
                 } else {
                     if (zoomMax > zoomMin) {
-                        ArcZoomSlider(
+                        ZoomRuler(
                             zoomRatio = zoomRatio,
                             zoomMin = zoomMin,
                             zoomMax = zoomMax,
@@ -700,20 +748,34 @@ private fun saveCameraAspect(context: Context, aspect: CameraAspect) {
 }
 
 /**
- * iOS-style arc zoom slider: an upward semicircle above the shutter.
- * The arc position maps to zoom on a logarithmic scale, so the thumb
- * moves evenly in perceived zoom rather than bunching up at the low end.
- * Pinch-to-zoom writes the same zoomRatio state, so dragging the arc
- * and pinching always agree with each other.
+ * iPhone-style ruler zoom control, in the look of the library's
+ * RulerValuePicker: a horizontal ruler strip with ticks and zoom
+ * labels that slides under a fixed centre indicator. It is not a
+ * position slider: the ruler itself moves with the finger, exactly
+ * like the iPhone camera zoom dial, so swiping left moves higher
+ * zoom values into the centre (zoom in) and swiping right moves
+ * lower values in (zoom out). Tapping a visible stop jumps straight
+ * to it. Zoom maps to the ruler on a logarithmic scale, so the ruler
+ * moves evenly in perceived zoom rather than bunching up at the low
+ * end. Pinch-to-zoom writes the same zoomRatio state, so dragging
+ * the ruler and pinching always agree with each other.
  */
 @Composable
-private fun ArcZoomSlider(
+private fun ZoomRuler(
     zoomRatio: Float,
     zoomMin: Float,
     zoomMax: Float,
     onZoomChange: (Float) -> Unit
 ) {
     val primary = MaterialTheme.colorScheme.primary
+    val textMeasurer = rememberTextMeasurer()
+    // The gesture blocks below are keyed only on the zoom range, so
+    // they are not restarted when zoom changes mid-drag. Reading the
+    // zoom through this updated-state reference (rather than the
+    // captured zoomRatio) is what makes a drag accumulate instead of
+    // snapping back to the zoom at gesture-block creation, and what
+    // makes a tap after a pinch use the current zoom.
+    val latestZoomRatio by rememberUpdatedState(zoomRatio)
 
     fun tForRatio(ratio: Float): Float {
         if (zoomMax <= zoomMin) return 0f
@@ -727,86 +789,97 @@ private fun ArcZoomSlider(
             .coerceIn(zoomMin, zoomMax)
     }
 
-    fun ratioFromOffset(offset: Offset, size: androidx.compose.ui.unit.IntSize): Float {
-        val cx = size.width / 2f
-        val cy = size.height.toFloat()
-        val dx = offset.x - cx
-        val dy = offset.y - cy
-        // Touches below the arc centre snap to the nearest end.
-        if (dy > 0f) return if (dx < 0f) zoomMin else zoomMax
-        val angleDeg = atan2(dy.toDouble(), dx.toDouble()) * 180.0 / PI
-        val t = ((angleDeg + 180.0) / 180.0).toFloat().coerceIn(0f, 1f)
-        return ratioForT(t)
-    }
-
     val t = tForRatio(zoomRatio)
-    Canvas(
+    Box(
         modifier = Modifier
-            .width(280.dp)
-            .height(110.dp)
-            .pointerInput(zoomMin, zoomMax) {
-                detectTapGestures { offset ->
-                    onZoomChange(ratioFromOffset(offset, size))
-                }
-            }
-            .pointerInput(zoomMin, zoomMax) {
-                detectDragGestures { change, _ ->
-                    onZoomChange(ratioFromOffset(change.position, size))
-                    change.consume()
-                }
-            }
+            .width(300.dp)
+            .height(64.dp)
+            .clip(RoundedCornerShape(32.dp))
+            .background(Color.Black.copy(alpha = 0.4f))
     ) {
-        val cx = size.width / 2f
-        val cy = size.height
-        val r = size.height * 0.90f
-        val arcTopLeft = Offset(cx - r, cy - r)
-        val arcSize = androidx.compose.ui.geometry.Size(r * 2f, r * 2f)
-        val stroke = Stroke(width = 6.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-        drawArc(
-            color = Color.White.copy(alpha = 0.3f),
-            startAngle = 180f,
-            sweepAngle = 180f,
-            useCenter = false,
-            topLeft = arcTopLeft,
-            size = arcSize,
-            style = stroke
-        )
-        drawArc(
-            color = primary,
-            startAngle = 180f,
-            sweepAngle = t * 180f,
-            useCenter = false,
-            topLeft = arcTopLeft,
-            size = arcSize,
-            style = stroke
-        )
-        // Ticks at the zoom stops that exist on this device.
-        for (stop in listOf(1f, 2f, 3f, 5f, zoomMax).distinct()) {
-            if (stop < zoomMin || stop > zoomMax) continue
-            val angleRad = (180f + tForRatio(stop) * 180f) * PI / 180.0
-            val ux = cos(angleRad).toFloat()
-            val uy = sin(angleRad).toFloat()
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(zoomMin, zoomMax) {
+                    detectTapGestures { offset ->
+                        // Bring the tapped ruler position to the centre.
+                        val spanPx = size.width * 1.5f
+                        val tappedT = tForRatio(latestZoomRatio) +
+                            (offset.x - size.width / 2f) / spanPx
+                        onZoomChange(ratioForT(tappedT.coerceIn(0f, 1f)))
+                    }
+                }
+                .pointerInput(zoomMin, zoomMax) {
+                    detectDragGestures { change, dragAmount ->
+                        // Finger left (negative dx) moves the ruler left,
+                        // so a higher zoom value arrives at the centre:
+                        // zoom in. Finger right zooms out. Each event
+                        // is a delta, so it is applied to the latest
+                        // zoom, not to a captured one.
+                        val spanPx = size.width * 1.5f
+                        val newT = tForRatio(latestZoomRatio) - dragAmount.x / spanPx
+                        onZoomChange(ratioForT(newT.coerceIn(0f, 1f)))
+                        change.consume()
+                    }
+                }
+        ) {
+            val cx = size.width / 2f
+            val spanPx = size.width * 1.5f
+            fun xForRatio(ratio: Float): Float = cx + (tForRatio(ratio) - t) * spanPx
+            // Minor ticks: 20 even steps on the log scale.
+            for (i in 0..20) {
+                val ratio = ratioForT(i / 20f)
+                val x = xForRatio(ratio)
+                if (x < 0f || x > size.width) continue
+                drawLine(
+                    color = Color.White.copy(alpha = 0.4f),
+                    start = Offset(x, 8.dp.toPx()),
+                    end = Offset(x, 16.dp.toPx()),
+                    strokeWidth = 1.5.dp.toPx(),
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+            }
+            // Major ticks and labels at the zoom stops that exist on
+            // this device.
+            for (stop in listOf(1f, 2f, 3f, 5f, zoomMax).distinct()) {
+                if (stop < zoomMin || stop > zoomMax) continue
+                val x = xForRatio(stop)
+                if (x < 0f || x > size.width) continue
+                drawLine(
+                    color = Color.White.copy(alpha = 0.8f),
+                    start = Offset(x, 8.dp.toPx()),
+                    end = Offset(x, 26.dp.toPx()),
+                    strokeWidth = 2.dp.toPx(),
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+                val label = if (stop == zoomMax && stop != stop.toInt().toFloat()) {
+                    String.format(Locale.US, "%.1f×", stop)
+                } else {
+                    "${stop.toInt()}×"
+                }
+                val measured = textMeasurer.measure(
+                    text = label,
+                    style = TextStyle(color = Color.White, fontSize = 11.sp)
+                )
+                drawText(
+                    textMeasurer = textMeasurer,
+                    text = label,
+                    topLeft = Offset(
+                        (x - measured.size.width / 2f).coerceIn(0f, size.width - measured.size.width),
+                        32.dp.toPx()
+                    ),
+                    style = TextStyle(color = Color.White, fontSize = 11.sp)
+                )
+            }
+            // Fixed centre indicator: the value under it is the zoom.
             drawLine(
-                color = Color.White.copy(alpha = 0.6f),
-                start = Offset(cx + ux * (r - 7.dp.toPx()), cy + uy * (r - 7.dp.toPx())),
-                end = Offset(cx + ux * (r + 7.dp.toPx()), cy + uy * (r + 7.dp.toPx())),
-                strokeWidth = 2.dp.toPx(),
+                color = primary,
+                start = Offset(cx, 4.dp.toPx()),
+                end = Offset(cx, size.height - 4.dp.toPx()),
+                strokeWidth = 3.dp.toPx(),
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
         }
-        // Thumb on the current zoom position.
-        val thumbAngleRad = (180f + t * 180f) * PI / 180.0
-        val thumb = Offset(
-            cx + cos(thumbAngleRad).toFloat() * r,
-            cy + sin(thumbAngleRad).toFloat() * r
-        )
-        drawCircle(color = Color.White, radius = 13.dp.toPx(), center = thumb)
-        drawCircle(
-            color = primary,
-            radius = 13.dp.toPx(),
-            center = thumb,
-            style = Stroke(width = 2.dp.toPx())
-        )
     }
 }
 
@@ -815,6 +888,16 @@ private fun ArcZoomSlider(
  * file is what gets returned to the manager; the review bitmap must never
  * be used as the saved photo, to avoid holding a full-resolution bitmap in
  * composition memory.
+ *
+ * The decoded bitmap is rotated by the file's EXIF orientation, the same
+ * correction the manager's pipeline applies before returning the photo.
+ * Without this, the review shows the file's raw sensor orientation --
+ * 90 degrees anti-clockwise on a typical portrait capture -- while the
+ * photo returned to AdvancedImageView is upright, so the confirmation
+ * screen disagrees with both the preview and the final photo. Only
+ * rotation is applied, never a flip: the front camera's saved file is
+ * not mirrored, and the review must match the returned photo, not the
+ * mirrored preview.
  */
 private fun decodeReviewBitmap(path: String): Bitmap? {
     return try {
@@ -829,7 +912,21 @@ private fun decodeReviewBitmap(path: String): Bitmap? {
             sampleSize *= 2
         }
         val options = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-        BitmapFactory.decodeFile(path, options)
+        val bitmap = BitmapFactory.decodeFile(path, options) ?: return null
+        val degrees = when (ExifInterface(path).getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_NORMAL
+        )) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
+        if (degrees == 0f) return bitmap
+        val matrix = Matrix().apply { postRotate(degrees) }
+        val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        if (rotated !== bitmap) bitmap.recycle()
+        rotated
     } catch (_: Exception) {
         null
     }

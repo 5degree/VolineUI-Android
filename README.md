@@ -318,10 +318,13 @@ Photo capture opens VolineUI's own in-app camera screen (CameraX) — it does
 not launch a system camera app, and there is no fallback to one: if the
 in-app camera cannot start, `capturePhoto` reports an `Error`. The camera
 screen inherits the host app's Material theme for its controls, and offers
-a full-screen preview, front/back switching, flash, tap-to-focus,
-pinch-to-zoom, an iOS-style arc zoom slider whose range comes from the
-camera itself, an aspect-ratio switch (4:3 / 16:9, remembered between
-camera opens), and a Retake / Use photo review step with text buttons.
+a preview sized to the selected aspect ratio, back camera and flash off
+by default, front/back switching, flash, tap-to-focus, pinch-to-zoom,
+an iPhone-style ruler zoom control whose range comes from the camera
+itself (swipe left to zoom in, right to zoom out), an aspect-ratio
+switch (4:3 / 16:9, remembered between camera opens), and a Retake /
+Use photo review step with text buttons. The review image is rotated
+by the photo's EXIF orientation, so it matches the returned photo.
 Front-camera photos are saved as captured (not mirrored to match the
 preview).
 
