@@ -319,8 +319,11 @@ not launch a system camera app, and there is no fallback to one: if the
 in-app camera cannot start, `capturePhoto` reports an `Error`. The camera
 screen inherits the host app's Material theme for its controls, and offers
 a full-screen preview, front/back switching, flash, tap-to-focus,
-pinch-to-zoom, and a Retake / Use photo review step. Front-camera photos
-are saved as captured (not mirrored to match the preview).
+pinch-to-zoom, an iOS-style arc zoom slider whose range comes from the
+camera itself, an aspect-ratio switch (4:3 / 16:9, remembered between
+camera opens), and a Retake / Use photo review step with text buttons.
+Front-camera photos are saved as captured (not mirrored to match the
+preview).
 
 ### Location
 
