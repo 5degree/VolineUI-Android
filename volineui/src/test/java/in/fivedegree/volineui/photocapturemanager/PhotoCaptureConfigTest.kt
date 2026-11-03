@@ -38,4 +38,21 @@ class PhotoCaptureConfigTest {
         assertEquals(PhotoCaptureConfig.AspectRatio.RATIO_16_9, config.aspectRatio)
         assertFalse(config.allowFrontCamera)
     }
+
+    @Test
+    fun captureGuideDefaultsToNone() {
+        assertEquals(CaptureGuide.NONE, PhotoCaptureConfig().captureGuide)
+    }
+
+    @Test
+    fun personGuideIsPreserved() {
+        val config = PhotoCaptureConfig(captureGuide = CaptureGuide.PERSON)
+        assertEquals(CaptureGuide.PERSON, config.captureGuide)
+    }
+
+    @Test
+    fun documentGuideIsPreserved() {
+        val config = PhotoCaptureConfig(captureGuide = CaptureGuide.DOCUMENT)
+        assertEquals(CaptureGuide.DOCUMENT, config.captureGuide)
+    }
 }

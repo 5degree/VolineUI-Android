@@ -7,14 +7,19 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
+import com.google.mlkit.vision.segmentation.Segmentation
+import com.google.mlkit.vision.segmentation.Segmenter
+import com.google.mlkit.vision.segmentation.selfie.SelfieSegmenterOptions
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.activity.compose.BackHandler
@@ -93,9 +98,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import `in`.fivedegree.volineui.photocapturemanager.CaptureGuide
 import `in`.fivedegree.volineui.photocapturemanager.OcrField
 import java.io.File
 import java.util.Locale
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlinx.coroutines.CancellationException
@@ -170,6 +178,15 @@ internal fun CameraScreen(
 	// keeps the capture on the back camera.
 	fixedAspect: CameraAspect? = null,
 	allowFrontCamera: Boolean = false,
+	// Guided capture. PERSON runs the live person guide (segmentation
+	// outline + gated shutter) on the capture UI and is ignored in
+	// confirm mode. reviewFile != null is confirm mode: instead of
+	// the capture UI, the screen opens directly on the review step
+	// for an already-existing photo (e.g. a document-scanner page),
+	// and Retake means "scan again" via onRetake, not a recapture.
+	captureGuide: CaptureGuide = CaptureGuide.NONE,
+	reviewFile: File? = null,
+	onRetake: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -179,7 +196,9 @@ internal fun CameraScreen(
     var lensFacing by rememberSaveable { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     var flashMode by rememberSaveable { mutableIntStateOf(ImageCapture.FLASH_MODE_OFF) }
     var isCapturing by remember { mutableStateOf(false) }
-    var capturedPath by rememberSaveable { mutableStateOf<String?>(null) }
+    // In confirm mode the review step opens on the supplied file, so
+    // the capture UI never appears; otherwise this starts empty.
+    var capturedPath by rememberSaveable { mutableStateOf<String?>(reviewFile?.absolutePath) }
     var cameraError by remember { mutableStateOf<String?>(null) }
 
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
@@ -201,6 +220,49 @@ internal fun CameraScreen(
     // ratios, so those are the only options; anything else would
     // silently fall back.
     var aspect by remember { mutableStateOf(fixedAspect ?: CameraAspect.FOUR_THREE) }
+
+    // Person capture guide. The segmenter is created once for the
+    // screen (stream mode, for live preview frames) and closed on
+    // dispose; a creation failure degrades to an unguided camera
+    // rather than a broken one, because a guide that cannot run
+    // must not brick capture. personAligned starts false, so the
+    // shutter is fail-closed until the first aligned frame.
+    val segmenter: Segmenter? = remember {
+        if (captureGuide == CaptureGuide.PERSON) {
+            try {
+                Segmentation.getClient(
+                    SelfieSegmenterOptions.Builder()
+                        .setDetectorMode(SelfieSegmenterOptions.STREAM_MODE)
+                        .build()
+                )
+            } catch (_: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+    }
+    androidx.compose.runtime.DisposableEffect(segmenter) {
+        onDispose {
+            try {
+                segmenter?.close()
+            } catch (_: Exception) {
+                // Closing must never crash teardown.
+            }
+        }
+    }
+    var segmentationBroken by remember { mutableStateOf(false) }
+    val personGuideActive = captureGuide == CaptureGuide.PERSON &&
+        reviewFile == null && segmenter != null && !segmentationBroken
+    var personAligned by remember { mutableStateOf(false) }
+    val shutterEnabled = !personGuideActive || personAligned
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { analysisExecutor.shutdown() }
+    }
+    // The analyzer runs on a camera thread, so it reads this flag
+    // instead of Compose state directly.
+    val personAnalysisActive = remember { AtomicBoolean(false) }
 
     // Zoom range, read from the bound camera (never hardcoded): some
     // devices have a fixed lens (max == min) and then the ruler hides.
@@ -314,6 +376,15 @@ internal fun CameraScreen(
         }
     }
 
+    // The person-guide analyzer only runs on the live capture UI:
+    // never on the review step (the photo is already taken) and never
+    // during the OCR step (the screen no longer shows the preview).
+    LaunchedEffect(personGuideActive, capturedPath, ocrStep) {
+        personAnalysisActive.set(
+            personGuideActive && capturedPath == null && ocrStep == OcrStep.NONE
+        )
+    }
+
     fun applyZoom(ratio: Float) {
         val cam = camera ?: return
         val state = cam.cameraInfo.zoomState.value ?: return
@@ -395,6 +466,35 @@ internal fun CameraScreen(
             )
             camera = boundCamera
             imageCapture = capture
+            // Person guide analysis binds separately, after the
+            // preview and capture it depends on. A failure here must
+            // not fail the camera: the guide degrades to unguided
+            // capture (overlay hidden, shutter ungated) instead.
+            // personGuideActive already implies a non-null segmenter;
+            // the safe call is just the compiler-proof form of that.
+            if (personGuideActive) {
+                segmenter?.let { activeSegmenter ->
+                    try {
+                        val analysis = ImageAnalysis.Builder()
+                            .setBackpressureStrategy(
+                                ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
+                            )
+                            .build()
+                        analysis.setAnalyzer(
+                            analysisExecutor,
+                            PersonGuideAnalyzer(
+                                segmenter = activeSegmenter,
+                                isActive = { personAnalysisActive.get() },
+                                onAligned = { aligned -> personAligned = aligned }
+                            )
+                        )
+                        provider.bindToLifecycle(lifecycleOwner, selector, analysis)
+                    } catch (e: Exception) {
+                        Log.w("VolineCamera", "Person guide analysis unavailable", e)
+                        segmentationBroken = true
+                    }
+                }
+            }
             hasFlash = boundCamera.cameraInfo.hasFlashUnit()
             // Zoom range for this lens; the ruler slider and pinch both
             // read and write zoomRatio, so they always stay in sync.
@@ -565,7 +665,13 @@ internal fun CameraScreen(
                     val resultFile = inputFile ?: outputFile
                     onOcrDone(resultFile, emptyMap())
                 },
-                onRetake = { retakePhoto() },
+                onRetake = {
+                    if (reviewFile != null) {
+                        onRetake()
+                    } else {
+                        retakePhoto()
+                    }
+                },
                 onCancel = { onClose() }
             )
         } else if (capturedPath == null) {
@@ -646,6 +752,18 @@ internal fun CameraScreen(
                             },
                             modifier = Modifier.fillMaxSize()
                         )
+
+                        // Person capture guide: silhouette outline
+                        // with the dimmed surround, drawn over the
+                        // preview frame itself (not the full screen)
+                        // so the outline lines up with the photo
+                        // that will be captured.
+                        if (personGuideActive) {
+                            PersonGuideOverlay(
+                                aligned = personAligned,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
 
                         // Focus ring.
                         if (focusVisible && focusPoint != null) {
@@ -847,17 +965,27 @@ internal fun CameraScreen(
                                 .background(Color.White)
                                 .border(4.dp, Color.White, CircleShape)
                                 .clickable(
+                                    enabled = shutterEnabled,
                                     role = Role.Button,
                                     onClickLabel = "Take photo"
                                 ) { takePhoto() }
                                 .padding(6.dp),
                             contentAlignment = Alignment.Center
                         ) {
+                            // Gated shutter reads pale while the
+                            // person guide is unaligned, matching the
+                            // design's disabled shutter.
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary)
+                                    .background(
+                                        if (shutterEnabled) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                                        }
+                                    )
                             )
                         }
                         Box(
@@ -935,8 +1063,18 @@ internal fun CameraScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // In confirm mode Retake does not recapture: it
+                    // asks the caller to scan again (the activity
+                    // finishes with a retake result and the manager
+                    // relaunches the scanner).
                     TextButton(
-                        onClick = { retakePhoto() },
+                        onClick = {
+                            if (reviewFile != null) {
+                                onRetake()
+                            } else {
+                                retakePhoto()
+                            }
+                        },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(text = "Retake", color = Color.White)

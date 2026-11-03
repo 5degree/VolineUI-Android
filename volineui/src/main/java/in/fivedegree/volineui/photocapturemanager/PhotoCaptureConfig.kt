@@ -31,6 +31,13 @@ package `in`.fivedegree.volineui.photocapturemanager
  *   camera when the device has one; the camera still opens on the back
  *   camera. If false (the default), the switch-camera button is hidden
  *   and the capture stays on the back camera.
+ * @property captureGuide Guided capture for this photo (default NONE,
+ *   today's behaviour). PERSON shows a person outline over the live
+ *   preview and only enables the shutter while a person is framed
+ *   inside it, then returns a face mesh with the photo. DOCUMENT
+ *   launches Google's document-scanner UI instead of this camera
+ *   (so it needs Play services) and the cleaned page comes back into
+ *   the confirmation screen. See [CaptureGuide].
  */
 data class PhotoCaptureConfig(
     val watermarkText: String? = null,
@@ -43,7 +50,8 @@ data class PhotoCaptureConfig(
     val watermarkPosition: WatermarkPosition = WatermarkPosition.BOTTOM_LEFT,
     val ocrFields: List<OcrField> = emptyList(),
     val aspectRatio: AspectRatio = AspectRatio.RATIO_4_3,
-    val allowFrontCamera: Boolean = false
+    val allowFrontCamera: Boolean = false,
+    val captureGuide: CaptureGuide = CaptureGuide.NONE
 ) {
     /**
      * Aspect ratio the host wants the camera locked to. CameraX only

@@ -47,6 +47,12 @@ sealed class PhotoCaptureResult {
      *   with at least one selected word appear; unfilled optional fields
      *   are absent, and required fields are always present on a Done
      *   result because Done is gated on them.
+     * @property faceMesh Face mesh for a person capture
+     *   ([PhotoCaptureConfig.captureGuide] == [CaptureGuide.PERSON]),
+     *   in the delivered photo's pixel space. Null when no mesh was
+     *   requested. [FaceMeshResult.EMPTY] (no points, null box) means
+     *   a mesh was requested but no usable face was found; it never
+     *   fails the capture.
      */
     data class Success(
         val file: File,
@@ -56,7 +62,8 @@ sealed class PhotoCaptureResult {
         val location: LocationResult? = null,
         val timestamp: Long,
         val hasWatermark: Boolean,
-        val ocrData: Map<String, String> = emptyMap()
+        val ocrData: Map<String, String> = emptyMap(),
+        val faceMesh: FaceMeshResult? = null
     ) : PhotoCaptureResult() {
         /**
          * Get user-friendly file size display

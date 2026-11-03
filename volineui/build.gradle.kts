@@ -142,5 +142,28 @@ dependencies {
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
 
+    // ML Kit selfie segmentation (bundled, ~4.5 MB) for the person
+    // capture guide: a live person mask over the preview, used to
+    // enable the shutter only while a person is framed inside the
+    // outline. Bundled, so it works immediately after install with
+    // no download and no network. Still beta (16.0.0-beta6).
+    implementation("com.google.mlkit:segmentation-selfie:16.0.0-beta6")
+
+    // ML Kit face mesh detection (bundled, ~6.4 MB) for the person
+    // capture result: 468 3D points plus a bounding box for the face
+    // in the finished photo. Bundled, no network. Still beta
+    // (16.0.0-beta1). It reports no head pose -- only points and box.
+    implementation("com.google.mlkit:face-mesh-detection:16.0.0-beta1")
+
+    // ML Kit document scanner (Play-services only) for the document
+    // capture guide. This is a small stub (~300 KB); the scanner UI,
+    // models, and cleaning logic are downloaded by Play services on
+    // first use, so unlike the bundled APIs above it needs Play
+    // services and cannot work offline on first use. It launches
+    // Google's own scanner screens and returns cleaned page images;
+    // it cannot clean a photo this camera already captured, which is
+    // why DOCUMENT captures launch it instead of this camera screen.
+    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
+
     testImplementation(libs.junit)
 }

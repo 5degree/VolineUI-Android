@@ -114,6 +114,30 @@
             android:textAllCaps="false"
             android:layout_marginBottom="16dp" />
 
+        <Button
+            android:id="@+id/btnCapturePersonGuide"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🧍 Capture Person (guide)"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnCaptureDocumentScanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📄 Capture Document (scanner)"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnCaptureDocumentScannerOcr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📄 Capture Document (scanner + OCR)"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp" />
+
         <!-- Photo Preview Section -->
         <TextView
             android:layout_width="match_parent"

@@ -7,6 +7,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import `in`.fivedegree.volineui.PhotoCaptureManager
+import `in`.fivedegree.volineui.photocapturemanager.CaptureGuide
 import `in`.fivedegree.volineui.photocapturemanager.OcrField
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureResult
@@ -33,6 +34,9 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
     private lateinit var btnCaptureLocked169: Button
     private lateinit var btnCaptureFreeAspect: Button
     private lateinit var btnCaptureFrontAllowed: Button
+    private lateinit var btnCapturePersonGuide: Button
+    private lateinit var btnCaptureDocumentScanner: Button
+    private lateinit var btnCaptureDocumentScannerOcr: Button
 
     private lateinit var ivPhoto: ImageView
     private lateinit var tvMetadata: TextView
@@ -57,6 +61,9 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
         btnCaptureLocked169 = findViewById(R.id.btnCaptureLocked169)
         btnCaptureFreeAspect = findViewById(R.id.btnCaptureFreeAspect)
         btnCaptureFrontAllowed = findViewById(R.id.btnCaptureFrontAllowed)
+        btnCapturePersonGuide = findViewById(R.id.btnCapturePersonGuide)
+        btnCaptureDocumentScanner = findViewById(R.id.btnCaptureDocumentScanner)
+        btnCaptureDocumentScannerOcr = findViewById(R.id.btnCaptureDocumentScannerOcr)
 
         ivPhoto = findViewById(R.id.ivPhoto)
         tvMetadata = findViewById(R.id.tvMetadata)
@@ -188,6 +195,54 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                 handlePhotoResult(result)
             }
         }
+
+        // Capture a person with the live guide: the person outline
+        // is drawn over the preview and the shutter stays disabled
+        // until a person is framed inside it. The result carries a
+        // face mesh (468 points + box) in the delivered photo's
+        // pixel space, shown in the metadata below.
+        btnCapturePersonGuide.setOnClickListener {
+            val config = PhotoCaptureConfig(
+                watermarkText = null,
+                targetFileSizeKB = 200,
+                captureGuide = CaptureGuide.PERSON
+            )
+            PhotoCaptureManager.instance.capturePhoto(config) { result ->
+                handlePhotoResult(result)
+            }
+        }
+
+        // Capture a document through Google's scanner UI: the
+        // cleaned page comes back into the confirmation screen.
+        btnCaptureDocumentScanner.setOnClickListener {
+            val config = PhotoCaptureConfig(
+                watermarkText = null,
+                targetFileSizeKB = 200,
+                captureGuide = CaptureGuide.DOCUMENT
+            )
+            PhotoCaptureManager.instance.capturePhoto(config) { result ->
+                handlePhotoResult(result)
+            }
+        }
+
+        // Same scanner flow, with the OCR step on the cleaned page
+        // after confirmation.
+        btnCaptureDocumentScannerOcr.setOnClickListener {
+            val config = PhotoCaptureConfig(
+                watermarkText = null,
+                targetFileSizeKB = 200,
+                captureGuide = CaptureGuide.DOCUMENT,
+                ocrFields = listOf(
+                    OcrField("personName", "Person Name", required = true),
+                    OcrField("dob", "Date of Birth", required = true),
+                    OcrField("gender", "Gender", required = false),
+                    OcrField("documentNumber", "Document Number", required = true)
+                )
+            )
+            PhotoCaptureManager.instance.capturePhoto(config) { result ->
+                handlePhotoResult(result)
+            }
+        }
     }
 
     private fun handlePhotoResult(result: PhotoCaptureResult) {
@@ -218,6 +273,18 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                         appendLine("OCR data:")
                         result.ocrData.forEach { (key, value) ->
                             appendLine("  $key: $value")
+                        }
+                    }
+
+                    result.faceMesh?.let { mesh ->
+                        appendLine()
+                        if (mesh.points.isEmpty()) {
+                            appendLine("Face mesh: no face found")
+                        } else {
+                            appendLine("Face mesh: ${mesh.points.size} points")
+                            mesh.boundingBox?.let { box ->
+                                appendLine("  Box: ${box.left.toInt()}, ${box.top.toInt()} - ${box.right.toInt()}, ${box.bottom.toInt()}")
+                            }
                         }
                     }
 

@@ -25,9 +25,15 @@ import android.os.Looper
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import `in`.fivedegree.volineui.camera.VolineCameraActivity
+import `in`.fivedegree.volineui.camera.detectFaceMesh
 import `in`.fivedegree.volineui.locationmanager.LocationResult
+import `in`.fivedegree.volineui.photocapturemanager.CaptureGuide
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureException
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureResult
@@ -111,6 +117,10 @@ class PhotoCaptureManager private constructor(
     // capture must not leave the app for a system camera app.
     private var cameraActivityLauncher: ActivityResultLauncher<Intent>? = null
     private var galleryLauncher: ActivityResultLauncher<String>? = null
+    // Launcher for Google's document-scanner UI (DOCUMENT captures).
+    // The scanner owns its own capture screens; this launcher only
+    // receives the cleaned page it returns.
+    private var documentScannerLauncher: ActivityResultLauncher<IntentSenderRequest>? = null
 
     // Callbacks for capture operations
     private var currentCallback: ((PhotoCaptureResult) -> Unit)? = null
@@ -159,6 +169,7 @@ class PhotoCaptureManager private constructor(
                     currentActivityRef = null
                     cameraActivityLauncher = null
                     galleryLauncher = null
+                    documentScannerLauncher = null
                 }
             }
         })
@@ -178,6 +189,24 @@ class PhotoCaptureManager private constructor(
             val config = currentConfig ?: PhotoCaptureConfig()
             val callback = currentCallback
             when {
+                result.resultCode == VolineCameraActivity.RESULT_RETAKE -> {
+                    // Confirm-mode Retake: the photo came from
+                    // elsewhere (today, only the document scanner),
+                    // so produce a fresh one and confirm again.
+                    // Anything else reaching here is treated as a
+                    // cancellation; the callback/config stay alive
+                    // for the relaunch, and are only cleared on a
+                    // terminal result below.
+                    if (config.captureGuide == CaptureGuide.DOCUMENT && callback != null) {
+                        cleanupTempFiles()
+                        launchDocumentScanner(config, callback)
+                    } else {
+                        callback?.invoke(PhotoCaptureResult.Cancelled)
+                        cleanupTempFiles()
+                        currentCallback = null
+                        currentConfig = null
+                    }
+                }
                 result.resultCode == Activity.RESULT_OK && file != null && file.exists() -> {
                     // Notify processing started, then reuse the existing
                     // pipeline: EXIF rotation, watermark, compression, and
@@ -212,6 +241,89 @@ class PhotoCaptureManager private constructor(
             }
         }
         
+        // Document-scanner launcher. The scanner returns cleaned
+        // page images; the first page becomes the photo to confirm,
+        // via the same tempCameraFile mechanism as a camera capture
+        // so the camera-activity result handler -- and its cleanup --
+        // treats it exactly like one. A user cancellation is a
+        // cancellation, not an error; anything else is an error.
+        documentScannerLauncher = activity.registerForActivityResult(
+            ActivityResultContracts.StartIntentSenderForResult()
+        ) { result ->
+            val config = currentConfig ?: PhotoCaptureConfig()
+            val callback = currentCallback
+            when {
+                result.resultCode == Activity.RESULT_OK -> {
+                    val scanningResult = result.data?.let {
+                        GmsDocumentScanningResult.fromActivityResultIntent(it)
+                    }
+                    val pageUri = scanningResult?.pages?.firstOrNull()?.imageUri
+                    if (pageUri == null) {
+                        callback?.invoke(
+                            PhotoCaptureResult.Error(
+                                PhotoCaptureException(PhotoCaptureException.ERROR_IMAGE_PROCESSING_FAILED),
+                                "Document scan returned no pages."
+                            )
+                        )
+                        cleanupTempFiles()
+                        currentCallback = null
+                        currentConfig = null
+                    } else {
+                        try {
+                            val tempFile = copyUriToTempFile(pageUri)
+                            tempCameraFile = tempFile
+                            val launcher = cameraActivityLauncher
+                            if (launcher == null) {
+                                callback?.invoke(
+                                    PhotoCaptureResult.Error(
+                                        PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                                        "Camera is not ready. Please try again."
+                                    )
+                                )
+                                cleanupTempFiles()
+                                currentCallback = null
+                                currentConfig = null
+                            } else {
+                                val intent = Intent(activity, VolineCameraActivity::class.java).apply {
+                                    putExtra(VolineCameraActivity.EXTRA_CONFIRM_PATH, tempFile.absolutePath)
+                                    putOcrFieldExtras(config)
+                                    putCameraOptionExtras(config)
+                                }
+                                launcher.launch(intent)
+                            }
+                        } catch (e: Exception) {
+                            callback?.invoke(
+                                PhotoCaptureResult.Error(
+                                    PhotoCaptureException(PhotoCaptureException.ERROR_IMAGE_PROCESSING_FAILED),
+                                    "Failed to read the scanned document."
+                                )
+                            )
+                            cleanupTempFiles()
+                            currentCallback = null
+                            currentConfig = null
+                        }
+                    }
+                }
+                result.resultCode == Activity.RESULT_CANCELED -> {
+                    callback?.invoke(PhotoCaptureResult.Cancelled)
+                    cleanupTempFiles()
+                    currentCallback = null
+                    currentConfig = null
+                }
+                else -> {
+                    callback?.invoke(
+                        PhotoCaptureResult.Error(
+                            PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                            "Document scanner failed."
+                        )
+                    )
+                    cleanupTempFiles()
+                    currentCallback = null
+                    currentConfig = null
+                }
+            }
+        }
+
         // Gallery picker launcher
         galleryLauncher = activity.registerForActivityResult(
             ActivityResultContracts.GetContent()
@@ -286,7 +398,17 @@ class PhotoCaptureManager private constructor(
         // Ensure we have an active activity
         val activity = currentActivityRef?.get()
             ?: throw PhotoCaptureException(PhotoCaptureException.ERROR_ACTIVITY_DESTROYED)
-        
+
+        // Document captures use Google's scanner UI, which needs no
+        // camera permission from this app (Play services holds its
+        // own), so they skip the camera-permission gate. The location
+        // gates below still apply when a watermark with location was
+        // requested, and launchCapture routes to the scanner.
+        if (config.captureGuide == CaptureGuide.DOCUMENT) {
+            checkLocationRequirementsAndLaunchCamera(config, callback)
+            return
+        }
+
         // Step 1: Check camera permission
         if (!PermissionManager.instance.isCameraPermissionGranted) {
             PermissionManager.instance.requestCameraPermission { result ->
@@ -358,7 +480,7 @@ class PhotoCaptureManager private constructor(
             checkLocationServicesAndLaunchCamera(config, callback)
         } else {
             // No watermark or watermark without location
-            launchInAppCamera(config, callback)
+            launchCapture(config, callback)
         }
     }
     
@@ -393,9 +515,84 @@ class PhotoCaptureManager private constructor(
             return
         }
         
-        launchInAppCamera(config, callback)
+        launchCapture(config, callback)
     }
-    
+
+    /**
+     * Route a capture to the right capture surface: Google's
+     * document-scanner UI for DOCUMENT, this library's in-app camera
+     * for everything else (including the PERSON guide, which lives
+     * inside that camera screen).
+     */
+    private fun launchCapture(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
+        if (config.captureGuide == CaptureGuide.DOCUMENT) {
+            launchDocumentScanner(config, callback)
+        } else {
+            launchInAppCamera(config, callback)
+        }
+    }
+
+    /**
+     * Launch Google's document-scanner UI for a DOCUMENT capture.
+     * Single page, gallery import off (the host asked for a camera
+     * capture), JPEG only (the PDF is never used here), FULL mode
+     * for the ML cleaning the design shows (crop, filters, shadow
+     * and stain removal). Play services downloads the scanner on
+     * first use; a missing Play services or a failed launch is an
+     * Error, never a silent fallback to an unscanned photo.
+     */
+    private fun launchDocumentScanner(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
+        try {
+            val activity = currentActivityRef?.get() ?: return
+            val launcher = documentScannerLauncher ?: run {
+                callback(
+                    PhotoCaptureResult.Error(
+                        PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                        "Document scanner is not ready. Please try again."
+                    )
+                )
+                return
+            }
+            currentCallback = callback
+            currentConfig = config
+            val options = GmsDocumentScannerOptions.Builder()
+                .setGalleryImportAllowed(false)
+                .setPageLimit(1)
+                .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
+                .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+                .build()
+            // getStartScanIntent is a Task, not a direct return: the
+            // scanner may still need to download before it can hand
+            // over an IntentSender, so the launch waits for it.
+            GmsDocumentScanning.getClient(options)
+                .getStartScanIntent(activity)
+                .addOnSuccessListener { intentSender ->
+                    launcher.launch(IntentSenderRequest.Builder(intentSender).build())
+                }
+                .addOnFailureListener {
+                    callback(
+                        PhotoCaptureResult.Error(
+                            PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                            "Document scanner is not available on this device."
+                        )
+                    )
+                    cleanupTempFiles()
+                    currentCallback = null
+                    currentConfig = null
+                }
+        } catch (e: Exception) {
+            callback(
+                PhotoCaptureResult.Error(
+                    PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                    "Document scanner is not available on this device."
+                )
+            )
+            cleanupTempFiles()
+            currentCallback = null
+            currentConfig = null
+        }
+    }
+
     /**
      * Show dialog for permanently denied permissions
      */
@@ -502,12 +699,14 @@ class PhotoCaptureManager private constructor(
 
     /**
      * Attach a config's camera options to a camera-activity intent:
-     * the host's aspect choice and front-camera permission. Sent on
-     * both launch paths so the activity never has to guess.
+     * the host's aspect choice, front-camera permission, and capture
+     * guide. Sent on every camera-activity launch path so the
+     * activity never has to guess.
      */
     private fun Intent.putCameraOptionExtras(config: PhotoCaptureConfig): Intent {
         putExtra(VolineCameraActivity.EXTRA_ASPECT_RATIO, config.aspectRatio.name)
         putExtra(VolineCameraActivity.EXTRA_ALLOW_FRONT_CAMERA, config.allowFrontCamera)
+        putExtra(VolineCameraActivity.EXTRA_CAPTURE_GUIDE, config.captureGuide.name)
         return this
     }
 
@@ -568,9 +767,20 @@ class PhotoCaptureManager private constructor(
                 if (config.saveToGallery) {
                     saveToGallery(bitmap, "IMG_$timestamp", config.galleryFolder)
                 }
-                
+
+                // Step 6: Face mesh for person captures, on the
+                // finished bitmap so the points line up with the
+                // exact delivered bytes. A mesh failure never fails
+                // the capture -- detectFaceMesh returns an empty
+                // mesh instead, and the host decides what that means.
+                val faceMesh = if (config.captureGuide == CaptureGuide.PERSON) {
+                    detectFaceMesh(bitmap)
+                } else {
+                    null
+                }
+
                 val fileSizeKB = (finalFile.length() / 1024).toInt()
-                
+
                 // Return success result on main thread
                 mainHandler.post {
                     callback?.invoke(
@@ -582,7 +792,8 @@ class PhotoCaptureManager private constructor(
                             location = location,
                             timestamp = timestamp,
                             hasWatermark = config.watermarkText != null,
-                            ocrData = ocrData
+                            ocrData = ocrData,
+                            faceMesh = faceMesh
                         )
                     )
                 }

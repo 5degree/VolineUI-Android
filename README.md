@@ -334,6 +334,40 @@ by the photo's EXIF orientation, so it matches the returned photo.
 Front-camera photos are saved as captured (not mirrored to match the
 preview).
 
+### Capture guides (photo capture)
+
+A host that wants a guided capture sets `captureGuide` in the config
+(default `NONE`, today's behaviour). `PERSON` draws a person-shaped
+outline over the live preview with a dimmed surround: the outline is
+green and the shutter enabled while a person is framed inside it, red
+and the shutter disabled otherwise (live selfie segmentation, ML Kit,
+on-device, no network). After the user taps Use photo, face-mesh
+detection runs on the finished photo and the result carries it in
+addition to everything else: `Success.faceMesh` holds 468 points plus
+a bounding box, in the delivered photo's pixel space, as plain data
+the host can send to a server as JSON. If no usable face is found,
+the photo is still returned with an empty mesh — that never fails
+the capture. `DOCUMENT` launches Google's document-scanner UI instead
+of this camera screen (single page, gallery import off, full cleaning:
+crop, filters, shadow and stain removal); the cleaned page comes back
+into the confirmation screen, then the OCR step if fields were given,
+and the cleaned image is the returned photo. Note the scanner is
+Play-services-based, unlike the bundled segmentation and face-mesh
+models: it downloads on first use and cannot work on devices without
+Play services, where it reports an Error. Both ML Kit guide models
+are still beta, and add roughly 4.5 MB (segmentation) and 6.4 MB
+(face mesh) to the app.
+
+```kotlin
+val personConfig = PhotoCaptureConfig(captureGuide = CaptureGuide.PERSON)
+val documentConfig = PhotoCaptureConfig(captureGuide = CaptureGuide.DOCUMENT)
+PhotoCaptureManager.instance.capturePhoto(personConfig) { result ->
+    if (result is PhotoCaptureResult.Success) {
+        println(result.faceMesh) // 468 points + box, or empty when no face
+    }
+}
+```
+
 ### Document OCR (photo capture)
 
 A host that wants data read off a document photo passes the fields it
