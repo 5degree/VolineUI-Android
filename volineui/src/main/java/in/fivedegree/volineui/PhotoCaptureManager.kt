@@ -544,7 +544,9 @@ class PhotoCaptureManager private constructor(
     private fun launchDocumentScanner(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
         try {
             val activity = currentActivityRef?.get() ?: return
-            val launcher = documentScannerLauncher ?: run {
+            // Fail fast if no launcher is registered yet; the actual
+            // launch re-resolves it in onSuccess (see below).
+            if (documentScannerLauncher == null) {
                 callback(
                     PhotoCaptureResult.Error(
                         PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
@@ -563,11 +565,44 @@ class PhotoCaptureManager private constructor(
                 .build()
             // getStartScanIntent is a Task, not a direct return: the
             // scanner may still need to download before it can hand
-            // over an IntentSender, so the launch waits for it.
+            // over an IntentSender, so the launch waits for it. The
+            // launcher is deliberately NOT captured here: while the
+            // Task is pending, the host activity can be recreated
+            // (rotation during a first-use download is the classic
+            // case), and a launcher captured from the old instance
+            // throws IllegalStateException on launch. Resolving it
+            // fresh inside onSuccess uses the current activity's
+            // launcher, and the try/catch turns a still-racing
+            // teardown into an Error instead of a crash.
             GmsDocumentScanning.getClient(options)
                 .getStartScanIntent(activity)
                 .addOnSuccessListener { intentSender ->
-                    launcher.launch(IntentSenderRequest.Builder(intentSender).build())
+                    val currentLauncher = documentScannerLauncher
+                    if (currentLauncher == null) {
+                        callback(
+                            PhotoCaptureResult.Error(
+                                PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                                "Document scanner is not ready. Please try again."
+                            )
+                        )
+                        cleanupTempFiles()
+                        currentCallback = null
+                        currentConfig = null
+                    } else {
+                        try {
+                            currentLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
+                        } catch (e: IllegalStateException) {
+                            callback(
+                                PhotoCaptureResult.Error(
+                                    PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                                    "Document scanner is not ready. Please try again."
+                                )
+                            )
+                            cleanupTempFiles()
+                            currentCallback = null
+                            currentConfig = null
+                        }
+                    }
                 }
                 .addOnFailureListener {
                     callback(

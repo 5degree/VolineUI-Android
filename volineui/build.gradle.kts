@@ -151,9 +151,15 @@ dependencies {
 
     // ML Kit face mesh detection (bundled, ~6.4 MB) for the person
     // capture result: 468 3D points plus a bounding box for the face
-    // in the finished photo. Bundled, no network. Still beta
-    // (16.0.0-beta1). It reports no head pose -- only points and box.
-    implementation("com.google.mlkit:face-mesh-detection:16.0.0-beta1")
+    // in the finished photo. Bundled, no network. Still beta.
+    // Beta3, not beta1: beta1 was compiled against
+    // mediapipe-internal beta8, but Gradle resolves beta10 (pulled
+    // in by segmentation-selfie beta6), whose MediaPipeGraphRunner
+    // .create signature changed -- and face mesh crashed on device
+    // with NoSuchMethodError. Beta3 is built against the newer
+    // mediapipe, so the two guides share one compatible version.
+    // It reports no head pose -- only points and box.
+    implementation("com.google.mlkit:face-mesh-detection:16.0.0-beta3")
 
     // ML Kit document scanner (Play-services only) for the document
     // capture guide. This is a small stub (~300 KB); the scanner UI,
