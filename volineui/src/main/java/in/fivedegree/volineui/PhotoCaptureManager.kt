@@ -23,6 +23,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
@@ -44,6 +45,7 @@ import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.WeakHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -115,12 +117,33 @@ class PhotoCaptureManager private constructor(
     // Launcher for the library-owned in-app camera activity. It is separate
     // from the gallery launcher and is never a TakePicture launcher: photo
     // capture must not leave the app for a system camera app.
-    private var cameraActivityLauncher: ActivityResultLauncher<Intent>? = null
-    private var galleryLauncher: ActivityResultLauncher<String>? = null
-    // Launcher for Google's document-scanner UI (DOCUMENT captures).
-    // The scanner owns its own capture screens; this launcher only
-    // receives the cleaned page it returns.
-    private var documentScannerLauncher: ActivityResultLauncher<IntentSenderRequest>? = null
+    /**
+     * One host activity's result launchers. Launchers are bound to
+     * the activity that registered them, so they are kept per
+     * activity, not as a single shared set: a shared set breaks the
+     * moment the host is recreated -- the new instance's
+     * registration overwrites the fields, and the old instance's
+     * destruction then clears them, leaving the live activity with
+     * no launchers at all (the "not ready" failure). With a
+     * per-activity map, destroying one instance only ever removes
+     * its own entry. Keys are weak so a destroyed activity's entry
+     * cannot leak; destruction also removes it explicitly.
+     * The scanner launcher only receives the cleaned page the
+     * scanner returns; the scanner owns its own capture screens.
+     */
+    private class ActivityLaunchers(
+        val camera: ActivityResultLauncher<Intent>,
+        val scanner: ActivityResultLauncher<IntentSenderRequest>,
+        val gallery: ActivityResultLauncher<String>
+    )
+
+    private val launchersByActivity = WeakHashMap<ComponentActivity, ActivityLaunchers>()
+
+    /** The current activity and its launchers, or null if it has none. */
+    private fun currentLaunchers(): Pair<ComponentActivity, ActivityLaunchers>? {
+        val activity = currentActivityRef?.get() ?: return null
+        return launchersByActivity[activity]?.let { activity to it }
+    }
 
     // Callbacks for capture operations
     private var currentCallback: ((PhotoCaptureResult) -> Unit)? = null
@@ -165,11 +188,13 @@ class PhotoCaptureManager private constructor(
 
             override fun onActivityDestroyed(activity: Activity) {
                 if (activity is VolineCameraActivity) return
+                // Only this instance's entry goes: another activity's
+                // launchers must survive this destruction untouched.
+                if (activity is ComponentActivity) {
+                    launchersByActivity.remove(activity)
+                }
                 if (currentActivityRef?.get() == activity) {
                     currentActivityRef = null
-                    cameraActivityLauncher = null
-                    galleryLauncher = null
-                    documentScannerLauncher = null
                 }
             }
         })
@@ -182,7 +207,7 @@ class PhotoCaptureManager private constructor(
         // In-app camera launcher. The camera activity writes directly to
         // tempCameraFile and returns RESULT_OK with that path; it never
         // launches a system camera app, so there is no TakePicture path here.
-        cameraActivityLauncher = activity.registerForActivityResult(
+        val cameraLauncher = activity.registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
             val file = tempCameraFile
@@ -247,7 +272,7 @@ class PhotoCaptureManager private constructor(
         // so the camera-activity result handler -- and its cleanup --
         // treats it exactly like one. A user cancellation is a
         // cancellation, not an error; anything else is an error.
-        documentScannerLauncher = activity.registerForActivityResult(
+        val scannerLauncher = activity.registerForActivityResult(
             ActivityResultContracts.StartIntentSenderForResult()
         ) { result ->
             val config = currentConfig ?: PhotoCaptureConfig()
@@ -272,8 +297,17 @@ class PhotoCaptureManager private constructor(
                         try {
                             val tempFile = copyUriToTempFile(pageUri)
                             tempCameraFile = tempFile
-                            val launcher = cameraActivityLauncher
-                            if (launcher == null) {
+                            // Resolve fresh: the activity that
+                            // registered this scanner launcher may
+                            // have been recreated since, and its
+                            // launcher is dead. The confirm screen
+                            // must launch from the live activity.
+                            val current = currentLaunchers()
+                            if (current == null) {
+                                Log.w(
+                                    "PhotoCaptureManager",
+                                    "Scanner result with no launchers for the current activity"
+                                )
                                 callback?.invoke(
                                     PhotoCaptureResult.Error(
                                         PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
@@ -284,12 +318,13 @@ class PhotoCaptureManager private constructor(
                                 currentCallback = null
                                 currentConfig = null
                             } else {
-                                val intent = Intent(activity, VolineCameraActivity::class.java).apply {
+                                val (currentActivity, launchers) = current
+                                val intent = Intent(currentActivity, VolineCameraActivity::class.java).apply {
                                     putExtra(VolineCameraActivity.EXTRA_CONFIRM_PATH, tempFile.absolutePath)
                                     putOcrFieldExtras(config)
                                     putCameraOptionExtras(config)
                                 }
-                                launcher.launch(intent)
+                                launchers.camera.launch(intent)
                             }
                         } catch (e: Exception) {
                             callback?.invoke(
@@ -325,7 +360,7 @@ class PhotoCaptureManager private constructor(
         }
 
         // Gallery picker launcher
-        galleryLauncher = activity.registerForActivityResult(
+        val galleryPickerLauncher = activity.registerForActivityResult(
             ActivityResultContracts.GetContent()
         ) { uri: Uri? ->
             if (uri != null) {
@@ -341,8 +376,15 @@ class PhotoCaptureManager private constructor(
                         // camera-activity result handler above -- and its
                         // cleanup -- treats it exactly like a capture.
                         tempCameraFile = tempFile
-                        val ocrLauncher = cameraActivityLauncher
-                        if (ocrLauncher == null) {
+                        // Resolve fresh, as in the scanner handler:
+                        // the registering activity may have been
+                        // recreated since this launcher was made.
+                        val current = currentLaunchers()
+                        if (current == null) {
+                            Log.w(
+                                "PhotoCaptureManager",
+                                "Gallery OCR with no launchers for the current activity"
+                            )
                             callback?.invoke(
                                 PhotoCaptureResult.Error(
                                     PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
@@ -353,12 +395,13 @@ class PhotoCaptureManager private constructor(
                             currentCallback = null
                             currentConfig = null
                         } else {
-                            val intent = Intent(activity, VolineCameraActivity::class.java).apply {
+                            val (currentActivity, launchers) = current
+                            val intent = Intent(currentActivity, VolineCameraActivity::class.java).apply {
                                 putExtra(VolineCameraActivity.EXTRA_INPUT_PATH, tempFile.absolutePath)
                                 putOcrFieldExtras(config)
                                 putCameraOptionExtras(config)
                             }
-                            ocrLauncher.launch(intent)
+                            launchers.camera.launch(intent)
                         }
                     } else {
                         // Notify processing started
@@ -382,8 +425,16 @@ class PhotoCaptureManager private constructor(
                 currentConfig = null
             }
         }
+
+        // This activity's entry: later activities get their own, and
+        // destroying one never touches another's.
+        launchersByActivity[activity] = ActivityLaunchers(
+            camera = cameraLauncher,
+            scanner = scannerLauncher,
+            gallery = galleryPickerLauncher
+        )
     }
-    
+
     /**
      * Capture photo using camera
      * 
@@ -543,10 +594,15 @@ class PhotoCaptureManager private constructor(
      */
     private fun launchDocumentScanner(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
         try {
-            val activity = currentActivityRef?.get() ?: return
-            // Fail fast if no launcher is registered yet; the actual
-            // launch re-resolves it in onSuccess (see below).
-            if (documentScannerLauncher == null) {
+            // Resolve from the current activity's own entry: a
+            // launcher from any other instance may be dead. A
+            // missing activity or entry is an Error, never a silent
+            // return that leaves the caller hanging.
+            val current = currentLaunchers() ?: run {
+                Log.w(
+                    "PhotoCaptureManager",
+                    "Document scanner launch with no launchers for the current activity"
+                )
                 callback(
                     PhotoCaptureResult.Error(
                         PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
@@ -555,6 +611,7 @@ class PhotoCaptureManager private constructor(
                 )
                 return
             }
+            val activity = current.first
             currentCallback = callback
             currentConfig = config
             val options = GmsDocumentScannerOptions.Builder()
@@ -577,8 +634,12 @@ class PhotoCaptureManager private constructor(
             GmsDocumentScanning.getClient(options)
                 .getStartScanIntent(activity)
                 .addOnSuccessListener { intentSender ->
-                    val currentLauncher = documentScannerLauncher
-                    if (currentLauncher == null) {
+                    val currentNow = currentLaunchers()
+                    if (currentNow == null) {
+                        Log.w(
+                            "PhotoCaptureManager",
+                            "Scanner intent ready but no launchers for the current activity"
+                        )
                         callback(
                             PhotoCaptureResult.Error(
                                 PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
@@ -590,7 +651,7 @@ class PhotoCaptureManager private constructor(
                         currentConfig = null
                     } else {
                         try {
-                            currentLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
+                            currentNow.second.scanner.launch(IntentSenderRequest.Builder(intentSender).build())
                         } catch (e: IllegalStateException) {
                             callback(
                                 PhotoCaptureResult.Error(
@@ -665,15 +726,20 @@ class PhotoCaptureManager private constructor(
      *
      * No external camera app is launched and no FileProvider URI is handed
      * to another app: the camera activity writes directly to a temporary
-     * file created here, and the result comes back through
-     * [cameraActivityLauncher]. If that launcher is not available (for
+     * file created here, and the result comes back through the current
+     * activity's camera launcher. If that launcher is not available (for
      * example, capture was requested before any host activity was created),
      * this reports an error instead of falling back to a system camera.
      */
     private fun launchInAppCamera(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
         try {
-            val activity = currentActivityRef?.get() ?: return
-            val launcher = cameraActivityLauncher ?: run {
+            // The current activity's own camera launcher; a missing
+            // activity or entry is an Error, never a silent return.
+            val current = currentLaunchers() ?: run {
+                Log.w(
+                    "PhotoCaptureManager",
+                    "Camera launch with no launchers for the current activity"
+                )
                 callback(
                     PhotoCaptureResult.Error(
                         PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
@@ -682,6 +748,7 @@ class PhotoCaptureManager private constructor(
                 )
                 return
             }
+            val (activity, launchers) = current
 
             // Create temp file for the in-app camera's output.
             tempCameraFile = createTempImageFile()
@@ -696,7 +763,7 @@ class PhotoCaptureManager private constructor(
                 putOcrFieldExtras(config)
                 putCameraOptionExtras(config)
             }
-            launcher.launch(intent)
+            launchers.camera.launch(intent)
         } catch (e: Exception) {
             callback(
                 PhotoCaptureResult.Error(
@@ -712,9 +779,24 @@ class PhotoCaptureManager private constructor(
      * Launch gallery picker
      */
     private fun launchGalleryPicker(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
+        // Same per-activity resolution: previously a missing
+        // launcher silently did nothing here.
+        val launchers = currentLaunchers()?.second ?: run {
+            Log.w(
+                "PhotoCaptureManager",
+                "Gallery launch with no launchers for the current activity"
+            )
+            callback(
+                PhotoCaptureResult.Error(
+                    PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
+                    "Photo picker is not ready. Please try again."
+                )
+            )
+            return
+        }
         currentCallback = callback
         currentConfig = config
-        galleryLauncher?.launch("image/*")
+        launchers.gallery.launch("image/*")
     }
     
     /**
