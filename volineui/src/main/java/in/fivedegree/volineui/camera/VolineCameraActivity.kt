@@ -43,6 +43,14 @@ import java.io.File
  * in this mode: without fields there is nothing to collect, so a
  * missing or malformed field set finishes with [RESULT_ERROR].
  *
+ * Camera options: the caller passes the host's aspect choice via
+ * [EXTRA_ASPECT_RATIO] (a PhotoCaptureConfig AspectRatio name) and
+ * front-camera permission via [EXTRA_ALLOW_FRONT_CAMERA]. A locked
+ * ratio fixes the camera and hides the aspect pill; NONE leaves the
+ * pill up for session-only switching. An absent or unknown ratio
+ * extra locks to 4:3, matching the config's default, so an older
+ * caller that sends no extra still gets the default behaviour.
+ *
  * Theme: no theme is set on this activity in the library manifest, so it
  * inherits the host application's theme. The Compose colour scheme below is
  * derived from the host theme's colour attributes where they resolve
@@ -60,6 +68,8 @@ class VolineCameraActivity : ComponentActivity() {
         val outputPath = intent.getStringExtra(EXTRA_OUTPUT_PATH)
         val inputPath = intent.getStringExtra(EXTRA_INPUT_PATH)
         val (ocrFields, ocrFieldsMalformed) = readOcrFields(intent)
+        val fixedAspect = readFixedAspect(intent)
+        val allowFrontCamera = intent.getBooleanExtra(EXTRA_ALLOW_FRONT_CAMERA, false)
         if (inputPath != null) {
             // OCR-only mode (gallery photo): fields are mandatory here.
             if (ocrFieldsMalformed || ocrFields.isEmpty()) {
@@ -112,6 +122,8 @@ class VolineCameraActivity : ComponentActivity() {
                     },
                     ocrFields = ocrFields,
                     inputFile = ocrInputFile,
+                    fixedAspect = fixedAspect,
+                    allowFrontCamera = allowFrontCamera,
                     onOcrDone = { file, ocrData ->
                         Log.d(TAG, "VolineCamera finishing with RESULT_OK (OCR Done, ${ocrData.size} fields)")
                         setResult(
@@ -138,6 +150,19 @@ class VolineCameraActivity : ComponentActivity() {
                     }
                 )
             }
+        }
+    }
+
+    /**
+     * Translate the host's aspect choice into the ratio the camera
+     * locks to, or null for NONE (user switching). Absent or unknown
+     * values lock to 4:3, the config's default.
+     */
+    private fun readFixedAspect(intent: Intent): CameraAspect? {
+        return when (intent.getStringExtra(EXTRA_ASPECT_RATIO)) {
+            "RATIO_16_9" -> CameraAspect.SIXTEEN_NINE
+            "NONE" -> null
+            else -> CameraAspect.FOUR_THREE
         }
     }
 
@@ -221,6 +246,12 @@ class VolineCameraActivity : ComponentActivity() {
 
         /** Absolute path of an existing photo to run the OCR step on (gallery mode). */
         const val EXTRA_INPUT_PATH = "voline_camera_input_path"
+
+        /** Host aspect choice: a PhotoCaptureConfig AspectRatio name. */
+        const val EXTRA_ASPECT_RATIO = "voline_camera_aspect_ratio"
+
+        /** Whether the host allows switching to the front camera. */
+        const val EXTRA_ALLOW_FRONT_CAMERA = "voline_camera_allow_front_camera"
 
         /** Human-readable error message, present only with [RESULT_ERROR]. */
         const val EXTRA_ERROR_MESSAGE = "voline_camera_error_message"

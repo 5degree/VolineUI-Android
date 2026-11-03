@@ -21,6 +21,16 @@ package `in`.fivedegree.volineui.photocapturemanager
  *   user tap words on the photo for each field, and the collected values
  *   come back in [PhotoCaptureResult.Success.ocrData]. This also applies
  *   to gallery picks, which open the OCR step on the picked photo.
+ * @property aspectRatio Aspect ratio the camera captures at. A locked
+ *   value (the default, [AspectRatio.RATIO_4_3]) fixes the camera for
+ *   the whole capture and hides the aspect-ratio pill, so the user
+ *   cannot change it. [AspectRatio.NONE] leaves the pill up and the
+ *   user may switch between 4:3 and 16:9 for that capture only -- the
+ *   choice is deliberately not remembered anywhere.
+ * @property allowFrontCamera If true, the user may switch to the front
+ *   camera when the device has one; the camera still opens on the back
+ *   camera. If false (the default), the switch-camera button is hidden
+ *   and the capture stays on the back camera.
  */
 data class PhotoCaptureConfig(
     val watermarkText: String? = null,
@@ -31,8 +41,22 @@ data class PhotoCaptureConfig(
     val saveToGallery: Boolean = true,
     val galleryFolder: String = "VolineUI",
     val watermarkPosition: WatermarkPosition = WatermarkPosition.BOTTOM_LEFT,
-    val ocrFields: List<OcrField> = emptyList()
+    val ocrFields: List<OcrField> = emptyList(),
+    val aspectRatio: AspectRatio = AspectRatio.RATIO_4_3,
+    val allowFrontCamera: Boolean = false
 ) {
+    /**
+     * Aspect ratio the host wants the camera locked to. CameraX only
+     * offers 4:3 and 16:9 as target ratios, so those are the only locked
+     * values; 1:1 is deliberately not offered. NONE means "no lock":
+     * the user picks 4:3 or 16:9 from the pill during the capture.
+     */
+    enum class AspectRatio {
+        RATIO_4_3,
+        RATIO_16_9,
+        NONE
+    }
+
     /**
      * Watermark position on the image
      */

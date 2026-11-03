@@ -104,7 +104,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
-import androidx.core.content.edit
 import androidx.lifecycle.compose.LocalLifecycleOwner
 
 /**
@@ -116,15 +115,18 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
  * switch-camera on either side, tap-to-focus, pinch-to-zoom, an
  * iPhone-style ruler zoom control driven by the bound camera's own
  * zoom range (swipe left to zoom in, right to zoom out), an
- * aspect-ratio switch (4:3 / 16:9, persisted across opens), and a
- * Retake / Use photo review step with plain text buttons. It never
- * launches an external camera app.
+ * aspect-ratio switch (4:3 / 16:9) shown only when the host did not
+ * lock the ratio, and a Retake / Use photo review step with plain
+ * text buttons. It never launches an external camera app.
  *
- * Defaults: back camera, flash off. The lens is deliberately not
- * persisted (unlike the aspect ratio), so every fresh camera open
- * starts on the back camera even if a previous open-ended on front;
- * rememberSaveable only preserves the lens across recreation of the
- * same open, e.g. a rotation.
+ * Defaults: back camera, flash off, aspect ratio locked to 4:3. The
+ * host drives both the aspect ratio and front-camera availability
+ * through the config: a locked ratio hides the aspect pill, NONE
+ * leaves switching to the user for that capture only (nothing is
+ * remembered), and front camera is off unless the host allows it.
+ * Every fresh camera open starts on the back camera; rememberSaveable
+ * only preserves the lens across recreation of the same open, e.g.
+ * a rotation.
  *
  * Front-camera mirroring (the "recommended" behaviour): CameraX mirrors the
  * front-camera preview so it feels like a mirror, but the saved file is
@@ -161,6 +163,13 @@ internal fun CameraScreen(
 	ocrFields: List<OcrField> = emptyList(),
 	inputFile: File? = null,
 	onOcrDone: (File, Map<String, String>) -> Unit = { _, _ -> },
+	// Host-driven camera options. fixedAspect != null locks the camera
+	// to that ratio for the whole capture and hides the aspect pill;
+	// null means the user may switch 4:3 / 16:9 for this session only.
+	// allowFrontCamera = false hides the switch-camera button and
+	// keeps the capture on the back camera.
+	fixedAspect: CameraAspect? = null,
+	allowFrontCamera: Boolean = false,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -183,12 +192,15 @@ internal fun CameraScreen(
     var focusPoint by remember { mutableStateOf<Offset?>(null) }
     var focusVisible by remember { mutableStateOf(false) }
 
-    // Aspect ratio, remembered across camera opens in SharedPreferences
-    // (rememberSavable alone only survives recreation of this activity).
-    // CameraX only offers 4:3 and 16:9 target ratios, so those are the
-    // only options offered; anything else would silently fall back.
-    var aspect by remember { mutableStateOf(loadCameraAspect(context)) }
-    LaunchedEffect(aspect) { saveCameraAspect(context, aspect) }
+    // Aspect ratio, host-driven and deliberately not remembered: a
+    // locked value fixes the camera for this capture, and NONE (null
+    // here) starts at 4:3 with the pill up for switching during this
+    // session only. The previous SharedPreferences persistence was
+    // removed, so one host's capture can no longer change the next
+    // host's starting ratio. CameraX only offers 4:3 and 16:9 target
+    // ratios, so those are the only options; anything else would
+    // silently fall back.
+    var aspect by remember { mutableStateOf(fixedAspect ?: CameraAspect.FOUR_THREE) }
 
     // Zoom range, read from the bound camera (never hardcoded): some
     // devices have a fixed lens (max == min) and then the ruler hides.
@@ -346,7 +358,16 @@ internal fun CameraScreen(
             provider = withContext(Dispatchers.IO) {
                 ProcessCameraProvider.getInstance(context).get()
             }
-            val selector = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
+            // Front camera is host-gated: when the host did not allow
+            // it, the back camera binds even if the lens state somehow
+            // says front, so a disallowed front capture is impossible
+            // rather than merely hidden behind a missing button.
+            val effectiveLensFacing = if (allowFrontCamera) {
+                lensFacing
+            } else {
+                CameraSelector.LENS_FACING_BACK
+            }
+            val selector = if (effectiveLensFacing == CameraSelector.LENS_FACING_FRONT) {
                 CameraSelector.DEFAULT_FRONT_CAMERA
             } else {
                 CameraSelector.DEFAULT_BACK_CAMERA
@@ -789,29 +810,34 @@ internal fun CameraScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Aspect ratio pill: tap cycles 4:3 -> 16:9.
+                        // Hidden when the host locked the ratio; the
+                        // outer weighted Box stays so the shutter
+                        // remains centred either way.
                         Box(
                             modifier = Modifier.weight(1f),
                             contentAlignment = Alignment.CenterStart
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        Color.Black.copy(alpha = 0.4f),
-                                        RoundedCornerShape(24.dp)
+                            if (fixedAspect == null) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            Color.Black.copy(alpha = 0.4f),
+                                            RoundedCornerShape(24.dp)
+                                        )
+                                        .clickable(
+                                            role = Role.Button,
+                                            onClickLabel = "Change aspect ratio"
+                                        ) { aspect = aspect.next() }
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = aspect.label,
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
                                     )
-                                    .clickable(
-                                        role = Role.Button,
-                                        onClickLabel = "Change aspect ratio"
-                                    ) { aspect = aspect.next() }
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = aspect.label,
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                }
                             }
                         }
                         Box(
@@ -838,7 +864,7 @@ internal fun CameraScreen(
                             modifier = Modifier.weight(1f),
                             contentAlignment = Alignment.CenterEnd
                         ) {
-                            if (hasFrontCamera && hasBackCamera) {
+                            if (allowFrontCamera && hasFrontCamera && hasBackCamera) {
                                 IconButton(
                                     onClick = {
                                         lensFacing = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
@@ -945,28 +971,14 @@ internal fun CameraScreen(
  * Aspect ratios CameraX actually supports as target ratios. 1:1 is not
  * one of them, so it is not offered: offering it would silently fall
  * back to one of these and mislead the user about the captured photo.
+ * Internal so [VolineCameraActivity] can translate the host config's
+ * aspect choice into the ratio the camera binds with.
  */
-private enum class CameraAspect(val label: String, val cameraRatio: Int) {
+internal enum class CameraAspect(val label: String, val cameraRatio: Int) {
     FOUR_THREE("4:3", AspectRatio.RATIO_4_3),
     SIXTEEN_NINE("16:9", AspectRatio.RATIO_16_9);
 
     fun next(): CameraAspect = if (this == FOUR_THREE) SIXTEEN_NINE else FOUR_THREE
-}
-
-private const val CAMERA_PREFS_NAME = "voline_camera"
-private const val CAMERA_PREFS_ASPECT = "aspect_ratio"
-
-private fun loadCameraAspect(context: Context): CameraAspect {
-    val stored = context.getSharedPreferences(CAMERA_PREFS_NAME, Context.MODE_PRIVATE)
-        .getInt(CAMERA_PREFS_ASPECT, 0)
-    return if (stored == 1) CameraAspect.SIXTEEN_NINE else CameraAspect.FOUR_THREE
-}
-
-private fun saveCameraAspect(context: Context, aspect: CameraAspect) {
-    context.getSharedPreferences(CAMERA_PREFS_NAME, Context.MODE_PRIVATE)
-        .edit {
-	        putInt(CAMERA_PREFS_ASPECT, if (aspect == CameraAspect.SIXTEEN_NINE) 1 else 0)
-        }
 }
 
 /**

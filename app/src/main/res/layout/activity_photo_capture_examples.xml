@@ -90,6 +90,30 @@
             android:textAllCaps="false"
             android:layout_marginBottom="16dp" />
 
+        <Button
+            android:id="@+id/btnCaptureLocked169"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📐 Capture (16:9 locked)"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnCaptureFreeAspect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📐 Capture (free aspect ratio)"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnCaptureFrontAllowed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🤳 Capture (front camera allowed)"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp" />
+
         <!-- Photo Preview Section -->
         <TextView
             android:layout_width="match_parent"

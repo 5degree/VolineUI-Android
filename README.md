@@ -319,11 +319,17 @@ not launch a system camera app, and there is no fallback to one: if the
 in-app camera cannot start, `capturePhoto` reports an `Error`. The camera
 screen inherits the host app's Material theme for its controls, and offers
 a preview sized to the selected aspect ratio, back camera and flash off
-by default, front/back switching, flash, tap-to-focus, pinch-to-zoom,
-an iPhone-style ruler zoom control whose range comes from the camera
-itself (swipe left to zoom in, right to zoom out), an aspect-ratio
-switch (4:3 / 16:9, remembered between camera opens), and a Retake /
-Use photo review step with text buttons. The review image is rotated
+by default, flash, tap-to-focus, pinch-to-zoom, an iPhone-style ruler
+zoom control whose range comes from the camera itself (swipe left to
+zoom in, right to zoom out), and a Retake / Use photo review step
+with text buttons. The aspect ratio and the front camera are
+host-driven through `PhotoCaptureConfig`: `aspectRatio` defaults to
+a locked 4:3 (the aspect pill is hidden, so the user cannot change
+it); `AspectRatio.NONE` shows the pill and lets the user switch
+4:3 / 16:9 for that capture only, nothing is remembered; and
+`allowFrontCamera` (default false) hides the switch-camera button
+and keeps the capture on the back camera, while true shows the
+button on devices that have a front camera. The review image is rotated
 by the photo's EXIF orientation, so it matches the returned photo.
 Front-camera photos are saved as captured (not mirrored to match the
 preview).

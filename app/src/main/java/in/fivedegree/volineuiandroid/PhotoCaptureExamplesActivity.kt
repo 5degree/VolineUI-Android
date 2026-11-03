@@ -30,6 +30,9 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
     private lateinit var btnPickFromGallery: Button
     private lateinit var btnCaptureOcr: Button
     private lateinit var btnPickOcrFromGallery: Button
+    private lateinit var btnCaptureLocked169: Button
+    private lateinit var btnCaptureFreeAspect: Button
+    private lateinit var btnCaptureFrontAllowed: Button
 
     private lateinit var ivPhoto: ImageView
     private lateinit var tvMetadata: TextView
@@ -51,6 +54,9 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
         btnPickFromGallery = findViewById(R.id.btnPickFromGallery)
         btnCaptureOcr = findViewById(R.id.btnCaptureOcr)
         btnPickOcrFromGallery = findViewById(R.id.btnPickOcrFromGallery)
+        btnCaptureLocked169 = findViewById(R.id.btnCaptureLocked169)
+        btnCaptureFreeAspect = findViewById(R.id.btnCaptureFreeAspect)
+        btnCaptureFrontAllowed = findViewById(R.id.btnCaptureFrontAllowed)
 
         ivPhoto = findViewById(R.id.ivPhoto)
         tvMetadata = findViewById(R.id.tvMetadata)
@@ -139,6 +145,46 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                 )
             )
             PhotoCaptureManager.instance.pickPhotoFromGallery(config) { result ->
+                handlePhotoResult(result)
+            }
+        }
+
+        // Capture locked to 16:9: the aspect pill is hidden and the
+        // user cannot change the ratio for this capture.
+        btnCaptureLocked169.setOnClickListener {
+            val config = PhotoCaptureConfig(
+                watermarkText = null,
+                targetFileSizeKB = 200,
+                aspectRatio = PhotoCaptureConfig.AspectRatio.RATIO_16_9
+            )
+            PhotoCaptureManager.instance.capturePhoto(config) { result ->
+                handlePhotoResult(result)
+            }
+        }
+
+        // Capture with no aspect lock: the pill is shown and the user
+        // may switch 4:3 / 16:9 for this capture only.
+        btnCaptureFreeAspect.setOnClickListener {
+            val config = PhotoCaptureConfig(
+                watermarkText = null,
+                targetFileSizeKB = 200,
+                aspectRatio = PhotoCaptureConfig.AspectRatio.NONE
+            )
+            PhotoCaptureManager.instance.capturePhoto(config) { result ->
+                handlePhotoResult(result)
+            }
+        }
+
+        // Capture with the front camera allowed: the switch-camera
+        // button appears (on devices that have a front camera). The
+        // camera still opens on the back camera.
+        btnCaptureFrontAllowed.setOnClickListener {
+            val config = PhotoCaptureConfig(
+                watermarkText = null,
+                targetFileSizeKB = 200,
+                allowFrontCamera = true
+            )
+            PhotoCaptureManager.instance.capturePhoto(config) { result ->
                 handlePhotoResult(result)
             }
         }

@@ -244,6 +244,7 @@ class PhotoCaptureManager private constructor(
                             val intent = Intent(activity, VolineCameraActivity::class.java).apply {
                                 putExtra(VolineCameraActivity.EXTRA_INPUT_PATH, tempFile.absolutePath)
                                 putOcrFieldExtras(config)
+                                putCameraOptionExtras(config)
                             }
                             ocrLauncher.launch(intent)
                         }
@@ -461,6 +462,7 @@ class PhotoCaptureManager private constructor(
                     tempCameraFile!!.absolutePath
                 )
                 putOcrFieldExtras(config)
+                putCameraOptionExtras(config)
             }
             launcher.launch(intent)
         } catch (e: Exception) {
@@ -496,6 +498,17 @@ class PhotoCaptureManager private constructor(
             ?: return emptyMap()
         if (keys.size != values.size) return emptyMap()
         return keys.zip(values).toMap()
+    }
+
+    /**
+     * Attach a config's camera options to a camera-activity intent:
+     * the host's aspect choice and front-camera permission. Sent on
+     * both launch paths so the activity never has to guess.
+     */
+    private fun Intent.putCameraOptionExtras(config: PhotoCaptureConfig): Intent {
+        putExtra(VolineCameraActivity.EXTRA_ASPECT_RATIO, config.aspectRatio.name)
+        putExtra(VolineCameraActivity.EXTRA_ALLOW_FRONT_CAMERA, config.allowFrontCamera)
+        return this
     }
 
     /**
