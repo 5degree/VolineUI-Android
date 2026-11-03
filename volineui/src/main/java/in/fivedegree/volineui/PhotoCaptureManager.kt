@@ -210,7 +210,6 @@ class PhotoCaptureManager private constructor(
         val cameraLauncher = activity.registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
-            val file = tempCameraFile
             val config = currentConfig ?: PhotoCaptureConfig()
             val callback = currentCallback
             when {
@@ -232,16 +231,53 @@ class PhotoCaptureManager private constructor(
                         currentConfig = null
                     }
                 }
-                result.resultCode == Activity.RESULT_OK && file != null && file.exists() -> {
-                    // Notify processing started, then reuse the existing
-                    // pipeline: EXIF rotation, watermark, compression, and
-                    // optional gallery save. processImage() cleans up the
-                    // temporary file itself. The OCR values collected in
-                    // the camera activity (empty when OCR was off) travel
-                    // with the result so the host gets photo and data
-                    // together; the pipeline itself is unchanged.
-                    callback?.invoke(PhotoCaptureResult.Processing)
-                    processImage(file, config, callback, readOcrData(result.data))
+                result.resultCode == Activity.RESULT_OK -> {
+                    // The activity always returns the photo path it
+                    // finished with (EXTRA_OUTPUT_PATH). Prefer it,
+                    // falling back to the manager's temp file: trusting
+                    // only tempCameraFile turned a successful Use into
+                    // a phantom Cancelled whenever that field was lost
+                    // on the scanner round trip, even though the
+                    // activity had just returned a valid photo. The
+                    // returned path is the same file in every mode
+                    // (camera output, scanner confirm page, gallery
+                    // OCR input), so this changes nothing when the
+                    // temp file is intact.
+                    val returnedPath = result.data
+                        ?.getStringExtra(VolineCameraActivity.EXTRA_OUTPUT_PATH)
+                    val returnedFile = returnedPath
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { File(it) }
+                    val tempFile = tempCameraFile
+                    val file = when {
+                        returnedFile != null && returnedFile.exists() -> returnedFile
+                        tempFile != null && tempFile.exists() -> tempFile
+                        else -> null
+                    }
+                    if (file != null) {
+                        tempCameraFile = file
+                        // Notify processing started, then reuse the existing
+                        // pipeline: EXIF rotation, watermark, compression, and
+                        // optional gallery save. processImage() cleans up the
+                        // temporary file itself. The OCR values collected in
+                        // the camera activity (empty when OCR was off) travel
+                        // with the result so the host gets photo and data
+                        // together; the pipeline itself is unchanged.
+                        callback?.invoke(PhotoCaptureResult.Processing)
+                        processImage(file, config, callback, readOcrData(result.data))
+                    } else {
+                        Log.w(
+                            "PhotoCaptureManager",
+                            "Camera result OK but no usable photo file: " +
+                                "returnedPath=$returnedPath, " +
+                                "tempCameraFile=${tempFile?.absolutePath} " +
+                                "(exists=${tempFile?.exists()})"
+                        )
+                        callback?.invoke(PhotoCaptureResult.Cancelled)
+                        cleanupTempFiles()
+                        currentCallback = null
+                        currentConfig = null
+                    }
                 }
                 result.resultCode == VolineCameraActivity.RESULT_ERROR -> {
                     val message = result.data
@@ -258,6 +294,12 @@ class PhotoCaptureManager private constructor(
                     currentConfig = null
                 }
                 else -> {
+                    Log.w(
+                        "PhotoCaptureManager",
+                        "Camera result not OK: resultCode=${result.resultCode}, " +
+                            "tempCameraFile=${tempCameraFile?.absolutePath} " +
+                            "(exists=${tempCameraFile?.exists()})"
+                    )
                     callback?.invoke(PhotoCaptureResult.Cancelled)
                     cleanupTempFiles()
                     currentCallback = null
@@ -265,7 +307,7 @@ class PhotoCaptureManager private constructor(
                 }
             }
         }
-        
+
         // Document-scanner launcher. The scanner returns cleaned
         // page images; the first page becomes the photo to confirm,
         // via the same tempCameraFile mechanism as a camera capture
