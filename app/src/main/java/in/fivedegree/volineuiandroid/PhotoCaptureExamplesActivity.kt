@@ -1,5 +1,9 @@
 package `in`.fivedegree.volineuiandroid
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
@@ -8,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import `in`.fivedegree.volineui.PhotoCaptureManager
 import `in`.fivedegree.volineui.photocapturemanager.CaptureGuide
+import `in`.fivedegree.volineui.photocapturemanager.FaceMeshResult
 import `in`.fivedegree.volineui.photocapturemanager.OcrField
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureResult
@@ -200,7 +205,9 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
         // is drawn over the preview and the shutter stays disabled
         // until a person is framed inside it. The result carries a
         // face mesh (468 points + box) in the delivered photo's
-        // pixel space, shown in the metadata below.
+        // pixel space, drawn over the photo and listed in the
+        // metadata below, so the host can verify the mesh data
+        // arrives aligned and usable.
         btnCapturePersonGuide.setOnClickListener {
             val config = PhotoCaptureConfig(
                 watermarkText = null,
@@ -256,8 +263,21 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
             is PhotoCaptureResult.Success -> {
                 currentPhotoFile = result.file
 
-                // Display photo
-                ivPhoto.setImageBitmap(result.bitmap)
+                // Display photo. When a face mesh was returned, draw
+                // it over a copy of the photo: the mesh points are
+                // in this bitmap's pixel space, so they land exactly
+                // on the face with no view-scale mapping, and dots
+                // sitting on eyes, nose and lips prove the host
+                // received the data aligned and usable.
+                val mesh = result.faceMesh
+                val photo = result.bitmap
+                ivPhoto.setImageBitmap(
+                    if (mesh != null && mesh.points.isNotEmpty() && photo != null) {
+                        drawFaceMeshOverlay(photo, mesh)
+                    } else {
+                        photo
+                    }
+                )
 
                 // Display metadata
                 val metadata = buildString {
@@ -285,6 +305,7 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                             mesh.boundingBox?.let { box ->
                                 appendLine("  Box: ${box.left.toInt()}, ${box.top.toInt()} - ${box.right.toInt()}, ${box.bottom.toInt()}")
                             }
+                            appendLine("  Overlay: drawn on the photo above")
                         }
                     }
 
@@ -313,5 +334,39 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    /**
+     * Draws a face mesh over a copy of [photo] and returns it; the
+     * original bitmap is left untouched. Points become white dots
+     * and the bounding box a green rectangle, both in the photo's
+     * own pixel space, so no view-scale mapping is needed. Dot and
+     * stroke sizes scale with the photo so the mesh stays visible
+     * at any resolution. Note the library payload carries points
+     * and a box only, no triangle indices, so this draws dots
+     * rather than the triangulated wireframe.
+     */
+    private fun drawFaceMeshOverlay(photo: Bitmap, mesh: FaceMeshResult): Bitmap {
+        val overlay = photo.copy(Bitmap.Config.ARGB_8888, true)
+        val canvas = Canvas(overlay)
+
+        mesh.boundingBox?.let { box ->
+            val boxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.GREEN
+                style = Paint.Style.STROKE
+                strokeWidth = maxOf(4f, photo.width / 300f)
+            }
+            canvas.drawRect(box.left, box.top, box.right, box.bottom, boxPaint)
+        }
+
+        val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            style = Paint.Style.FILL
+        }
+        val dotRadius = maxOf(3f, photo.width / 400f)
+        for (point in mesh.points) {
+            canvas.drawCircle(point.x, point.y, dotRadius, dotPaint)
+        }
+        return overlay
     }
 }
