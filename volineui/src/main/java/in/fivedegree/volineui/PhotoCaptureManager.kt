@@ -212,6 +212,17 @@ class PhotoCaptureManager private constructor(
         ) { result ->
             val config = currentConfig ?: PhotoCaptureConfig()
             val callback = currentCallback
+            // Diagnostic: the scanner flow reached the camera
+            // activity's RESULT_OK but the host screen stayed on
+            // its initial text, so the loss is between this
+            // callback and the host lambda. Log entry, callback
+            // presence, and the file resolution to pin it down.
+            Log.d(
+                "PhotoCaptureManager",
+                "Camera result: resultCode=${result.resultCode}, " +
+                    "callback=${if (callback == null) "null" else "present"}, " +
+                    "tempCameraFile=${tempCameraFile?.absolutePath}"
+            )
             when {
                 result.resultCode == VolineCameraActivity.RESULT_RETAKE -> {
                     // Confirm-mode Retake: the photo came from
@@ -254,6 +265,11 @@ class PhotoCaptureManager private constructor(
                         tempFile != null && tempFile.exists() -> tempFile
                         else -> null
                     }
+                    Log.d(
+                        "PhotoCaptureManager",
+                        "Camera result OK: returnedPath=$returnedPath, " +
+                            "resolvedFile=${file?.absolutePath}"
+                    )
                     if (file != null) {
                         tempCameraFile = file
                         // Notify processing started, then reuse the existing
@@ -942,6 +958,11 @@ class PhotoCaptureManager private constructor(
 
                 // Return success result on main thread
                 mainHandler.post {
+                    Log.d(
+                        "PhotoCaptureManager",
+                        "Processing done, delivering Success: ${finalFile.name}, " +
+                            "callback=${if (callback == null) "null" else "present"}"
+                    )
                     callback?.invoke(
                         PhotoCaptureResult.Success(
                             file = finalFile,
@@ -960,6 +981,10 @@ class PhotoCaptureManager private constructor(
                 cleanupTempFiles()
             } catch (e: PhotoCaptureException) {
                 mainHandler.post {
+                    Log.w(
+                        "PhotoCaptureManager",
+                        "Processing failed, delivering Error: ${e.message}"
+                    )
                     callback?.invoke(
                         PhotoCaptureResult.Error(e, e.message ?: "Unknown error")
                     )
@@ -967,6 +992,10 @@ class PhotoCaptureManager private constructor(
                 cleanupTempFiles()
             } catch (e: Exception) {
                 mainHandler.post {
+                    Log.w(
+                        "PhotoCaptureManager",
+                        "Processing failed, delivering Error: ${e.message}"
+                    )
                     callback?.invoke(
                         PhotoCaptureResult.Error(
                             PhotoCaptureException(PhotoCaptureException.ERROR_IMAGE_PROCESSING_FAILED),
