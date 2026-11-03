@@ -1541,7 +1541,7 @@ private fun OcrSelectionScreen(
                                         with(density) { boxWidth.toDp() },
                                         with(density) { boxHeight.toDp() }
                                     )
-                                    .border(2.dp, borderColor, RoundedCornerShape(4.dp))
+                                    .border(1.dp, borderColor, RoundedCornerShape(4.dp))
                                     .background(fillColor, RoundedCornerShape(4.dp))
                             )
                         }
