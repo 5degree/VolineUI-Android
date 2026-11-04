@@ -85,6 +85,13 @@ class VolineCameraActivity : ComponentActivity() {
         val fixedAspect = readFixedAspect(intent)
         val allowFrontCamera = intent.getBooleanExtra(EXTRA_ALLOW_FRONT_CAMERA, false)
         val captureGuide = readCaptureGuide(intent)
+        // Diagnostic (temporary): which mode this launch is.
+        Log.d(
+            TAG,
+            "VolineCamera onCreate: confirmPath=$confirmPath, " +
+                "inputPath=$inputPath, outputPath=$outputPath, " +
+                "ocrFields=${ocrFields.size}, captureGuide=$captureGuide"
+        )
         if (confirmPath != null) {
             // Confirm mode (e.g. a document-scanner page): no camera
             // is involved, so no output path is required. Malformed

@@ -166,6 +166,14 @@ class PhotoCaptureManager private constructor(
                 // while the camera screen is on top.
                 if (activity is VolineCameraActivity) return
                 if (activity is ComponentActivity) {
+                    // Diagnostic (temporary): a host recreated
+                    // mid-flow would orphan the result callback, so
+                    // log every host creation/destruction with its
+                    // instance hash.
+                    Log.d(
+                        "PhotoCaptureManager",
+                        "onActivityCreated ${activity::class.simpleName} instance=${activity.hashCode()}"
+                    )
                     currentActivityRef = WeakReference(activity)
                     registerActivityResultLaunchers(activity)
                 }
@@ -188,6 +196,11 @@ class PhotoCaptureManager private constructor(
 
             override fun onActivityDestroyed(activity: Activity) {
                 if (activity is VolineCameraActivity) return
+                // Diagnostic (temporary): see onActivityCreated.
+                Log.d(
+                    "PhotoCaptureManager",
+                    "onActivityDestroyed ${activity::class.simpleName} instance=${activity.hashCode()}"
+                )
                 // Only this instance's entry goes: another activity's
                 // launchers must survive this destruction untouched.
                 if (activity is ComponentActivity) {
@@ -210,18 +223,22 @@ class PhotoCaptureManager private constructor(
         val cameraLauncher = activity.registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
+            val file = tempCameraFile
             val config = currentConfig ?: PhotoCaptureConfig()
             val callback = currentCallback
-            // Diagnostic: the scanner flow reached the camera
-            // activity's RESULT_OK but the host screen stayed on
-            // its initial text, so the loss is between this
-            // callback and the host lambda. Log entry, callback
-            // presence, and the file resolution to pin it down.
+            // Diagnostic (temporary): the scanner flow finishes
+            // RESULT_OK but the host screen stays on its initial
+            // text. Log every step here to find where the result
+            // is lost. The returned path is logged only: the
+            // decision below is the original pre-fix behaviour
+            // (temp file must exist), restored so a failure shows
+            // up cleanly instead of being papered over.
             Log.d(
                 "PhotoCaptureManager",
                 "Camera result: resultCode=${result.resultCode}, " +
                     "callback=${if (callback == null) "null" else "present"}, " +
-                    "tempCameraFile=${tempCameraFile?.absolutePath}"
+                    "tempCameraFile=${file?.absolutePath} (exists=${file?.exists()}), " +
+                    "returnedPath=${result.data?.getStringExtra(VolineCameraActivity.EXTRA_OUTPUT_PATH)}"
             )
             when {
                 result.resultCode == VolineCameraActivity.RESULT_RETAKE -> {
@@ -242,58 +259,16 @@ class PhotoCaptureManager private constructor(
                         currentConfig = null
                     }
                 }
-                result.resultCode == Activity.RESULT_OK -> {
-                    // The activity always returns the photo path it
-                    // finished with (EXTRA_OUTPUT_PATH). Prefer it,
-                    // falling back to the manager's temp file: trusting
-                    // only tempCameraFile turned a successful Use into
-                    // a phantom Cancelled whenever that field was lost
-                    // on the scanner round trip, even though the
-                    // activity had just returned a valid photo. The
-                    // returned path is the same file in every mode
-                    // (camera output, scanner confirm page, gallery
-                    // OCR input), so this changes nothing when the
-                    // temp file is intact.
-                    val returnedPath = result.data
-                        ?.getStringExtra(VolineCameraActivity.EXTRA_OUTPUT_PATH)
-                    val returnedFile = returnedPath
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { File(it) }
-                    val tempFile = tempCameraFile
-                    val file = when {
-                        returnedFile != null && returnedFile.exists() -> returnedFile
-                        tempFile != null && tempFile.exists() -> tempFile
-                        else -> null
-                    }
-                    Log.d(
-                        "PhotoCaptureManager",
-                        "Camera result OK: returnedPath=$returnedPath, " +
-                            "resolvedFile=${file?.absolutePath}"
-                    )
-                    if (file != null) {
-                        tempCameraFile = file
-                        // Notify processing started, then reuse the existing
-                        // pipeline: EXIF rotation, watermark, compression, and
-                        // optional gallery save. processImage() cleans up the
-                        // temporary file itself. The OCR values collected in
-                        // the camera activity (empty when OCR was off) travel
-                        // with the result so the host gets photo and data
-                        // together; the pipeline itself is unchanged.
-                        callback?.invoke(PhotoCaptureResult.Processing)
-                        processImage(file, config, callback, readOcrData(result.data))
-                    } else {
-                        Log.w(
-                            "PhotoCaptureManager",
-                            "Camera result OK but no usable photo file: " +
-                                "returnedPath=$returnedPath, " +
-                                "tempCameraFile=${tempFile?.absolutePath} " +
-                                "(exists=${tempFile?.exists()})"
-                        )
-                        callback?.invoke(PhotoCaptureResult.Cancelled)
-                        cleanupTempFiles()
-                        currentCallback = null
-                        currentConfig = null
-                    }
+                result.resultCode == Activity.RESULT_OK && file != null && file.exists() -> {
+                    // Notify processing started, then reuse the existing
+                    // pipeline: EXIF rotation, watermark, compression, and
+                    // optional gallery save. processImage() cleans up the
+                    // temporary file itself. The OCR values collected in
+                    // the camera activity (empty when OCR was off) travel
+                    // with the result so the host gets photo and data
+                    // together; the pipeline itself is unchanged.
+                    callback?.invoke(PhotoCaptureResult.Processing)
+                    processImage(file, config, callback, readOcrData(result.data))
                 }
                 result.resultCode == VolineCameraActivity.RESULT_ERROR -> {
                     val message = result.data
@@ -335,12 +310,22 @@ class PhotoCaptureManager private constructor(
         ) { result ->
             val config = currentConfig ?: PhotoCaptureConfig()
             val callback = currentCallback
+            // Diagnostic (temporary): trace the scanner leg.
+            Log.d(
+                "PhotoCaptureManager",
+                "Scanner result: resultCode=${result.resultCode}, " +
+                    "callback=${if (callback == null) "null" else "present"}"
+            )
             when {
                 result.resultCode == Activity.RESULT_OK -> {
                     val scanningResult = result.data?.let {
                         GmsDocumentScanningResult.fromActivityResultIntent(it)
                     }
                     val pageUri = scanningResult?.pages?.firstOrNull()?.imageUri
+                    Log.d(
+                        "PhotoCaptureManager",
+                        "Scanner result OK: pages=${scanningResult?.pages?.size}, pageUri=$pageUri"
+                    )
                     if (pageUri == null) {
                         callback?.invoke(
                             PhotoCaptureResult.Error(
@@ -355,6 +340,11 @@ class PhotoCaptureManager private constructor(
                         try {
                             val tempFile = copyUriToTempFile(pageUri)
                             tempCameraFile = tempFile
+                            Log.d(
+                                "PhotoCaptureManager",
+                                "Scanner page copied: ${tempFile.absolutePath} " +
+                                    "(exists=${tempFile.exists()}, length=${tempFile.length()})"
+                            )
                             // Resolve fresh: the activity that
                             // registered this scanner launcher may
                             // have been recreated since, and its
@@ -382,6 +372,12 @@ class PhotoCaptureManager private constructor(
                                     putOcrFieldExtras(config)
                                     putCameraOptionExtras(config)
                                 }
+                                Log.d(
+                                    "PhotoCaptureManager",
+                                    "Launching confirm for ${tempFile.absolutePath} " +
+                                        "from ${currentActivity::class.simpleName} " +
+                                        "instance=${currentActivity.hashCode()}"
+                                )
                                 launchers.camera.launch(intent)
                             }
                         } catch (e: Exception) {
@@ -651,6 +647,12 @@ class PhotoCaptureManager private constructor(
      * Error, never a silent fallback to an unscanned photo.
      */
     private fun launchDocumentScanner(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
+        // Diagnostic (temporary).
+        Log.d(
+            "PhotoCaptureManager",
+            "launchDocumentScanner: currentActivity=" +
+                "${currentActivityRef?.get()?.let { "${it::class.simpleName}#${it.hashCode()}" }}"
+        )
         try {
             // Resolve from the current activity's own entry: a
             // launcher from any other instance may be dead. A
@@ -692,6 +694,7 @@ class PhotoCaptureManager private constructor(
             GmsDocumentScanning.getClient(options)
                 .getStartScanIntent(activity)
                 .addOnSuccessListener { intentSender ->
+                    Log.d("PhotoCaptureManager", "Scanner intent ready, resolving launchers fresh")
                     val currentNow = currentLaunchers()
                     if (currentNow == null) {
                         Log.w(
@@ -723,7 +726,8 @@ class PhotoCaptureManager private constructor(
                         }
                     }
                 }
-                .addOnFailureListener {
+                .addOnFailureListener { e ->
+                    Log.w("PhotoCaptureManager", "Scanner intent failed", e)
                     callback(
                         PhotoCaptureResult.Error(
                             PhotoCaptureException(PhotoCaptureException.ERROR_CAMERA_UNAVAILABLE),
@@ -917,6 +921,13 @@ class PhotoCaptureManager private constructor(
     ) {
         // Run processing in background thread
         Thread {
+            // Diagnostic (temporary).
+            Log.d(
+                "PhotoCaptureManager",
+                "processImage started: ${sourceFile.absolutePath} " +
+                    "(exists=${sourceFile.exists()}, length=${sourceFile.length()}), " +
+                    "callback=${if (callback == null) "null" else "present"}"
+            )
             try {
                 val timestamp = System.currentTimeMillis()
                 
