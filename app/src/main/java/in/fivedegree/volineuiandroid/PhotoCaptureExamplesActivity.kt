@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -51,11 +50,6 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Diagnostic: the scanner flow finishes RESULT_OK but this
-        // screen stays on its initial text. Comparing this instance
-        // hash with the one in handlePhotoResult shows whether the
-        // result lambda ran on this visible instance or a dead one.
-        Log.d("DemoPhoto", "PhotoCaptureExamplesActivity onCreate instance=${this.hashCode()}")
         setContentView(R.layout.activity_photo_capture_examples)
 
         initializeViews()
@@ -259,10 +253,6 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
     }
 
     private fun handlePhotoResult(result: PhotoCaptureResult) {
-        Log.d(
-            "DemoPhoto",
-            "handlePhotoResult ${result::class.simpleName} instance=${this.hashCode()}"
-        )
         when (result) {
             is PhotoCaptureResult.Processing -> {
                 // Show loading indicator

@@ -1,5 +1,6 @@
 package `in`.fivedegree.volineui.camera
 
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage
@@ -31,6 +32,7 @@ internal class PersonGuideAnalyzer(
     private val lastAnalyzedMs = AtomicLong(0)
     private val inFlight = AtomicBoolean(false)
 
+    @ExperimentalGetImage
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         val now = System.currentTimeMillis()

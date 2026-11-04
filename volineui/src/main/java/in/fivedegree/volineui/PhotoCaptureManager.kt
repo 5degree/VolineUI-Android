@@ -181,14 +181,6 @@ class PhotoCaptureManager private constructor(
                 // a host.
                 if (activity is VolineCameraActivity || isScannerUiActivity(activity)) return
                 if (activity is ComponentActivity) {
-                    // Diagnostic (temporary): a host recreated
-                    // mid-flow would orphan the result callback, so
-                    // log every host creation/destruction with its
-                    // instance hash.
-                    Log.d(
-                        "PhotoCaptureManager",
-                        "onActivityCreated ${activity::class.simpleName} instance=${activity.hashCode()}"
-                    )
                     currentActivityRef = WeakReference(activity)
                     registerActivityResultLaunchers(activity)
                 }
@@ -211,11 +203,6 @@ class PhotoCaptureManager private constructor(
 
             override fun onActivityDestroyed(activity: Activity) {
                 if (activity is VolineCameraActivity) return
-                // Diagnostic (temporary): see onActivityCreated.
-                Log.d(
-                    "PhotoCaptureManager",
-                    "onActivityDestroyed ${activity::class.simpleName} instance=${activity.hashCode()}"
-                )
                 // Only this instance's entry goes: another activity's
                 // launchers must survive this destruction untouched.
                 if (activity is ComponentActivity) {
@@ -241,20 +228,9 @@ class PhotoCaptureManager private constructor(
             val file = tempCameraFile
             val config = currentConfig ?: PhotoCaptureConfig()
             val callback = currentCallback
-            // Diagnostic (temporary): the scanner flow finishes
-            // RESULT_OK but the host screen stays on its initial
-            // text. Log every step here to find where the result
-            // is lost. The returned path is logged only: the
-            // decision below is the original pre-fix behaviour
+            // The decision below is the original pre-fix behaviour
             // (temp file must exist), restored so a failure shows
             // up cleanly instead of being papered over.
-            Log.d(
-                "PhotoCaptureManager",
-                "Camera result: resultCode=${result.resultCode}, " +
-                    "callback=${if (callback == null) "null" else "present"}, " +
-                    "tempCameraFile=${file?.absolutePath} (exists=${file?.exists()}), " +
-                    "returnedPath=${result.data?.getStringExtra(VolineCameraActivity.EXTRA_OUTPUT_PATH)}"
-            )
             when {
                 result.resultCode == VolineCameraActivity.RESULT_RETAKE -> {
                     // Confirm-mode Retake: the photo came from
@@ -325,22 +301,12 @@ class PhotoCaptureManager private constructor(
         ) { result ->
             val config = currentConfig ?: PhotoCaptureConfig()
             val callback = currentCallback
-            // Diagnostic (temporary): trace the scanner leg.
-            Log.d(
-                "PhotoCaptureManager",
-                "Scanner result: resultCode=${result.resultCode}, " +
-                    "callback=${if (callback == null) "null" else "present"}"
-            )
             when {
                 result.resultCode == Activity.RESULT_OK -> {
                     val scanningResult = result.data?.let {
                         GmsDocumentScanningResult.fromActivityResultIntent(it)
                     }
                     val pageUri = scanningResult?.pages?.firstOrNull()?.imageUri
-                    Log.d(
-                        "PhotoCaptureManager",
-                        "Scanner result OK: pages=${scanningResult?.pages?.size}, pageUri=$pageUri"
-                    )
                     if (pageUri == null) {
                         callback?.invoke(
                             PhotoCaptureResult.Error(
@@ -355,11 +321,6 @@ class PhotoCaptureManager private constructor(
                         try {
                             val tempFile = copyUriToTempFile(pageUri)
                             tempCameraFile = tempFile
-                            Log.d(
-                                "PhotoCaptureManager",
-                                "Scanner page copied: ${tempFile.absolutePath} " +
-                                    "(exists=${tempFile.exists()}, length=${tempFile.length()})"
-                            )
                             // Launch the confirm screen from THIS
                             // activity's own camera launcher -- the
                             // activity whose scanner launcher received
@@ -394,12 +355,6 @@ class PhotoCaptureManager private constructor(
                                     putOcrFieldExtras(config)
                                     putCameraOptionExtras(config)
                                 }
-                                Log.d(
-                                    "PhotoCaptureManager",
-                                    "Launching confirm for ${tempFile.absolutePath} " +
-                                        "from ${activity::class.simpleName} " +
-                                        "instance=${activity.hashCode()}"
-                                )
                                 launchers.camera.launch(intent)
                             }
                         } catch (e: Exception) {
@@ -478,12 +433,6 @@ class PhotoCaptureManager private constructor(
                                 putOcrFieldExtras(config)
                                 putCameraOptionExtras(config)
                             }
-                            Log.d(
-                                "PhotoCaptureManager",
-                                "Launching OCR for ${tempFile.absolutePath} " +
-                                    "from ${activity::class.simpleName} " +
-                                    "instance=${activity.hashCode()}"
-                            )
                             launchers.camera.launch(intent)
                         }
                     } else {
@@ -676,12 +625,6 @@ class PhotoCaptureManager private constructor(
      * Error, never a silent fallback to an unscanned photo.
      */
     private fun launchDocumentScanner(config: PhotoCaptureConfig, callback: (PhotoCaptureResult) -> Unit) {
-        // Diagnostic (temporary).
-        Log.d(
-            "PhotoCaptureManager",
-            "launchDocumentScanner: currentActivity=" +
-                "${currentActivityRef?.get()?.let { "${it::class.simpleName}#${it.hashCode()}" }}"
-        )
         try {
             // Resolve from the current activity's own entry: a
             // launcher from any other instance may be dead. A
@@ -723,7 +666,6 @@ class PhotoCaptureManager private constructor(
             GmsDocumentScanning.getClient(options)
                 .getStartScanIntent(activity)
                 .addOnSuccessListener { intentSender ->
-                    Log.d("PhotoCaptureManager", "Scanner intent ready, resolving launchers fresh")
                     val currentNow = currentLaunchers()
                     if (currentNow == null) {
                         Log.w(
@@ -950,13 +892,6 @@ class PhotoCaptureManager private constructor(
     ) {
         // Run processing in background thread
         Thread {
-            // Diagnostic (temporary).
-            Log.d(
-                "PhotoCaptureManager",
-                "processImage started: ${sourceFile.absolutePath} " +
-                    "(exists=${sourceFile.exists()}, length=${sourceFile.length()}), " +
-                    "callback=${if (callback == null) "null" else "present"}"
-            )
             try {
                 val timestamp = System.currentTimeMillis()
                 
@@ -998,11 +933,6 @@ class PhotoCaptureManager private constructor(
 
                 // Return success result on main thread
                 mainHandler.post {
-                    Log.d(
-                        "PhotoCaptureManager",
-                        "Processing done, delivering Success: ${finalFile.name}, " +
-                            "callback=${if (callback == null) "null" else "present"}"
-                    )
                     callback?.invoke(
                         PhotoCaptureResult.Success(
                             file = finalFile,
