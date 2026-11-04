@@ -72,6 +72,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -115,6 +118,66 @@ import kotlin.time.Duration.Companion.milliseconds
 import androidx.lifecycle.compose.LocalLifecycleOwner
 
 /**
+ * How one recognised word flattens to Bundle-safe primitives. OcrWord
+ * and OcrBox are pure Kotlin, deliberately not Parcelable (the
+ * recognizer layer stays free of Android types for JVM unit tests),
+ * so the OCR step's rememberSaveable state needs explicit Savers
+ * instead of the default Parcelable path. Words flatten as id, text,
+ * left, top, right, bottom; selections flatten each field's word
+ * list the same way. Word identity is by id everywhere the
+ * selection logic looks words up, so restored instances behave
+ * exactly like the originals.
+ */
+private val OcrWordListSaver: Saver<List<OcrWord>, Any> = listSaver(
+    save = { words ->
+        words.flatMap { word ->
+            listOf(word.id, word.text, word.box.left, word.box.top, word.box.right, word.box.bottom)
+        }
+    },
+    restore = { flat ->
+        flat.chunked(6).map { item ->
+            OcrWord(
+                id = item[0] as Int,
+                text = item[1] as String,
+                box = OcrBox(
+                    left = item[2] as Float,
+                    top = item[3] as Float,
+                    right = item[4] as Float,
+                    bottom = item[5] as Float
+                )
+            )
+        }
+    }
+)
+
+private val OcrSelectionsSaver: Saver<Map<String, List<OcrWord>>, Any> = mapSaver(
+    save = { selections ->
+        selections.mapValues { (_, words) ->
+            words.flatMap { word ->
+                listOf(word.id, word.text, word.box.left, word.box.top, word.box.right, word.box.bottom)
+            }
+        }
+    },
+    restore = { map ->
+        map.mapValues { (_, flat) ->
+            @Suppress("UNCHECKED_CAST")
+            (flat as List<Any?>).chunked(6).map { item ->
+                OcrWord(
+                    id = item[0] as Int,
+                    text = item[1] as String,
+                    box = OcrBox(
+                        left = item[2] as Float,
+                        top = item[3] as Float,
+                        right = item[4] as Float,
+                        bottom = item[5] as Float
+                    )
+                )
+            }
+        }
+    }
+)
+
+/**
  * In-app camera screen.
  *
  * Professional camera: black preview sized to the selected aspect
@@ -155,11 +218,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
  * When [inputFile] is given (a gallery photo), the capture UI is skipped
  * entirely and the screen starts at the OCR step for that file.
  *
- * OCR state (words, selections, step) is deliberately remember, not
- * rememberSaveable: words and selections are not Bundle-safe, and a
- * recreation re-enters cleanly -- camera mode returns to the
- * confirmation screen, where Continue rescans, and gallery mode rescans
- * automatically because its file comes from the intent.
+ * OCR state survives rotation: the step, words, selections and scan
+ * bookkeeping are rememberSaveable (words and selections via the
+ * custom Savers above, since OcrWord/OcrBox are pure Kotlin, not
+ * Parcelable), and the scan itself runs in an effect keyed on the
+ * scan request id, so a rotation mid-scan re-runs it for the same
+ * photo instead of stranding the UI on the scanning screen.
  */
 @Composable
 internal fun CameraScreen(
@@ -211,15 +275,16 @@ internal fun CameraScreen(
     var focusPoint by remember { mutableStateOf<Offset?>(null) }
     var focusVisible by remember { mutableStateOf(false) }
 
-    // Aspect ratio, host-driven and deliberately not remembered: a
+    // Aspect ratio, host-driven and deliberately not persisted: a
     // locked value fixes the camera for this capture, and NONE (null
     // here) starts at 4:3 with the pill up for switching during this
     // session only. The previous SharedPreferences persistence was
     // removed, so one host's capture can no longer change the next
-    // host's starting ratio. CameraX only offers 4:3 and 16:9 target
-    // ratios, so those are the only options; anything else would
-    // silently fall back.
-    var aspect by remember { mutableStateOf(fixedAspect ?: CameraAspect.FOUR_THREE) }
+    // host's starting ratio; the session choice itself still
+    // survives rotation via rememberSaveable. CameraX only offers
+    // 4:3 and 16:9 target ratios, so those are the only options;
+    // anything else would silently fall back.
+    var aspect by rememberSaveable { mutableStateOf(fixedAspect ?: CameraAspect.FOUR_THREE) }
 
     // Person capture guide. The segmenter is created once for the
     // screen (stream mode, for live preview frames) and closed on
@@ -274,18 +339,19 @@ internal fun CameraScreen(
     // none of this code runs and the screen behaves exactly as before.
     val ocrEnabled = ocrFields.isNotEmpty()
     val ocrOnlyMode = inputFile != null
-    var ocrStep by remember { mutableStateOf(OcrStep.NONE) }
-    var ocrWords by remember { mutableStateOf<List<OcrWord>>(emptyList()) }
-    var ocrImageWidth by remember { mutableIntStateOf(0) }
-    var ocrImageHeight by remember { mutableIntStateOf(0) }
-    var ocrSelections by remember { mutableStateOf<Map<String, List<OcrWord>>>(emptyMap()) }
-    var ocrActiveFieldKey by remember { mutableStateOf<String?>(null) }
-    var ocrErrorMessage by remember { mutableStateOf<String?>(null) }
-    var ocrScannedForPath by remember { mutableStateOf<String?>(null) }
+    var ocrStep by rememberSaveable { mutableStateOf(OcrStep.NONE) }
+    var ocrWords by rememberSaveable(stateSaver = OcrWordListSaver) { mutableStateOf<List<OcrWord>>(emptyList()) }
+    var ocrImageWidth by rememberSaveable { mutableIntStateOf(0) }
+    var ocrImageHeight by rememberSaveable { mutableIntStateOf(0) }
+    var ocrSelections by rememberSaveable(stateSaver = OcrSelectionsSaver) { mutableStateOf<Map<String, List<OcrWord>>>(emptyMap()) }
+    var ocrActiveFieldKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var ocrErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var ocrScannedForPath by rememberSaveable { mutableStateOf<String?>(null) }
+    var ocrScanPath by rememberSaveable { mutableStateOf<String?>(null) }
     // Monotonic scan id: a scan that is still running when the user
     // retakes, goes back, or closes must never overwrite the new state
     // with a stale result. resetOcrState bumps the id to invalidate it.
-    var ocrScanId by remember { mutableIntStateOf(0) }
+    var ocrScanId by rememberSaveable { mutableIntStateOf(0) }
 
     fun resetOcrState() {
         ocrScanId++
@@ -297,38 +363,54 @@ internal fun CameraScreen(
         ocrActiveFieldKey = null
         ocrErrorMessage = null
         ocrScannedForPath = null
+        ocrScanPath = null
     }
 
     fun startOcrScan(file: File) {
-        val scanId = ++ocrScanId
+        // Only records the request: the scan itself runs in the
+        // LaunchedEffect below, keyed on the request id, so a
+        // rotation mid-scan re-runs it for the same photo instead
+        // of stranding the UI on the scanning screen.
+        ++ocrScanId
+        ocrScanPath = file.absolutePath
         ocrStep = OcrStep.SCANNING
         ocrErrorMessage = null
-        coroutineScope.launch {
-            try {
-                val recognition = withContext(Dispatchers.Default) {
-                    recognizeOcrWords(context, file)
-                }
-                if (scanId != ocrScanId) return@launch
-                if (recognition.words.isEmpty()) {
-                    ocrErrorMessage = "No text found in this photo."
-                    ocrStep = OcrStep.FAILED
-                } else {
-                    ocrWords = recognition.words
-                    ocrImageWidth = recognition.imageWidth
-                    ocrImageHeight = recognition.imageHeight
-                    ocrScannedForPath = file.absolutePath
-                    if (ocrActiveFieldKey == null) {
-                        ocrActiveFieldKey = ocrFields.firstOrNull()?.key
-                    }
-                    ocrStep = OcrStep.SELECTING
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                if (scanId != ocrScanId) return@launch
-                ocrErrorMessage = "Text recognition failed: ${e.message}"
-                ocrStep = OcrStep.FAILED
+    }
+
+    // The scan itself, keyed on the request id. A rotation destroys
+    // the old composition and its coroutine, but the saved step,
+    // request id and path survive, so this effect re-runs for the
+    // same photo. A newer request cancels the old run via the key
+    // change, and the id check below drops any result that still
+    // lands late.
+    LaunchedEffect(ocrScanId) {
+        val scanId = ocrScanId
+        val path = ocrScanPath
+        if (ocrStep != OcrStep.SCANNING || path == null) return@LaunchedEffect
+        try {
+            val recognition = withContext(Dispatchers.Default) {
+                recognizeOcrWords(context, File(path))
             }
+            if (scanId != ocrScanId) return@LaunchedEffect
+            if (recognition.words.isEmpty()) {
+                ocrErrorMessage = "No text found in this photo."
+                ocrStep = OcrStep.FAILED
+            } else {
+                ocrWords = recognition.words
+                ocrImageWidth = recognition.imageWidth
+                ocrImageHeight = recognition.imageHeight
+                ocrScannedForPath = path
+                if (ocrActiveFieldKey == null) {
+                    ocrActiveFieldKey = ocrFields.firstOrNull()?.key
+                }
+                ocrStep = OcrStep.SELECTING
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (scanId != ocrScanId) return@LaunchedEffect
+            ocrErrorMessage = "Text recognition failed: ${e.message}"
+            ocrStep = OcrStep.FAILED
         }
     }
 
