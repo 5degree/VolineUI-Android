@@ -145,6 +145,18 @@ class PhotoCaptureManager private constructor(
         return launchersByActivity[activity]?.let { activity to it }
     }
 
+    /**
+     * Transient Play-services UI activities are not hosts: the
+     * document-scanner screen runs in this app's process, so the
+     * lifecycle callbacks see it. It must never own launchers or
+     * become the "current activity": when it did, the confirm
+     * screen launched from ITS camera launcher and its result died
+     * with it when it was destroyed, so the host never saw the
+     * photo.
+     */
+    private fun isScannerUiActivity(activity: Activity): Boolean =
+        activity.javaClass.name.startsWith("com.google.mlkit")
+
     // Callbacks for capture operations
     private var currentCallback: ((PhotoCaptureResult) -> Unit)? = null
     private var currentConfig: PhotoCaptureConfig? = null
@@ -163,8 +175,11 @@ class PhotoCaptureManager private constructor(
                 // activity's launchers or become the "current activity" for
                 // capture purposes: the host's camera-activity launcher is
                 // what receives the camera result, and it must stay intact
-                // while the camera screen is on top.
-                if (activity is VolineCameraActivity) return
+                // while the camera screen is on top. The same goes for
+                // the document-scanner UI activity (see
+                // isScannerUiActivity): it is a transient screen, not
+                // a host.
+                if (activity is VolineCameraActivity || isScannerUiActivity(activity)) return
                 if (activity is ComponentActivity) {
                     // Diagnostic (temporary): a host recreated
                     // mid-flow would orphan the result callback, so
@@ -182,7 +197,7 @@ class PhotoCaptureManager private constructor(
             override fun onActivityStarted(activity: Activity) {}
 
             override fun onActivityResumed(activity: Activity) {
-                if (activity is VolineCameraActivity) return
+                if (activity is VolineCameraActivity || isScannerUiActivity(activity)) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                 }
@@ -345,16 +360,24 @@ class PhotoCaptureManager private constructor(
                                 "Scanner page copied: ${tempFile.absolutePath} " +
                                     "(exists=${tempFile.exists()}, length=${tempFile.length()})"
                             )
-                            // Resolve fresh: the activity that
-                            // registered this scanner launcher may
-                            // have been recreated since, and its
-                            // launcher is dead. The confirm screen
-                            // must launch from the live activity.
-                            val current = currentLaunchers()
-                            if (current == null) {
+                            // Launch the confirm screen from THIS
+                            // activity's own camera launcher -- the
+                            // activity whose scanner launcher received
+                            // this result. Resolving "current"
+                            // launchers here was the bug: the scanner
+                            // UI activity had become current when it
+                            // was created, so confirm launched from
+                            // ITS launcher and its result died with
+                            // it when it was destroyed. The callback's
+                            // own activity is always the live host,
+                            // even across recreation (the registry
+                            // re-delivers to the new instance's
+                            // launcher).
+                            val launchers = launchersByActivity[activity]
+                            if (launchers == null) {
                                 Log.w(
                                     "PhotoCaptureManager",
-                                    "Scanner result with no launchers for the current activity"
+                                    "Scanner result with no launchers for its own activity"
                                 )
                                 callback?.invoke(
                                     PhotoCaptureResult.Error(
@@ -366,8 +389,7 @@ class PhotoCaptureManager private constructor(
                                 currentCallback = null
                                 currentConfig = null
                             } else {
-                                val (currentActivity, launchers) = current
-                                val intent = Intent(currentActivity, VolineCameraActivity::class.java).apply {
+                                val intent = Intent(activity, VolineCameraActivity::class.java).apply {
                                     putExtra(VolineCameraActivity.EXTRA_CONFIRM_PATH, tempFile.absolutePath)
                                     putOcrFieldExtras(config)
                                     putCameraOptionExtras(config)
@@ -375,8 +397,8 @@ class PhotoCaptureManager private constructor(
                                 Log.d(
                                     "PhotoCaptureManager",
                                     "Launching confirm for ${tempFile.absolutePath} " +
-                                        "from ${currentActivity::class.simpleName} " +
-                                        "instance=${currentActivity.hashCode()}"
+                                        "from ${activity::class.simpleName} " +
+                                        "instance=${activity.hashCode()}"
                                 )
                                 launchers.camera.launch(intent)
                             }
@@ -430,14 +452,16 @@ class PhotoCaptureManager private constructor(
                         // camera-activity result handler above -- and its
                         // cleanup -- treats it exactly like a capture.
                         tempCameraFile = tempFile
-                        // Resolve fresh, as in the scanner handler:
-                        // the registering activity may have been
-                        // recreated since this launcher was made.
-                        val current = currentLaunchers()
-                        if (current == null) {
+                        // Same own-activity launch as the scanner
+                        // handler: the callback's own activity is
+                        // always the live host, while a "current"
+                        // activity resolved here could be a transient
+                        // UI activity created in between.
+                        val launchers = launchersByActivity[activity]
+                        if (launchers == null) {
                             Log.w(
                                 "PhotoCaptureManager",
-                                "Gallery OCR with no launchers for the current activity"
+                                "Gallery OCR with no launchers for its own activity"
                             )
                             callback?.invoke(
                                 PhotoCaptureResult.Error(
@@ -449,12 +473,17 @@ class PhotoCaptureManager private constructor(
                             currentCallback = null
                             currentConfig = null
                         } else {
-                            val (currentActivity, launchers) = current
-                            val intent = Intent(currentActivity, VolineCameraActivity::class.java).apply {
+                            val intent = Intent(activity, VolineCameraActivity::class.java).apply {
                                 putExtra(VolineCameraActivity.EXTRA_INPUT_PATH, tempFile.absolutePath)
                                 putOcrFieldExtras(config)
                                 putCameraOptionExtras(config)
                             }
+                            Log.d(
+                                "PhotoCaptureManager",
+                                "Launching OCR for ${tempFile.absolutePath} " +
+                                    "from ${activity::class.simpleName} " +
+                                    "instance=${activity.hashCode()}"
+                            )
                             launchers.camera.launch(intent)
                         }
                     } else {
