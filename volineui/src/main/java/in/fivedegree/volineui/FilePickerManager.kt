@@ -89,8 +89,11 @@ class FilePickerManager private constructor(
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 // Do not track the in-app camera activity or register
                 // launchers on it; the host activity owns those, the same
-                // rule PhotoCaptureManager applies.
-                if (activity is VolineCameraActivity) return
+                // rule PhotoCaptureManager applies. The same goes for
+                // the document-scanner UI activity (see
+                // isScannerUiActivity): it is a transient screen, not
+                // a host.
+                if (activity is VolineCameraActivity || isScannerUiActivity(activity)) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                     registerLaunchers(activity)
@@ -100,7 +103,7 @@ class FilePickerManager private constructor(
             override fun onActivityStarted(activity: Activity) {}
 
             override fun onActivityResumed(activity: Activity) {
-                if (activity is VolineCameraActivity) return
+                if (activity is VolineCameraActivity || isScannerUiActivity(activity)) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                 }
@@ -134,6 +137,19 @@ class FilePickerManager private constructor(
             }
         })
     }
+
+    /**
+     * Transient Play-services UI activities are not hosts: the
+     * document-scanner screen runs in this app's process, so the
+     * lifecycle callbacks see it. It must never own launchers or
+     * become the tracked current activity -- when it did, its
+     * launchers outlived it (the host resumed before it was
+     * destroyed, so the destroy cleanup did not fire) and the next
+     * launch crashed on an unregistered launcher. Same rule as
+     * PhotoCaptureManager.
+     */
+    private fun isScannerUiActivity(activity: Activity): Boolean =
+        activity.javaClass.name.startsWith("com.google.mlkit")
 
     private fun registerLaunchers(activity: ComponentActivity) {
         singleLauncher = activity.registerForActivityResult(

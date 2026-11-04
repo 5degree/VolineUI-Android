@@ -79,8 +79,11 @@ class PermissionManager private constructor(
                 // The in-app camera activity must not become the tracked
                 // current activity or have launchers registered on it, the
                 // same rule PhotoCaptureManager applies: the host activity
-                // owns the launchers that receive results.
-                if (activity is VolineCameraActivity) return
+                // owns the launchers that receive results. The same goes
+                // for the document-scanner UI activity (see
+                // isScannerUiActivity): it is a transient screen, not
+                // a host.
+                if (activity is VolineCameraActivity || isScannerUiActivity(activity)) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                     registerPermissionLaunchers(activity)
@@ -90,7 +93,7 @@ class PermissionManager private constructor(
             override fun onActivityStarted(activity: Activity) {}
 
             override fun onActivityResumed(activity: Activity) {
-                if (activity is VolineCameraActivity) return
+                if (activity is VolineCameraActivity || isScannerUiActivity(activity)) return
                 if (activity is ComponentActivity) {
                     currentActivityRef = WeakReference(activity)
                 }
@@ -112,6 +115,19 @@ class PermissionManager private constructor(
         })
     }
     
+    /**
+     * Transient Play-services UI activities are not hosts: the
+     * document-scanner screen runs in this app's process, so the
+     * lifecycle callbacks see it. It must never own launchers or
+     * become the tracked current activity. When it did, its
+     * launchers outlived it -- the host resumed before it was
+     * destroyed, so the destroy cleanup did not fire -- and the
+     * next permission request crashed launching an unregistered
+     * launcher. Same rule as PhotoCaptureManager.
+     */
+    private fun isScannerUiActivity(activity: Activity): Boolean =
+        activity.javaClass.name.startsWith("com.google.mlkit")
+
     /**
      * Register permission launchers for the current activity
      */
