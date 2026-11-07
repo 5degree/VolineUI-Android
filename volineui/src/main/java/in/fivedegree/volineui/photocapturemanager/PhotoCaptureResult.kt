@@ -50,9 +50,9 @@ sealed class PhotoCaptureResult {
      * @property faceMesh Face mesh for a person capture
      *   ([PhotoCaptureConfig.captureGuide] == [CaptureGuide.PERSON]),
      *   in the delivered photo's pixel space. Null when no mesh was
-     *   requested. [FaceMeshResult.EMPTY] (no points, null box) means
-     *   a mesh was requested but no usable face was found; it never
-     *   fails the capture.
+     *   requested. [FaceMeshResult.EMPTY] (no points, no triangles,
+     *   null box) means a mesh was requested but no usable face was
+     *   found; it never fails the capture.
      */
     data class Success(
         val file: File,

@@ -301,11 +301,11 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                         if (mesh.points.isEmpty()) {
                             appendLine("Face mesh: no face found")
                         } else {
-                            appendLine("Face mesh: ${mesh.points.size} points")
+                            appendLine("Face mesh: ${mesh.points.size} points, ${mesh.triangles.size} triangles")
                             mesh.boundingBox?.let { box ->
                                 appendLine("  Box: ${box.left.toInt()}, ${box.top.toInt()} - ${box.right.toInt()}, ${box.bottom.toInt()}")
                             }
-                            appendLine("  Overlay: drawn on the photo above")
+                            appendLine("  Overlay: wireframe drawn on the photo above")
                         }
                     }
 
@@ -338,13 +338,14 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
 
     /**
      * Draws a face mesh over a copy of [photo] and returns it; the
-     * original bitmap is left untouched. Points become white dots
-     * and the bounding box a green rectangle, both in the photo's
-     * own pixel space, so no view-scale mapping is needed. Dot and
-     * stroke sizes scale with the photo so the mesh stays visible
-     * at any resolution. Note the library payload carries points
-     * and a box only, no triangle indices, so this draws dots
-     * rather than the triangulated wireframe.
+     * original bitmap is left untouched. Triangles become the
+     * wireframe (each triangle's three edges in green), points
+     * become white dots, and the bounding box a green rectangle,
+     * all in the photo's own pixel space, so no view-scale mapping
+     * is needed. Dot and stroke sizes scale with the photo so the
+     * mesh stays visible at any resolution. A triangle whose
+     * indices fall outside the points list is skipped rather than
+     * drawn wrong -- it can only come from a corrupt payload.
      */
     private fun drawFaceMeshOverlay(photo: Bitmap, mesh: FaceMeshResult): Bitmap {
         val overlay = photo.copy(Bitmap.Config.ARGB_8888, true)
@@ -357,6 +358,20 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
                 strokeWidth = maxOf(4f, photo.width / 300f)
             }
             canvas.drawRect(box.left, box.top, box.right, box.bottom, boxPaint)
+        }
+
+        val wirePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.GREEN
+            style = Paint.Style.STROKE
+            strokeWidth = maxOf(2f, photo.width / 600f)
+        }
+        for (triangle in mesh.triangles) {
+            val a = mesh.points.getOrNull(triangle.first) ?: continue
+            val b = mesh.points.getOrNull(triangle.second) ?: continue
+            val c = mesh.points.getOrNull(triangle.third) ?: continue
+            canvas.drawLine(a.x, a.y, b.x, b.y, wirePaint)
+            canvas.drawLine(b.x, b.y, c.x, c.y, wirePaint)
+            canvas.drawLine(c.x, c.y, a.x, a.y, wirePaint)
         }
 
         val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

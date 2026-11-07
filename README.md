@@ -343,9 +343,11 @@ green and the shutter enabled while a person is framed inside it, red
 and the shutter disabled otherwise (live selfie segmentation, ML Kit,
 on-device, no network). After the user taps Use photo, face-mesh
 detection runs on the finished photo and the result carries it in
-addition to everything else: `Success.faceMesh` holds 468 points plus
-a bounding box, in the delivered photo's pixel space, as plain data
-the host can send to a server as JSON. If no usable face is found,
+addition to everything else: `Success.faceMesh` holds 468 points,
+a bounding box, and the triangle indices between the points, in the
+delivered photo's pixel space, as plain data the host can send to a
+server as JSON. Joining each triangle's three points draws the full
+wireframe; the points alone draw dots. If no usable face is found,
 the photo is still returned with an empty mesh — that never fails
 the capture. `DOCUMENT` launches Google's document-scanner UI instead
 of this camera screen (single page, gallery import off, full cleaning:
@@ -363,7 +365,7 @@ val personConfig = PhotoCaptureConfig(captureGuide = CaptureGuide.PERSON)
 val documentConfig = PhotoCaptureConfig(captureGuide = CaptureGuide.DOCUMENT)
 PhotoCaptureManager.instance.capturePhoto(personConfig) { result ->
     if (result is PhotoCaptureResult.Success) {
-        println(result.faceMesh) // 468 points + box, or empty when no face
+        println(result.faceMesh) // 468 points + box + triangles, or empty when no face
     }
 }
 ```

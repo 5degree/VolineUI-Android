@@ -8,6 +8,7 @@ import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import `in`.fivedegree.volineui.photocapturemanager.FaceMeshBox
 import `in`.fivedegree.volineui.photocapturemanager.FaceMeshPoint
 import `in`.fivedegree.volineui.photocapturemanager.FaceMeshResult
+import `in`.fivedegree.volineui.photocapturemanager.FaceMeshTriangle
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -65,7 +66,27 @@ internal fun detectFaceMesh(bitmap: Bitmap): FaceMeshResult {
                             top = box.top.toFloat(),
                             right = box.right.toFloat(),
                             bottom = box.bottom.toFloat()
-                        )
+                        ),
+                        // ML Kit's triangle points carry the same
+                        // indices as allPoints, so the indices map
+                        // straight onto the points list above.
+                        // A triangle that does not resolve to exactly
+                        // three points is skipped rather than drawn
+                        // wrong -- it can only come from a corrupt
+                        // mesh, and the remaining triangles still
+                        // describe the face.
+                        triangles = mesh.allTriangles.mapNotNull { triangle ->
+                            val indices = triangle.allPoints.map { it.index }
+                            if (indices.size == 3) {
+                                FaceMeshTriangle(
+                                    first = indices[0],
+                                    second = indices[1],
+                                    third = indices[2]
+                                )
+                            } else {
+                                null
+                            }
+                        }
                     )
                 }
             }
