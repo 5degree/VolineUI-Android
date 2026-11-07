@@ -31,6 +31,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -96,6 +97,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -920,10 +925,15 @@ internal fun CameraScreen(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (hasFlash) {
+                        // The description names the current mode and
+                        // the action: the button cycles auto -> on ->
+                        // off, which is not obvious from the icon
+                        // alone, and a screen-reader user hears the
+                        // state before choosing to tap it.
                         val (flashIcon, flashDescription) = when (flashMode) {
-                            ImageCapture.FLASH_MODE_ON -> Icons.Filled.FlashOn to "Flash on"
-                            ImageCapture.FLASH_MODE_OFF -> Icons.Filled.FlashOff to "Flash off"
-                            else -> Icons.Filled.FlashAuto to "Flash auto"
+                            ImageCapture.FLASH_MODE_ON -> Icons.Filled.FlashOn to "Flash on. Tap to change flash mode"
+                            ImageCapture.FLASH_MODE_OFF -> Icons.Filled.FlashOff to "Flash off. Tap to change flash mode"
+                            else -> Icons.Filled.FlashAuto to "Flash auto. Tap to change flash mode"
                         }
                         IconButton(
                             onClick = {
@@ -1000,6 +1010,14 @@ internal fun CameraScreen(
                                     role = Role.Button,
                                     onClickLabel = "Reset zoom to 1x"
                                 ) { applyZoom(1f) }
+                                // The bare "2.5×" text says nothing
+                                // about what it is; the description
+                                // names it as the current zoom.
+                                .semantics {
+                                    contentDescription = "Current zoom, " +
+                                        String.format(Locale.US, "%.1f", zoomRatio) +
+                                        " times"
+                                }
                                 .padding(bottom = 8.dp)
                         )
                     }
@@ -1028,6 +1046,12 @@ internal fun CameraScreen(
                                             role = Role.Button,
                                             onClickLabel = "Change aspect ratio"
                                         ) { aspect = aspect.next() }
+                                        // The pill's text is a bare
+                                        // "4:3"; merge it into one node
+                                        // whose description names it.
+                                        .semantics(mergeDescendants = true) {
+                                            contentDescription = "Aspect ratio, ${aspect.label}"
+                                        }
                                         .padding(horizontal = 14.dp, vertical = 10.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -1040,6 +1064,13 @@ internal fun CameraScreen(
                                 }
                             }
                         }
+                        // The shutter is a plain Box with a click
+                        // action and no text or icon, so without a
+                        // description a screen reader announces
+                        // nothing useful for it. The state description
+                        // covers the one case where it is disabled:
+                        // the person guide holding the shutter until
+                        // the person is aligned in the outline.
                         Box(
                             modifier = Modifier
                                 .size(76.dp)
@@ -1051,6 +1082,12 @@ internal fun CameraScreen(
                                     role = Role.Button,
                                     onClickLabel = "Take photo"
                                 ) { takePhoto() }
+                                .semantics {
+                                    contentDescription = "Take photo"
+                                    if (personGuideActive && !personAligned) {
+                                        stateDescription = "Align the person in the outline to take a photo"
+                                    }
+                                }
                                 .padding(6.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -1092,7 +1129,15 @@ internal fun CameraScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Filled.Cameraswitch,
-                                        contentDescription = "Switch camera",
+                                        // Name the camera it switches
+                                        // to, not just the action: a
+                                        // fixed "Switch camera" never
+                                        // says which lens comes next.
+                                        contentDescription = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
+                                            "Switch to back camera"
+                                        } else {
+                                            "Switch to front camera"
+                                        },
                                         tint = Color.White
                                     )
                                 }
@@ -1244,10 +1289,26 @@ private fun ZoomRuler(
     }
 
     val t = tForRatio(zoomRatio)
+    // The ruler is a Canvas with drag/tap gestures and no text, so
+    // without semantics a screen reader sees nothing here at all.
+    // progressSemantics plus the setProgress action expose it as an
+    // adjustable slider: TalkBack announces "Zoom, 2.5 times" and
+    // swiping up/down changes the zoom, the same as a SeekBar. The
+    // value is the zoom ratio itself, in the device's zoom range,
+    // so the action maps straight onto onZoomChange.
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
+            .progressSemantics(zoomRatio, zoomMin..zoomMax)
+            .semantics {
+                contentDescription = "Zoom"
+                stateDescription = String.format(Locale.US, "%.1f×", zoomRatio)
+                setProgress { value ->
+                    onZoomChange(value.coerceIn(zoomMin, zoomMax))
+                    true
+                }
+            }
     ) {
         Canvas(
             modifier = Modifier
