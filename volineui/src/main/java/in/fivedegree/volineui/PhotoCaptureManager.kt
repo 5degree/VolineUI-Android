@@ -33,8 +33,11 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import `in`.fivedegree.volineui.camera.VolineCameraActivity
 import `in`.fivedegree.volineui.camera.detectFaceMesh
+import `in`.fivedegree.volineui.camera.renderFaceMeshOverlay
 import `in`.fivedegree.volineui.locationmanager.LocationResult
 import `in`.fivedegree.volineui.photocapturemanager.CaptureGuide
+import `in`.fivedegree.volineui.photocapturemanager.FaceMeshOverlayStyle
+import `in`.fivedegree.volineui.photocapturemanager.FaceMeshResult
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureException
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureResult
@@ -1257,7 +1260,34 @@ class PhotoCaptureManager private constructor(
         tempCameraFile?.delete()
         tempCameraFile = null
     }
-    
+
+    /**
+     * Draws a face mesh over a photo, so a host does not have to do
+     * the Canvas work itself.
+     *
+     * The mesh points are in the photo's pixel space (that is how
+     * [PhotoCaptureResult.Success.faceMesh] is delivered), so the
+     * drawing lands exactly on the face with no view-scale mapping.
+     * Pass [PhotoCaptureResult.Success.bitmap] as [bitmap] and the
+     * [PhotoCaptureResult.Success.faceMesh] from the same result.
+     * A mesh from any other photo -- or a photo the mesh was not
+     * computed from -- will draw in the wrong place.
+     *
+     * @param bitmap The photo to draw on. Left untouched; the mesh
+     *   is drawn on a copy.
+     * @param faceMesh The mesh to draw. An empty mesh draws nothing
+     *   and the returned copy is just the photo.
+     * @param style Colours and which layers to draw (wireframe,
+     *   dots, bounding box). Defaults to a green wireframe, white
+     *   dots and a green box.
+     * @return A new mutable bitmap with the mesh drawn on it.
+     */
+    fun drawFaceMeshOverlay(
+        bitmap: Bitmap,
+        faceMesh: FaceMeshResult,
+        style: FaceMeshOverlayStyle = FaceMeshOverlayStyle()
+    ): Bitmap = renderFaceMeshOverlay(bitmap, faceMesh, style)
+
     companion object {
         @Volatile
         private var INSTANCE: PhotoCaptureManager? = null

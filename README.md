@@ -370,6 +370,16 @@ PhotoCaptureManager.instance.capturePhoto(personConfig) { result ->
 }
 ```
 
+A host that wants the mesh drawn on the photo does not need to do
+the Canvas work itself: `PhotoCaptureManager.instance.drawFaceMeshOverlay(bitmap, mesh)`
+returns a copy of the photo with the mesh drawn on it (green
+wireframe, white dots, green box by default). Pass the `bitmap` and
+`faceMesh` from the same `Success` result — the mesh is in that
+photo's pixel space, so it lands exactly on the face. A
+`FaceMeshOverlayStyle` changes the colours or turns a layer off
+(wireframe only, dots only). The demo's example screen draws its
+overlay through this function.
+
 ### Document OCR (photo capture)
 
 A host that wants data read off a document photo passes the fields it
