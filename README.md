@@ -380,6 +380,65 @@ photo's pixel space, so it lands exactly on the face. A
 (wireframe only, dots only). The demo's example screen draws its
 overlay through this function.
 
+### Capture-area geofence (photo capture)
+
+A host that wants photos taken only inside a particular area passes
+a polygon in the config:
+
+```kotlin
+val siteConfig = PhotoCaptureConfig(
+    allowedCaptureArea = listOf(
+        GeoPoint(19.07555, 72.87725),
+        GeoPoint(19.07555, 72.87815),
+        GeoPoint(19.07645, 72.87815),
+        GeoPoint(19.07645, 72.87725)
+    )
+)
+PhotoCaptureManager.instance.capturePhoto(siteConfig) { result ->
+    // ...
+}
+```
+
+The polygon is one ring of at least 3 points; it auto-closes, the
+winding order does not matter, and a point on the boundary counts as
+inside. The check is planar, which is correct for site-sized areas
+(tens/hundreds of metres). An empty list (the default) means no
+restriction.
+
+When the user taps the shutter, the library fetches the current
+location and the photo is only taken when the location is inside the
+polygon. Otherwise no photo is taken and the user sees a dialog
+naming the reason — outside the allowed area, location unavailable,
+location not precise enough, or permission needed — and can dismiss
+it, move inside the area, and tap the shutter again. If the user
+then closes the camera, the host receives a distinct
+`PhotoCaptureResult.Error` carrying
+`PhotoCaptureException.ERROR_OUTSIDE_ALLOWED_AREA` (or the
+reason-specific message) instead of `Cancelled`, so the host can
+tell a geofence abandonment apart from a plain cancel. A failed
+check on its own fires nothing to the host; the callback is
+one-shot, so the error is only delivered when the capture ends.
+
+Three knobs control the check: `geofenceLocationMode` picks which
+location counts — `FRESH_ONLY` (a cached fix never counts, even on
+timeout), `FRESH_WITH_CACHE_FALLBACK` (the default: fresh first,
+last-known on timeout), or `CACHE_ONLY` (last-known only, no fresh
+request); `geofenceLocationTimeoutMs` (default 30 seconds) bounds
+the fresh wait; `geofenceMaxAccuracyM` (default 10) is the worst
+GPS accuracy accepted — a fix worse than that, or with unknown
+accuracy, fails the check, because it cannot prove it is inside
+the area.
+
+Location permission and GPS are gated before the camera opens
+(the permission/settings launchers belong to the host activity, so
+they cannot be resolved from the camera screen): if permission is
+denied or GPS is off at launch, the host gets an `Error` or a
+cancel, exactly like the watermark location gate. At shutter time
+the check only fetches a fix. The geofence applies to camera
+captures only — not to gallery picks, and not to `DOCUMENT`
+captures, where the scanner UI replaces the camera (a polygon with
+a `DOCUMENT` capture is ignored and logged).
+
 ### Document OCR (photo capture)
 
 A host that wants data read off a document photo passes the fields it

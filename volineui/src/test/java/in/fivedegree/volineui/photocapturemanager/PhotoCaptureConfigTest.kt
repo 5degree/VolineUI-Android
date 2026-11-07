@@ -2,6 +2,7 @@ package `in`.fivedegree.volineui.photocapturemanager
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -54,5 +55,120 @@ class PhotoCaptureConfigTest {
     fun documentGuideIsPreserved() {
         val config = PhotoCaptureConfig(captureGuide = CaptureGuide.DOCUMENT)
         assertEquals(CaptureGuide.DOCUMENT, config.captureGuide)
+    }
+
+    // A ~100 m square around a fixed point, the same ring the
+    // GeofenceTest uses.
+    private val squareArea = listOf(
+        GeoPoint(19.07555, 72.87725),
+        GeoPoint(19.07555, 72.87815),
+        GeoPoint(19.07645, 72.87815),
+        GeoPoint(19.07645, 72.87725)
+    )
+
+    @Test
+    fun geofenceDefaultsToOff() {
+        val config = PhotoCaptureConfig()
+        assertTrue(config.allowedCaptureArea.isEmpty())
+        assertEquals(
+            PhotoCaptureConfig.GeofenceLocationMode.FRESH_WITH_CACHE_FALLBACK,
+            config.geofenceLocationMode
+        )
+        assertEquals(30_000L, config.geofenceLocationTimeoutMs)
+        assertEquals(10f, config.geofenceMaxAccuracyM, 0f)
+    }
+
+    @Test
+    fun validGeofencePolygonIsPreserved() {
+        val config = PhotoCaptureConfig(
+            allowedCaptureArea = squareArea,
+            geofenceLocationMode = PhotoCaptureConfig.GeofenceLocationMode.FRESH_ONLY,
+            geofenceLocationTimeoutMs = 10_000,
+            geofenceMaxAccuracyM = 5f
+        )
+        assertEquals(squareArea, config.allowedCaptureArea)
+        assertEquals(
+            PhotoCaptureConfig.GeofenceLocationMode.FRESH_ONLY,
+            config.geofenceLocationMode
+        )
+        assertEquals(10_000L, config.geofenceLocationTimeoutMs)
+        assertEquals(5f, config.geofenceMaxAccuracyM, 0f)
+    }
+
+    @Test
+    fun geofenceWithFewerThanThreePointsIsRejected() {
+        assertThrows(IllegalArgumentException::class.java) {
+            PhotoCaptureConfig(allowedCaptureArea = squareArea.take(2))
+        }
+    }
+
+    @Test
+    fun geofenceLatitudeOutOfRangeIsRejected() {
+        assertThrows(IllegalArgumentException::class.java) {
+            PhotoCaptureConfig(
+                allowedCaptureArea = listOf(
+                    GeoPoint(91.0, 72.87725),
+                    GeoPoint(19.07555, 72.87815),
+                    GeoPoint(19.07645, 72.87770)
+                )
+            )
+        }
+    }
+
+    @Test
+    fun geofenceLongitudeOutOfRangeIsRejected() {
+        assertThrows(IllegalArgumentException::class.java) {
+            PhotoCaptureConfig(
+                allowedCaptureArea = listOf(
+                    GeoPoint(19.07555, 181.0),
+                    GeoPoint(19.07555, 72.87815),
+                    GeoPoint(19.07645, 72.87770)
+                )
+            )
+        }
+    }
+
+    @Test
+    fun degenerateGeofencePolygonIsRejected() {
+        // Three collinear points enclose nothing.
+        assertThrows(IllegalArgumentException::class.java) {
+            PhotoCaptureConfig(
+                allowedCaptureArea = listOf(
+                    GeoPoint(19.07555, 72.87725),
+                    GeoPoint(19.07555, 72.87770),
+                    GeoPoint(19.07555, 72.87815)
+                )
+            )
+        }
+        // Three identical points enclose nothing either.
+        assertThrows(IllegalArgumentException::class.java) {
+            PhotoCaptureConfig(
+                allowedCaptureArea = listOf(
+                    GeoPoint(19.0760, 72.8777),
+                    GeoPoint(19.0760, 72.8777),
+                    GeoPoint(19.0760, 72.8777)
+                )
+            )
+        }
+    }
+
+    @Test
+    fun geofenceTimeoutMustBePositive() {
+        assertThrows(IllegalArgumentException::class.java) {
+            PhotoCaptureConfig(
+                allowedCaptureArea = squareArea,
+                geofenceLocationTimeoutMs = 0
+            )
+        }
+    }
+
+    @Test
+    fun geofenceAccuracyMustBePositive() {
+        assertThrows(IllegalArgumentException::class.java) {
+            PhotoCaptureConfig(
+                allowedCaptureArea = squareArea,
+                geofenceMaxAccuracyM = 0f
+            )
+        }
     }
 }

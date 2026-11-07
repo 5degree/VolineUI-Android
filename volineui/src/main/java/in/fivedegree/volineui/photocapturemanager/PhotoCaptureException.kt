@@ -51,5 +51,16 @@ class PhotoCaptureException(message: String) : Exception(message) {
          */
         const val ERROR_FILE_CREATION_FAILED = 
             "Failed to create image file. Check storage permissions and available space."
+
+        /**
+         * Error: The capture ended because the device was outside the
+         * host's allowed area. Delivered when the user abandons a
+         * geofenced capture after a failed location check (the check
+         * itself only shows a dialog and lets the user retry, so the
+         * host hears about it only when the capture ends this way).
+         * The message is the same text the user saw in the dialog.
+         */
+        const val ERROR_OUTSIDE_ALLOWED_AREA =
+            "You're outside the allowed area for this photo. Move inside the marked area and try again."
     }
 }

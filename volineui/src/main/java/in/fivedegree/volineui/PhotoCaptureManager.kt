@@ -489,8 +489,19 @@ class PhotoCaptureManager private constructor(
         // camera permission from this app (Play services holds its
         // own), so they skip the camera-permission gate. The location
         // gates below still apply when a watermark with location was
-        // requested, and launchCapture routes to the scanner.
+        // requested, and launchCapture routes to the scanner. A
+        // geofence does not apply here at all: the scanner UI
+        // replaces the camera, so there is no shutter to check the
+        // location at, and a polygon with a DOCUMENT capture is
+        // ignored rather than gating the launch on a permission the
+        // capture cannot use.
         if (config.captureGuide == CaptureGuide.DOCUMENT) {
+            if (config.allowedCaptureArea.isNotEmpty()) {
+                Log.w(
+                    "PhotoCaptureManager",
+                    "allowedCaptureArea is ignored for DOCUMENT captures: the scanner UI replaces the camera, so there is no shutter to check the location at."
+                )
+            }
             checkLocationRequirementsAndLaunchCamera(config, callback)
             return
         }
@@ -527,63 +538,104 @@ class PhotoCaptureManager private constructor(
     
     /**
      * Check location requirements before launching camera
+     *
+     * Location is needed for a watermark with coordinates, and for
+     * the geofence -- and the gate has to run here, before the camera
+     * opens, not at the shutter. The permission and settings
+     * launchers belong to the host activity, and their results only
+     * dispatch when the host is started, i.e. after the camera
+     * closes; resolving permission or settings from the camera
+     * screen would hang the shutter check. So permission is
+     * re-requested and GPS is offered here, exactly like the
+     * watermark gate, and the shutter check only ever fetches a fix.
+     * A DOCUMENT capture cannot enforce a geofence, so a polygon
+     * with one does not gate anything (see capturePhoto).
      */
     private fun checkLocationRequirementsAndLaunchCamera(
         config: PhotoCaptureConfig,
         callback: (PhotoCaptureResult) -> Unit
     ) {
         val activity = currentActivityRef?.get() ?: return
-        
-        // If watermark with location is requested, check location permission and services
-        if (config.watermarkText != null) {
+
+        // The geofence is the stricter requirement, so when both a
+        // watermark and a geofence are set, the geofence wording
+        // wins: denying permission blocks the capture either way.
+        val geofenceApplies = config.allowedCaptureArea.isNotEmpty() &&
+            config.captureGuide != CaptureGuide.DOCUMENT
+        val purpose = if (geofenceApplies) {
+            LocationPurpose.GEOFENCE
+        } else {
+            LocationPurpose.WATERMARK
+        }
+        // If watermark with location is requested, or a geofence is
+        // configured, check location permission and services
+        if (config.watermarkText != null || geofenceApplies) {
             // Re-check permission in case it was just granted
             if (!PermissionManager.instance.isLocationPermissionGranted) {
                 PermissionManager.instance.requestLocationPermission { result ->
                     if (result.isGranted) {
                         // Permission granted, check location services
-                        checkLocationServicesAndLaunchCamera(config, callback)
+                        checkLocationServicesAndLaunchCamera(config, callback, purpose)
                     } else if (result.isPermanentlyDenied) {
                         showPermissionPermanentlyDeniedDialog(activity, "Location")
                         callback(
                             PhotoCaptureResult.Error(
                                 PhotoCaptureException(PhotoCaptureException.ERROR_PERMISSION_DENIED),
-                                "Location permission is permanently denied. Watermark will not include coordinates."
+                                if (purpose == LocationPurpose.GEOFENCE) {
+                                    "Location permission is permanently denied. Enable it in settings to take photos in the allowed area."
+                                } else {
+                                    "Location permission is permanently denied. Watermark will not include coordinates."
+                                }
                             )
                         )
                     } else {
                         callback(
                             PhotoCaptureResult.Error(
                                 PhotoCaptureException(PhotoCaptureException.ERROR_PERMISSION_DENIED),
-                                "Location permission is required for watermark with coordinates"
+                                if (purpose == LocationPurpose.GEOFENCE) {
+                                    "Location permission is required to check you're inside the allowed area for this photo"
+                                } else {
+                                    "Location permission is required for watermark with coordinates"
+                                }
                             )
                         )
                     }
                 }
                 return
             }
-            
+
             // Permission already granted, check location services
-            checkLocationServicesAndLaunchCamera(config, callback)
+            checkLocationServicesAndLaunchCamera(config, callback, purpose)
         } else {
             // No watermark or watermark without location
             launchCapture(config, callback)
         }
     }
-    
+
+    /** What the pre-launch location gate is protecting. */
+    private enum class LocationPurpose { WATERMARK, GEOFENCE }
+
     /**
      * Check if location services are enabled
      */
     private fun checkLocationServicesAndLaunchCamera(
         config: PhotoCaptureConfig,
-        callback: (PhotoCaptureResult) -> Unit
+        callback: (PhotoCaptureResult) -> Unit,
+        purpose: LocationPurpose = LocationPurpose.WATERMARK
     ) {
         val activity = currentActivityRef?.get() ?: return
-        
+
         if (!LocationManager.instance.isLocationEnabled) {
             // Show dialog to enable location services
             AlertDialog.Builder(activity)
                 .setTitle("Location Services Disabled")
-                .setMessage("Location services are turned off. Please enable GPS to add location to watermark.")
+                .setMessage(
+                    if (purpose == LocationPurpose.GEOFENCE) {
+                        "Location services are turned off. Please enable GPS to check you're inside the allowed area."
+                    } else {
+                        "Location services are turned off. Please enable GPS to add location to watermark."
+                    }
+                )
                 .setPositiveButton("Open Settings") { _, _ ->
                     LocationManager.instance.openLocationSettings()
                     callback(
@@ -600,7 +652,7 @@ class PhotoCaptureManager private constructor(
                 .show()
             return
         }
-        
+
         launchCapture(config, callback)
     }
 
@@ -860,6 +912,29 @@ class PhotoCaptureManager private constructor(
         putExtra(VolineCameraActivity.EXTRA_ASPECT_RATIO, config.aspectRatio.name)
         putExtra(VolineCameraActivity.EXTRA_ALLOW_FRONT_CAMERA, config.allowFrontCamera)
         putExtra(VolineCameraActivity.EXTRA_CAPTURE_GUIDE, config.captureGuide.name)
+        // The geofence travels as parallel arrays, like the OCR
+        // fields: empty arrays mean "feature off", so every launch
+        // path sends them and the activity never has to guess.
+        putExtra(
+            VolineCameraActivity.EXTRA_GEOFENCE_LATITUDES,
+            config.allowedCaptureArea.map { it.latitude }.toDoubleArray()
+        )
+        putExtra(
+            VolineCameraActivity.EXTRA_GEOFENCE_LONGITUDES,
+            config.allowedCaptureArea.map { it.longitude }.toDoubleArray()
+        )
+        putExtra(
+            VolineCameraActivity.EXTRA_GEOFENCE_LOCATION_MODE,
+            config.geofenceLocationMode.name
+        )
+        putExtra(
+            VolineCameraActivity.EXTRA_GEOFENCE_TIMEOUT_MS,
+            config.geofenceLocationTimeoutMs
+        )
+        putExtra(
+            VolineCameraActivity.EXTRA_GEOFENCE_MAX_ACCURACY_M,
+            config.geofenceMaxAccuracyM
+        )
         return this
     }
 

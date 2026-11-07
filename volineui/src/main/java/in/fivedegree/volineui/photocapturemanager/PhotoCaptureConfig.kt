@@ -38,6 +38,31 @@ package `in`.fivedegree.volineui.photocapturemanager
  *   launches Google's document-scanner UI instead of this camera
  *   (so it needs Play services) and the cleaned page comes back into
  *   the confirmation screen. See [CaptureGuide].
+ * @property allowedCaptureArea The area the photo must be taken
+ *   inside, as a polygon of [GeoPoint]s (default: empty, meaning no
+ *   restriction -- today's behaviour). A non-empty list switches the
+ *   geofence on for camera captures: tapping the shutter fetches the
+ *   current location and the photo is only taken when the location is
+ *   inside the polygon; otherwise the user is told why and no photo
+ *   is taken. The polygon is one ring of at least 3 points, it
+ *   auto-closes, winding does not matter, and a point on the
+ *   boundary counts as inside. The check is planar, which is correct
+ *   for the site-sized areas this is for (tens/hundreds of metres).
+ *   It does not apply to gallery picks (nothing is captured at the
+ *   location) or to DOCUMENT captures (the scanner UI replaces the
+ *   camera, so there is no shutter to check at).
+ * @property geofenceLocationMode Which location the geofence check
+ *   uses (default [GeofenceLocationMode.FRESH_WITH_CACHE_FALLBACK]).
+ *   Only read when [allowedCaptureArea] is non-empty.
+ * @property geofenceLocationTimeoutMs How long the geofence check
+ *   waits for a fresh location, in milliseconds (default 30,000 --
+ *   the same default as the library's other location fetches). Only
+ *   read when [allowedCaptureArea] is non-empty.
+ * @property geofenceMaxAccuracyM The worst GPS accuracy, in metres,
+ *   the geofence check accepts (default 10). A fix worse than this,
+ *   or with unknown accuracy, fails the check: a fix that cannot
+ *   prove it is within 10 m cannot prove it is inside the area.
+ *   Only read when [allowedCaptureArea] is non-empty.
  */
 data class PhotoCaptureConfig(
     val watermarkText: String? = null,
@@ -51,7 +76,11 @@ data class PhotoCaptureConfig(
     val ocrFields: List<OcrField> = emptyList(),
     val aspectRatio: AspectRatio = AspectRatio.RATIO_4_3,
     val allowFrontCamera: Boolean = false,
-    val captureGuide: CaptureGuide = CaptureGuide.NONE
+    val captureGuide: CaptureGuide = CaptureGuide.NONE,
+    val allowedCaptureArea: List<GeoPoint> = emptyList(),
+    val geofenceLocationMode: GeofenceLocationMode = GeofenceLocationMode.FRESH_WITH_CACHE_FALLBACK,
+    val geofenceLocationTimeoutMs: Long = 30_000,
+    val geofenceMaxAccuracyM: Float = 10f
 ) {
     /**
      * Aspect ratio the host wants the camera locked to. CameraX only
@@ -63,6 +92,25 @@ data class PhotoCaptureConfig(
         RATIO_4_3,
         RATIO_16_9,
         NONE
+    }
+
+    /**
+     * Which location the geofence check uses. The host picks one per
+     * capture; the default matches what the library already does for
+     * its other location fetches (fresh first, cached on timeout).
+     */
+    enum class GeofenceLocationMode {
+        /** A fresh fix only. A cached fix never counts, even on timeout. */
+        FRESH_ONLY,
+
+        /**
+         * A fresh fix first; if none arrives within
+         * [geofenceLocationTimeoutMs], the last-known fix is used.
+         */
+        FRESH_WITH_CACHE_FALLBACK,
+
+        /** Only the last-known fix; no fresh request is made. */
+        CACHE_ONLY
     }
 
     /**
@@ -89,5 +137,46 @@ data class PhotoCaptureConfig(
         require(ocrFields.map { it.key }.toSet().size == ocrFields.size) {
             "ocrFields keys must be unique"
         }
+        // The geofence fields are only read when an area is given, but
+        // they are validated always, so a bad value fails fast at
+        // config construction instead of at shutter time on device.
+        require(geofenceLocationTimeoutMs > 0) {
+            "geofenceLocationTimeoutMs must be greater than 0"
+        }
+        require(geofenceMaxAccuracyM > 0) {
+            "geofenceMaxAccuracyM must be greater than 0"
+        }
+        if (allowedCaptureArea.isNotEmpty()) {
+            require(allowedCaptureArea.size >= 3) {
+                "allowedCaptureArea must have at least 3 points"
+            }
+            require(allowedCaptureArea.all { it.latitude in -90.0..90.0 }) {
+                "allowedCaptureArea latitudes must be between -90 and 90"
+            }
+            require(allowedCaptureArea.all { it.longitude in -180.0..180.0 }) {
+                "allowedCaptureArea longitudes must be between -180 and 180"
+            }
+            // A degenerate ring (collinear or duplicate points) encloses
+            // nothing, so every location would read as outside. Reject
+            // it here rather than silently blocking every capture.
+            require(allowedCaptureArea.polygonAreaDegrees() > 0.0) {
+                "allowedCaptureArea must enclose a non-zero area"
+            }
+        }
     }
+}
+
+/**
+ * Shoelace area of a ring, in square degrees; zero for a degenerate
+ * ring (collinear or duplicate points). The sign depends on winding,
+ * so the absolute value is what matters.
+ */
+private fun List<GeoPoint>.polygonAreaDegrees(): Double {
+    var sum = 0.0
+    for (i in indices) {
+        val a = this[i]
+        val b = this[(i + 1) % size]
+        sum += a.longitude * b.latitude - b.longitude * a.latitude
+    }
+    return kotlin.math.abs(sum) / 2.0
 }

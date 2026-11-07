@@ -12,11 +12,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import `in`.fivedegree.volineui.photocapturemanager.CaptureGuide
+import `in`.fivedegree.volineui.photocapturemanager.GeoPoint
 import `in`.fivedegree.volineui.photocapturemanager.OcrField
+import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import java.io.File
 
 /**
@@ -64,6 +70,21 @@ import java.io.File
  * extra locks to 4:3, matching the config's default, so an older
  * caller that sends no extra still gets the default behaviour.
  *
+ * Geofence: the caller passes the host's allowed area via
+ * [EXTRA_GEOFENCE_LATITUDES] / [EXTRA_GEOFENCE_LONGITUDES] (parallel
+ * arrays), the location mode via [EXTRA_GEOFENCE_LOCATION_MODE],
+ * and the timeout and accuracy limit via
+ * [EXTRA_GEOFENCE_TIMEOUT_MS] / [EXTRA_GEOFENCE_MAX_ACCURACY_M].
+ * Empty arrays mean the feature is off. The screen checks the
+ * location when the shutter is tapped and only takes the photo when
+ * the location is inside the polygon; a failed check shows a
+ * dialog and lets the user retry. If the user then closes the
+ * camera, it finishes with [RESULT_ERROR] carrying the failure
+ * message (a new [PhotoCaptureException.ERROR_OUTSIDE_ALLOWED_AREA]
+ * for the outside-area case) instead of [RESULT_CANCELED], so the
+ * host can tell a geofence abandonment apart from a plain cancel.
+ * Closing with no geofence failure behaves exactly as before.
+ *
  * Theme: no theme is set on this activity in the library manifest, so it
  * inherits the host application's theme. The Compose colour scheme below is
  * derived from the host theme's colour attributes where they resolve
@@ -85,6 +106,7 @@ class VolineCameraActivity : ComponentActivity() {
         val fixedAspect = readFixedAspect(intent)
         val allowFrontCamera = intent.getBooleanExtra(EXTRA_ALLOW_FRONT_CAMERA, false)
         val captureGuide = readCaptureGuide(intent)
+        val geofenceConfig = readGeofenceConfig(intent)
         if (confirmPath != null) {
             // Confirm mode (e.g. a document-scanner page): no camera
             // is involved, so no output path is required. Malformed
@@ -142,6 +164,14 @@ class VolineCameraActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme(colorScheme = hostColorScheme()) {
+                // The last geofence failure, if any: set by the screen
+                // when a shutter check fails, cleared when one passes.
+                // It is the activity -- not the screen -- that owns
+                // it, so closing from anywhere (close button, system
+                // back) sees the same value, and it survives rotation.
+                var geofenceFailure by rememberSaveable {
+                    mutableStateOf<String?>(null)
+                }
                 CameraScreen(
                     outputFile = outputFile,
                     onUsePhoto = { file ->
@@ -157,6 +187,8 @@ class VolineCameraActivity : ComponentActivity() {
                     fixedAspect = fixedAspect,
                     allowFrontCamera = allowFrontCamera,
                     captureGuide = captureGuide,
+                    geofenceConfig = geofenceConfig,
+                    onGeofenceFailure = { geofenceFailure = it },
                     reviewFile = reviewFile,
                     onRetake = {
                         Log.d(TAG, "VolineCamera finishing with RESULT_RETAKE (confirm retake)")
@@ -175,8 +207,25 @@ class VolineCameraActivity : ComponentActivity() {
                         finish()
                     },
                     onClose = {
-                        Log.d(TAG, "VolineCamera finishing with RESULT_CANCELED (close/back)")
-                        setResult(RESULT_CANCELED)
+                        // A close after a geofence failure is not a
+                        // plain cancellation: the capture ended
+                        // because the location check failed, and the
+                        // host needs to be able to tell the two
+                        // apart. The callback is one-shot, so the
+                        // error is only delivered here, when the
+                        // capture ends -- never while the camera stays
+                        // open for a retry.
+                        val failure = geofenceFailure
+                        if (failure != null) {
+                            Log.d(TAG, "VolineCamera finishing with RESULT_ERROR (geofence): $failure")
+                            setResult(
+                                RESULT_ERROR,
+                                Intent().putExtra(EXTRA_ERROR_MESSAGE, failure)
+                            )
+                        } else {
+                            Log.d(TAG, "VolineCamera finishing with RESULT_CANCELED (close/back)")
+                            setResult(RESULT_CANCELED)
+                        }
                         finish()
                     },
                     onError = { message ->
@@ -215,6 +264,41 @@ class VolineCameraActivity : ComponentActivity() {
             "NONE" -> null
             else -> CameraAspect.FOUR_THREE
         }
+    }
+
+    /**
+     * Read the host's geofence from the intent's parallel arrays.
+     * Returns null when the feature is off (no arrays, or empty
+     * arrays) or when the arrays are unusable: different lengths, or
+     * fewer than 3 points. A malformed set is treated as "off" with a
+     * warning, not an error -- the config already validated the
+     * polygon, so a mismatch can only come from a hand-built intent,
+     * and blocking the capture over it would be worse than the
+     * geofence silently not applying. Unknown mode names fall back
+     * to the config's default.
+     */
+    private fun readGeofenceConfig(intent: Intent): GeofenceConfig? {
+        val latitudes = intent.getDoubleArrayExtra(EXTRA_GEOFENCE_LATITUDES) ?: return null
+        val longitudes = intent.getDoubleArrayExtra(EXTRA_GEOFENCE_LONGITUDES) ?: return null
+        if (latitudes.isEmpty() && longitudes.isEmpty()) return null
+        if (latitudes.size != longitudes.size || latitudes.size < 3) {
+            Log.w(TAG, "VolineCamera ignoring malformed geofence extras")
+            return null
+        }
+        val polygon = latitudes.mapIndexed { index, latitude ->
+            GeoPoint(latitude = latitude, longitude = longitudes[index])
+        }
+        val mode = when (intent.getStringExtra(EXTRA_GEOFENCE_LOCATION_MODE)) {
+            "FRESH_ONLY" -> PhotoCaptureConfig.GeofenceLocationMode.FRESH_ONLY
+            "CACHE_ONLY" -> PhotoCaptureConfig.GeofenceLocationMode.CACHE_ONLY
+            else -> PhotoCaptureConfig.GeofenceLocationMode.FRESH_WITH_CACHE_FALLBACK
+        }
+        return GeofenceConfig(
+            polygon = polygon,
+            mode = mode,
+            timeoutMs = intent.getLongExtra(EXTRA_GEOFENCE_TIMEOUT_MS, 30_000),
+            maxAccuracyM = intent.getFloatExtra(EXTRA_GEOFENCE_MAX_ACCURACY_M, 10f)
+        )
     }
 
     /**
@@ -309,6 +393,21 @@ class VolineCameraActivity : ComponentActivity() {
 
         /** Whether the host allows switching to the front camera. */
         const val EXTRA_ALLOW_FRONT_CAMERA = "voline_camera_allow_front_camera"
+
+        /** Geofence polygon latitudes, parallel to [EXTRA_GEOFENCE_LONGITUDES]. */
+        const val EXTRA_GEOFENCE_LATITUDES = "voline_camera_geofence_latitudes"
+
+        /** Geofence polygon longitudes, parallel to [EXTRA_GEOFENCE_LATITUDES]. */
+        const val EXTRA_GEOFENCE_LONGITUDES = "voline_camera_geofence_longitudes"
+
+        /** Geofence location mode: a PhotoCaptureConfig GeofenceLocationMode name. */
+        const val EXTRA_GEOFENCE_LOCATION_MODE = "voline_camera_geofence_location_mode"
+
+        /** Geofence fresh-location timeout, in milliseconds. */
+        const val EXTRA_GEOFENCE_TIMEOUT_MS = "voline_camera_geofence_timeout_ms"
+
+        /** Geofence worst accepted GPS accuracy, in metres. */
+        const val EXTRA_GEOFENCE_MAX_ACCURACY_M = "voline_camera_geofence_max_accuracy_m"
 
         /** Human-readable error message, present only with [RESULT_ERROR]. */
         const val EXTRA_ERROR_MESSAGE = "voline_camera_error_message"

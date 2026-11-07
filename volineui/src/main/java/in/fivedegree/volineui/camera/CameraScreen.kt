@@ -58,6 +58,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashAuto
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -106,8 +107,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import `in`.fivedegree.volineui.LocationManager
+import `in`.fivedegree.volineui.PermissionManager
+import `in`.fivedegree.volineui.locationmanager.LocationResult
 import `in`.fivedegree.volineui.photocapturemanager.CaptureGuide
 import `in`.fivedegree.volineui.photocapturemanager.OcrField
+import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
+import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureException
 import java.io.File
 import java.util.Locale
 import java.util.concurrent.Executors
@@ -256,6 +263,15 @@ internal fun CameraScreen(
 	captureGuide: CaptureGuide = CaptureGuide.NONE,
 	reviewFile: File? = null,
 	onRetake: () -> Unit = {},
+	// Geofence: null means the feature is off. When set, the shutter
+	// checks the location before taking the photo (see
+	// runGeofenceCheckThenTakePhoto). onGeofenceFailure reports the
+	// outcome to the activity: the failure message when a check
+	// fails, null when one passes (clearing a previous failure), so
+	// closing the camera after a failure finishes with the geofence
+	// error instead of a plain cancellation.
+	geofenceConfig: GeofenceConfig? = null,
+	onGeofenceFailure: (String?) -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -327,6 +343,16 @@ internal fun CameraScreen(
     var personAligned by remember { mutableStateOf(false) }
     val shutterEnabled = !personGuideActive || personAligned
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+
+    // Geofence state. isCheckingGeofence disables the shutter and
+    // shows the checking spinner while a location fetch is in
+    // flight; geofenceDenial drives the failure dialog. Neither
+    // survives rotation deliberately: a rotation mid-check drops the
+    // in-flight fetch (the user taps the shutter again), and a
+    // dismissed dialog stays dismissed -- while the failure the
+    // activity reports on close lives in the activity, not here.
+    var isCheckingGeofence by remember { mutableStateOf(false) }
+    var geofenceDenial by remember { mutableStateOf<GeofenceCheckResult.Denied?>(null) }
     androidx.compose.runtime.DisposableEffect(Unit) {
         onDispose { analysisExecutor.shutdown() }
     }
@@ -461,6 +487,17 @@ internal fun CameraScreen(
         } else {
             ocrStep = OcrStep.NONE
         }
+    }
+
+    // System back on the capture UI or the review step closes the
+    // camera, exactly as the default back behaviour does -- routed
+    // through onClose so a close after a geofence failure finishes
+    // with the geofence error instead of a plain cancellation.
+    // (Without this, back would finish the activity with the default
+    // RESULT_CANCELED and the host would never hear about the
+    // geofence failure.)
+    BackHandler(enabled = ocrStep == OcrStep.NONE) {
+        onClose()
     }
 
     // The person-guide analyzer only runs on the live capture UI:
@@ -655,6 +692,82 @@ internal fun CameraScreen(
                 }
             }
         )
+    }
+
+    /**
+     * Records a failed check: shows the dialog (with the reason and,
+     * where one helps, an Open-settings action) and reports the
+     * message to the activity, which delivers it as the host's
+     * Error if the user then closes the camera. The dialog is
+     * cancellable -- dismissing it stays on the camera, so the user
+     * can move inside the area and tap the shutter again.
+     */
+    fun denyGeofence(denial: GeofenceCheckResult.Denied, maxAccuracyM: Float) {
+        geofenceDenial = denial
+        onGeofenceFailure(geofenceDialogContent(denial, maxAccuracyM).message)
+    }
+
+    /**
+     * The shutter tap when a geofence is configured: fetch the
+     * location, evaluate it, and only then take the photo. Without
+     * a geofence this is just takePhoto().
+     *
+     * Two things are deliberately NOT done here, even though they
+     * look like the obvious calls. Permission is not requested: the
+     * permission launcher belongs to the host activity, and its
+     * results only dispatch when the host is started -- i.e. after
+     * this camera closes -- so a request from this screen would hang
+     * the check. Permission was gated before the camera opened
+     * instead; a mid-session revoke is a denial, not a re-request.
+     * Location settings are not resolved either, for the same
+     * deferred-result reason: if GPS is off now, the check fails
+     * with guidance and the user turns location on and retries.
+     */
+    fun runGeofenceCheckThenTakePhoto() {
+        val geofence = geofenceConfig ?: run {
+            takePhoto()
+            return
+        }
+        if (isCheckingGeofence || isCapturing) return
+        isCheckingGeofence = true
+        if (!PermissionManager.instance.isLocationPermissionGranted) {
+            isCheckingGeofence = false
+            denyGeofence(
+                GeofenceCheckResult.Denied(GeofenceDenialReason.PERMISSION_DENIED),
+                geofence.maxAccuracyM
+            )
+            return
+        }
+        if (!LocationManager.instance.isLocationEnabled) {
+            isCheckingGeofence = false
+            denyGeofence(
+                GeofenceCheckResult.Denied(GeofenceDenialReason.LOCATION_UNAVAILABLE),
+                geofence.maxAccuracyM
+            )
+            return
+        }
+        fun onLocation(location: LocationResult?) {
+            // The user may have closed the camera while the fetch was
+            // in flight; a late fix must not take a photo on a dead
+            // screen (the capture use case is unbound on dispose, so
+            // takePicture there would crash).
+            if (!lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return
+            isCheckingGeofence = false
+            when (val result = evaluateGeofence(location, geofence)) {
+                GeofenceCheckResult.Allowed -> {
+                    onGeofenceFailure(null)
+                    takePhoto()
+                }
+                is GeofenceCheckResult.Denied -> denyGeofence(result, geofence.maxAccuracyM)
+            }
+        }
+        when (geofence.mode) {
+            PhotoCaptureConfig.GeofenceLocationMode.FRESH_ONLY,
+            PhotoCaptureConfig.GeofenceLocationMode.FRESH_WITH_CACHE_FALLBACK ->
+                LocationManager.instance.getLatestLocation(geofence.timeoutMs, ::onLocation)
+            PhotoCaptureConfig.GeofenceLocationMode.CACHE_ONLY ->
+                LocationManager.instance.getCachedLocation(::onLocation)
+        }
     }
 
     val reviewBitmap: Bitmap? = remember(capturedPath) {
@@ -979,17 +1092,34 @@ internal fun CameraScreen(
                     .padding(top = 16.dp, bottom = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (isCapturing) {
+                if (isCapturing || isCheckingGeofence) {
+                    // The checking spinner reuses the capture spinner's
+                    // slot, so the shutter cannot be double-tapped
+                    // while a location fetch is in flight. The text
+                    // says what is happening: a bare spinner here
+                    // would read as the photo being taken.
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(76.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(48.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            if (isCheckingGeofence) {
+                                Text(
+                                    text = "Checking your location…",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
                     }
                 } else {
                     if (zoomMax > zoomMin) {
@@ -1078,10 +1208,10 @@ internal fun CameraScreen(
                                 .background(Color.White)
                                 .border(4.dp, Color.White, CircleShape)
                                 .clickable(
-                                    enabled = shutterEnabled,
+                                    enabled = shutterEnabled && !isCheckingGeofence,
                                     role = Role.Button,
                                     onClickLabel = "Take photo"
-                                ) { takePhoto() }
+                                ) { runGeofenceCheckThenTakePhoto() }
                                 .semantics {
                                     contentDescription = "Take photo"
                                     if (personGuideActive && !personAligned) {
@@ -1229,6 +1359,101 @@ internal fun CameraScreen(
                 }
             }
         }
+
+        // Geofence failure dialog. Cancellable: dismissing it stays
+        // on the camera, so the user can move inside the area and tap
+        // the shutter again. The settings action is the path forward
+        // for the two fixable reasons (permission, location off);
+        // the other two reasons (outside, not precise enough) only
+        // need an OK.
+        geofenceDenial?.let { denial ->
+            val content = geofenceDialogContent(
+                denial,
+                geofenceConfig?.maxAccuracyM ?: 10f
+            )
+            AlertDialog(
+                onDismissRequest = { geofenceDenial = null },
+                title = { Text(text = content.title) },
+                text = { Text(text = content.message) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            geofenceDenial = null
+                            when (content.settingsAction) {
+                                GeofenceSettingsAction.APP ->
+                                    PermissionManager.instance.openAppSettings()
+                                GeofenceSettingsAction.LOCATION ->
+                                    LocationManager.instance.openLocationSettings()
+                                null -> Unit
+                            }
+                        }
+                    ) {
+                        Text(
+                            text = if (content.settingsAction != null) "Open settings" else "OK"
+                        )
+                    }
+                },
+                dismissButton = if (content.settingsAction != null) {
+                    {
+                        TextButton(onClick = { geofenceDenial = null }) {
+                            Text(text = "Cancel")
+                        }
+                    }
+                } else {
+                    null
+                }
+            )
+        }
+    }
+}
+
+/** What the geofence dialog offers besides dismissing it. */
+private enum class GeofenceSettingsAction { APP, LOCATION }
+
+/** Title, message and optional settings action for a denial. */
+private data class GeofenceDialogContent(
+    val title: String,
+    val message: String,
+    val settingsAction: GeofenceSettingsAction?
+)
+
+/**
+ * The dialog content for a failed geofence check. The outside-area
+ * message is the shared constant, so the dialog text and the host's
+ * Error carry the same words. The accuracy message names the actual
+ * fix accuracy (or that it was unknown) and the limit, so the user
+ * knows to wait for a better fix rather than that something is
+ * broken.
+ */
+private fun geofenceDialogContent(
+    denial: GeofenceCheckResult.Denied,
+    maxAccuracyM: Float
+): GeofenceDialogContent {
+    return when (denial.reason) {
+        GeofenceDenialReason.OUTSIDE_AREA -> GeofenceDialogContent(
+            title = "Outside allowed area",
+            message = PhotoCaptureException.ERROR_OUTSIDE_ALLOWED_AREA,
+            settingsAction = null
+        )
+        GeofenceDenialReason.LOCATION_UNAVAILABLE -> GeofenceDialogContent(
+            title = "Location unavailable",
+            message = "Couldn't determine your location. Check that location is turned on and try again.",
+            settingsAction = GeofenceSettingsAction.LOCATION
+        )
+        GeofenceDenialReason.ACCURACY_TOO_LOW -> GeofenceDialogContent(
+            title = "Location not precise enough",
+            message = "Your location is only accurate to " +
+                (denial.accuracy?.let { String.format(Locale.US, "%.0f", it) } ?: "unknown") +
+                " m, but this photo needs " +
+                String.format(Locale.US, "%.0f", maxAccuracyM) +
+                " m or better. Wait a moment for a better fix and try again.",
+            settingsAction = null
+        )
+        GeofenceDenialReason.PERMISSION_DENIED -> GeofenceDialogContent(
+            title = "Location permission needed",
+            message = "Location permission is needed to check you're inside the allowed area for this photo.",
+            settingsAction = GeofenceSettingsAction.APP
+        )
     }
 }
 

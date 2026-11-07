@@ -6,12 +6,15 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import `in`.fivedegree.volineui.LocationManager
 import `in`.fivedegree.volineui.PhotoCaptureManager
 import `in`.fivedegree.volineui.photocapturemanager.CaptureGuide
+import `in`.fivedegree.volineui.photocapturemanager.GeoPoint
 import `in`.fivedegree.volineui.photocapturemanager.OcrField
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureConfig
 import `in`.fivedegree.volineui.photocapturemanager.PhotoCaptureResult
 import java.io.File
+import kotlin.math.cos
 
 /**
  * PhotoCaptureExamplesActivity - Demonstrates PhotoCaptureManager usage
@@ -37,6 +40,7 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
     private lateinit var btnCapturePersonGuide: Button
     private lateinit var btnCaptureDocumentScanner: Button
     private lateinit var btnCaptureDocumentScannerOcr: Button
+    private lateinit var btnCaptureAllowedArea: Button
 
     private lateinit var ivPhoto: ImageView
     private lateinit var tvMetadata: TextView
@@ -64,6 +68,7 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
         btnCapturePersonGuide = findViewById(R.id.btnCapturePersonGuide)
         btnCaptureDocumentScanner = findViewById(R.id.btnCaptureDocumentScanner)
         btnCaptureDocumentScannerOcr = findViewById(R.id.btnCaptureDocumentScannerOcr)
+        btnCaptureAllowedArea = findViewById(R.id.btnCaptureAllowedArea)
 
         ivPhoto = findViewById(R.id.ivPhoto)
         tvMetadata = findViewById(R.id.tvMetadata)
@@ -243,6 +248,43 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
             )
             PhotoCaptureManager.instance.capturePhoto(config) { result ->
                 handlePhotoResult(result)
+            }
+        }
+
+        // Capture inside an allowed area: the polygon is a ~100 m
+        // square centred on the device's current location, so this
+        // passes wherever the demo runs -- and moving outside the
+        // square before tapping the shutter shows the outside-area
+        // dialog instead of taking the photo. The square is built
+        // from a fresh fix here so the demo works anywhere; a real
+        // host passes its own site boundary.
+        btnCaptureAllowedArea.setOnClickListener {
+            LocationManager.instance.getLatestLocation { location ->
+                if (location == null) {
+                    Toast.makeText(
+                        this,
+                        "Couldn't determine your location for the allowed area",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@getLatestLocation
+                }
+                val halfSideM = 50.0
+                val dLat = halfSideM / 111_320.0
+                val dLng = halfSideM / (111_320.0 * cos(Math.toRadians(location.latitude)))
+                val area = listOf(
+                    GeoPoint(location.latitude - dLat, location.longitude - dLng),
+                    GeoPoint(location.latitude - dLat, location.longitude + dLng),
+                    GeoPoint(location.latitude + dLat, location.longitude + dLng),
+                    GeoPoint(location.latitude + dLat, location.longitude - dLng)
+                )
+                val config = PhotoCaptureConfig(
+                    watermarkText = null,
+                    targetFileSizeKB = 200,
+                    allowedCaptureArea = area
+                )
+                PhotoCaptureManager.instance.capturePhoto(config) { result ->
+                    handlePhotoResult(result)
+                }
             }
         }
     }
