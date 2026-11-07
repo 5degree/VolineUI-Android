@@ -252,21 +252,24 @@ class PhotoCaptureExamplesActivity : AppCompatActivity() {
         }
 
         // Capture inside an allowed area: the polygon is a ~100 m
-        // square centred on the device's current location, so this
+        // square centred on the device's last-known location, so this
         // passes wherever the demo runs -- and moving outside the
         // square before tapping the shutter shows the outside-area
-        // dialog instead of taking the photo. The square is built
-        // from a fresh fix here so the demo works anywhere; a real
-        // host passes its own site boundary.
+        // dialog instead of taking the photo. The square is centred
+        // from the last-known fix on purpose: the host screen does
+        // minimal work (a cached read, no GPS spin-up, no waiting),
+        // and the real location fetch happens inside the camera, at
+        // shutter time. A real host passes its own site boundary and
+        // does no location work at all before capture.
         btnCaptureAllowedArea.setOnClickListener {
-            LocationManager.instance.getLatestLocation { location ->
+            LocationManager.instance.getCachedLocation { location ->
                 if (location == null) {
                     Toast.makeText(
                         this,
                         "Couldn't determine your location for the allowed area",
                         Toast.LENGTH_LONG
                     ).show()
-                    return@getLatestLocation
+                    return@getCachedLocation
                 }
                 val halfSideM = 50.0
                 val dLat = halfSideM / 111_320.0
